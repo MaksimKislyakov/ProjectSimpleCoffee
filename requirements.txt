@@ -3,6 +3,9 @@ uvicorn[standard]
 SQLAlchemy>=2.0
 asyncpg
 alembic
-passlib[bcrypt]
 python-jose
 pydantic
+pydantic_settings
+psycopg2
+bcrypt==3.2.2 
+passlib==1.7.4

@@ -24,7 +24,9 @@ def run_migrations_offline():
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    connectable = create_engine(settings.SYNC_DATABASE_URL) 
+    DATABASE_URL = "postgresql://postgres:postgres@postgres:5432/simplecoffee"
+    
+    connectable = create_engine(DATABASE_URL) 
 
     with connectable.connect() as connection:
         context.configure(
