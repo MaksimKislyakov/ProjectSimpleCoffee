@@ -10,6 +10,6 @@ class Schedule(Base):
     employee = Column(String)
     shift_start = Column(DateTime)
     shift_end = Column(DateTime)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.user_id"))
 
     user = relationship("User", backref="schedules")
