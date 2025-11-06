@@ -5,11 +5,11 @@ class UserRepository:
     def __init__(self, session):
         self.session = session
 
-    async def get_by_id(self, user_id: str) -> User:
+    async def get_by_id(self, user_id: int) -> User:
         result = await self.session.execute(select(User).where(User.user_id == user_id))
         return result.scalars().first()
 
-    async def get_by_email(self, email: str) -> User:
-        result = await self.session.execute(select(User).where(User.email == email))
+    async def get_by_phone(self, telephone: str) -> User:
+        result = await self.session.execute(select(User).where(User.telephone == str(telephone)))
         return result.scalars().first()
     

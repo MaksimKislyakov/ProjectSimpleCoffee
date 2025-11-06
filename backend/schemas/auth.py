@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 class LoginRequest(BaseModel):
-    user_id: int
+    telephone: int
     password: str
 
 class TokenResponse(BaseModel):

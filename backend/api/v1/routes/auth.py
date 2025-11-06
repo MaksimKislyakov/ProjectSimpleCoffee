@@ -7,4 +7,4 @@ router = APIRouter(prefix="/auth")
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, auth_service: AuthService = Depends(get_auth_service)):
-    return await auth_service.authenticate(data.user_id, data.password)
+    return await auth_service.authenticate(data.telephone, data.password)

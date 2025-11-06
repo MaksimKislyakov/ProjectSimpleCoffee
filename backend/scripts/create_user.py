@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 async def create_user():
     async with async_session() as session:
         user = User(
-            username="maksim",
+            user_id=3,
             hashed_password=hash_password("12345")
         )
         session.add(user)
