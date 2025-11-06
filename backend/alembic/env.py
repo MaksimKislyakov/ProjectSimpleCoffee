@@ -6,6 +6,7 @@ from db.base import Base
 from core.config import settings
 from models.user import User
 from models.schedule import Schedule
+from models.roles import Roles
 
 target_metadata = Base.metadata
 

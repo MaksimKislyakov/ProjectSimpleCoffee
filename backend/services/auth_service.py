@@ -26,5 +26,5 @@ class AuthService:
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
         
-        token = create_access_token({"sub": user.user_id})
+        token = create_access_token({"sub": user.id})
         return {"access_token": token, "token_type": "bearer"}

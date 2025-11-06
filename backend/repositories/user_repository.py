@@ -6,7 +6,7 @@ class UserRepository:
         self.session = session
 
     async def get_by_id(self, user_id: int) -> User:
-        result = await self.session.execute(select(User).where(User.user_id == user_id))
+        result = await self.session.execute(select(User).where(User.id == user_id))
         return result.scalars().first()
 
     async def get_by_phone(self, telephone: str) -> User:
