@@ -1,12 +1,17 @@
 from fastapi import Depends, HTTPException, status
-from db.session import async_session
-from repositories.schedule_repository import ScheduleRepository
-from repositories.user_repository import UserRepository
-from services.auth_service import AuthService
-from services.user_service import UserService
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+
+from db.session import async_session
+
+from repositories.schedule_repository import ScheduleRepository
+from repositories.user_repository import UserRepository
+
+from services.auth_service import AuthService
+from services.user_service import UserService
+from services.schedule_service import ScheduleService
+
 from core.config import settings
 
 
@@ -27,6 +32,9 @@ async def get_auth_service(repo: UserRepository = Depends(get_user_repository)) 
 
 async def get_user_service(repo: UserRepository = Depends(get_user_repository)) -> UserService:
     return UserService(repo)
+
+async def get_schedule_service(repo: ScheduleRepository = Depends(get_schedule_repository)) -> ScheduleService:
+    return ScheduleService(repo)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Проверяет Bearer-токен, декодирует JWT и возвращает текущего пользователя."""

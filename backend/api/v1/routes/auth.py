@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from schemas.auth import LoginRequest, TokenResponse
+from schemas.auth_schemas import LoginRequest, TokenResponse
 from services.auth_service import AuthService
 from api.v1.dependencies import get_auth_service
 
