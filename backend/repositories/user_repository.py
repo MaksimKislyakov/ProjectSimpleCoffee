@@ -3,6 +3,7 @@ from models.user import User
 from schemas.user_schemas import UserBase
 from core.security import hash_password
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
 
 class UserRepository:
@@ -25,6 +26,16 @@ class UserRepository:
 
         return user
     
-    async def get_all_users(self):
+    async def get_all_users(self) -> List[User]:
         result = await self.session.execute(select(User))
         return result.scalars().all()
+    
+    async def delete_user(self, user_id: int) -> User:
+        user = await self.session.get(User, user_id)
+        if not user:
+            return None
+        
+        await self.session.delete(user)
+        await self.session.commit()
+
+        return user
