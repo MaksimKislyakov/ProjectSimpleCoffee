@@ -2,10 +2,11 @@ from sqlalchemy.future import select
 from models.user import User
 from schemas.user_schemas import UserBase
 from core.security import hash_password
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserRepository:
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     async def get_by_id(self, user_id: int) -> User:
@@ -23,3 +24,7 @@ class UserRepository:
         await self.session.refresh(user)
 
         return user
+    
+    async def get_all_users(self):
+        result = await self.session.execute(select(User))
+        return result.scalars().all()

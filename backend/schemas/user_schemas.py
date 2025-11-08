@@ -3,7 +3,6 @@ from typing import Optional
 from decimal import Decimal
 
 class UserBase(BaseModel):
-    # hashed_password: str
     first_name: str
     last_name: str
     patronymic: Optional[str] = None

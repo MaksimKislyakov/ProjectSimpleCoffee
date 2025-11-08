@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from repositories.user_repository import UserRepository
-from schemas.user_schemas import UserCreate
+from schemas.user_schemas import UserCreate, UserRead
 from models.user import User
 from core.security import hash_password
 
@@ -37,3 +37,9 @@ class UserService:
         new_user = await self.user_repo.create_user(user)
 
         return new_user
+    
+    async def get_all_users(self, current_user: User):
+        if current_user.role_id != 1:
+            raise HTTPException(status_code=403, detail='Нет доступа')
+        all_users = await self.user_repo.get_all_users()
+        return all_users
