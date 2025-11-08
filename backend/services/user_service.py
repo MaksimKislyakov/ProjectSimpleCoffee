@@ -44,10 +44,10 @@ class UserService:
         all_users = await self.user_repo.get_all_users()
         return all_users
     
-    async def delete_user(self, user_del, current_user: User) -> User:
+    async def delete_user(self, id_user_del, current_user: User) -> User:
         if current_user.role_id != 1:
             raise HTTPException(status_code=403, detail='Не достаточно прав')
         
-        del_user = await self.user_repo.delete_user(user_del.id)
+        del_user = await self.user_repo.delete_user(id_user_del)
 
         return del_user

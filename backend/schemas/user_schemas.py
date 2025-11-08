@@ -21,3 +21,6 @@ class UserRead(UserBase):
     id: int
 
     model_config = {"from_attributes": True}
+
+class UserDelete(BaseModel):
+    id: int
