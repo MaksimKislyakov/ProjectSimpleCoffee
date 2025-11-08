@@ -11,7 +11,7 @@ async def login(user_service: UserService = Depends(get_user_service),
                 user: User = Depends(get_current_user)):
     return await user_service.get_user_info(user.id)
 
-@router.post("/create", response_model=UserRead)
+@router.post("/create", response_model=UserCreate)
 async def create(data: UserCreate,
                  user_service: UserService = Depends(get_user_service), 
                  user: User = Depends(get_current_user)):

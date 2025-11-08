@@ -12,7 +12,7 @@ class User(Base):
     patronymic = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
     telephone = Column(String, unique=True, index=True, nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     # coffee_shop_id = Column(Integer, ForeignKey("coffee_shops.id"), nullable=True)
     hourly_rate = Column(Numeric(precision=6, scale=2), nullable=True)
     assessment_rate = Column(Integer, nullable=True, default=0)
