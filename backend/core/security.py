@@ -18,3 +18,5 @@ def create_access_token(data: dict):
     token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     print("TOKEN CREATED:", token)
     return token
+
+print(hash_password('12345'))

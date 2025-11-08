@@ -5,7 +5,7 @@ from db.base import Base
 class Schedule(Base):
     __tablename__ = "schedule"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     coffee_shop = Column(String, index=True)
     employee = Column(String)
     shift_start = Column(DateTime)

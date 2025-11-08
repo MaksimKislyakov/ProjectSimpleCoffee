@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Float, Numeric
 from db.base import Base
+from models.roles import Roles
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     hashed_password = Column(String, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)

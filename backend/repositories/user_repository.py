@@ -1,5 +1,8 @@
 from sqlalchemy.future import select
 from models.user import User
+from schemas.user_schemas import UserBase
+from core.security import hash_password
+
 
 class UserRepository:
     def __init__(self, session):
@@ -13,3 +16,10 @@ class UserRepository:
         result = await self.session.execute(select(User).where(User.telephone == str(telephone)))
         return result.scalars().first()
     
+    async def create_user(self, user) -> User:
+        self.session.add(user)
+
+        await self.session.commit()
+        await self.session.refresh(user)
+
+        return user
