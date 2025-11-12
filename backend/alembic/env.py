@@ -7,6 +7,7 @@ from core.config import settings
 from models.roles import Roles
 from models.user import User
 from models.schedule import Schedule
+from models.coffeshops import CoffeeShops
 
 target_metadata = Base.metadata
 
