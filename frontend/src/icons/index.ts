@@ -1,0 +1,16 @@
+export { ReactComponent as ExitIcon } from "./exit.svg";
+export { ReactComponent as EyeOpenIcon } from "./eyeOpen.svg";
+export { ReactComponent as EyeClosedIcon } from "./eyeClose.svg";
+export { ReactComponent as LogoIcon } from "./logo.svg";
+export { ReactComponent as RubleIcon } from "./ruble.svg";
+export { ReactComponent as CalendarIcon } from "./calendar.svg";
+export { ReactComponent as ArrowsIcon } from "./arrows.svg";
+export { ReactComponent as BriefcaseIcon } from "./briefcase.svg";
+export { ReactComponent as HouseIcon } from "./house.svg";
+export { ReactComponent as MedicalIcon } from "./medical.svg";
+export { ReactComponent as RevealIcon } from "./reveal.svg";
+export { ReactComponent as RollUpIcon } from "./roll_up.svg";
+export { ReactComponent as SettingsIcon } from "./settings.svg";
+export { ReactComponent as TimeIcon } from "./time.svg";
+export { ReactComponent as VacationIcon } from "./vacation.svg";
+export { ReactComponent as CalendarWhiteIcon } from "./calendarWhite.svg";
