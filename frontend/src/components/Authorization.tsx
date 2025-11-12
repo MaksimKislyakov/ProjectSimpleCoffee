@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/authorization.css";
 //import fox from "../images/fox.png";
 //import { API_URL } from "../Global.tsx";
@@ -12,6 +13,7 @@ const Authorization: React.FC = () => {
     const [success, setSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [isFormValid, setIsFormValid] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const isValid = username.trim().length > 5 && password.trim().length > 3;
@@ -47,6 +49,10 @@ const Authorization: React.FC = () => {
             localStorage.setItem("token_type", data.token_type);
             
             setSuccess(true);
+            setTimeout(() => {
+            navigate("/profile");
+            }, 1500);
+
             setTimeout(() => setSuccess(false), 2000);
 
             console.log("Авторизация успешна:", data.access_token);
@@ -94,7 +100,10 @@ const Authorization: React.FC = () => {
                         </button>
                     </div>
                     {error && <div className="login-error">{error}</div>}
-                    {<button type="submit" className={`login-button ${isFormValid ? "active" : ""}`}>
+                    {<button 
+                        type="submit"
+                        disabled={!isFormValid} 
+                        className={`login-button ${isFormValid ? "active" : ""}`}>
                             Войти
                         </button>
 }

@@ -99,6 +99,12 @@
   pointer-events: auto;
 }
 
+.login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 .login-button:hover {
   background-color: #ff9c5a;
 }

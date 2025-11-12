@@ -1,0 +1,194 @@
+.profile-page {
+  font-family: "Montserrat", sans-serif;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  color: #333;
+}
+
+/* ——— Верхняя панель ——— */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 14px 30px;
+  border-bottom: 1px solid #ddd;
+  box-shadow: #dcdcdc 0px 4px 12px -2px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 300px;
+}
+
+
+.logout-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  transition: 0.3s;
+}
+
+.logout-btn:hover {
+  color: #ff7b32;
+}
+
+/* ——— Основная часть ——— */
+.profile-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  padding: 30px;
+}
+
+/* Карточки */
+.profile-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Фото */
+.photo-placeholder {
+  width: 215px;
+  height: 100%;
+  background: #dcdcdc;
+  border-radius: 8px;
+  margin-right: 50px;
+}
+
+/* Блок информации */
+.employee-main {
+  display: flex;
+  align-items: flex-start;
+  grid-column: 1 / 3;
+  padding: 41px 43px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 30px;
+  margin-bottom: 30px;
+}
+
+.employee-columns {
+  display: flex;
+  gap: 60px;
+  width: 100%;
+}
+
+.employee-columns p {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0;
+    font-size: 24px;
+}
+
+.info-left,
+.info-right {
+  width: 400px;
+}
+
+/* Отчёт */
+.report {
+  padding: 16px 43px;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+
+.report-header h2 {
+  margin: 0;
+}
+
+.date-pill {
+  background: #ff7b32;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 20px;
+  margin-right: 33px;
+}
+
+.report-stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stat-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  flex: 1;
+  text-align: center;
+  padding: 30px 9px;
+  margin-right: 8px;
+}
+
+.stat-card:last-child {
+  margin-right: 0;
+}
+
+.stat-card h3 {
+  margin: 6px 0 0;
+  color: #333;
+  font-size: 40px;
+  font-weight: 400;
+}
+
+.stat-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+}
+
+.report-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Отчёт за месяц */
+.month-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 27px 43px;
+}
+
+.month-summary p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24px;
+    margin: 2px 0;
+}
+
+.next-shift {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.date-pill.orange {
+  background-color: #ff7b32;
+  color: white;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin: 0;
+}
