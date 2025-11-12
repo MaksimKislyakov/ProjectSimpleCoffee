@@ -1,10 +1,28 @@
-import './styles/App.css';
-import './styles/authorization.css';
-import Authorization from './components/Authorization.tsx';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Authorization from "./components/Authorization";
+import ProfilePage from "./components/Profile";
+import "./styles/App.css";
+import "./styles/authorization.css";
+import "./styles/fonts.css";
 
 function App() {
-  return ( 
-  <Authorization />
+  const token = localStorage.getItem("token");
+
+  return (
+    <Router>
+      <Routes>
+        {/* Страница авторизации */}
+        <Route path="/" element={<Authorization />} />
+
+        {/* Страница профиля — доступна только при наличии токена */}
+        
+        {/* ИЗМЕНИТЬ */}
+        <Route
+          path="/profile" 
+          element={token ? <ProfilePage /> : <Navigate to="/" />}
+        />
+      </Routes>
+    </Router>
   );
 }
 
