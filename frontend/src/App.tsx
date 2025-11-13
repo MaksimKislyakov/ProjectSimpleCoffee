@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Authorization from "./components/Authorization";
-import ProfilePage from "./components/Profile";
+import Authorization from "./components/Authorization.tsx";
+import ProfilePage from "./components/Profile.tsx";
 import "./styles/App.css";
 import "./styles/authorization.css";
 import "./styles/fonts.css";
