@@ -34,6 +34,8 @@ class UserService:
             assessment_rate=user_data.assessment_rate,
             work_experience=user_data.work_experience,
             hashed_password=hashed_password,
+            coffee_shop_id=user_data.coffee_shop_id,
+            data_work_start=user_data.data_work_start
         )
 
         new_user = await self.user_repo.create_user(user)
