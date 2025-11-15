@@ -2,6 +2,22 @@ import React, { useEffect, useState } from "react";
 import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
 import { useNavigate } from "react-router-dom";
+import WorkSchedule from "./WorkSchedule.tsx";
+
+// Создаем моковые данные для тестирования
+const mockUser: UserData = {
+  first_name: "Иван",
+  last_name: "Иванов",
+  patronymic: "Иванович",
+  email: "mymail@mail.ru",
+  telephone: "+7 987 654 32 10",
+  role_id: 1,
+  hourly_rate: "250",
+  assessment_rate: 4,
+  work_experience: 1,
+  id: 1,
+  data_work_start: 1735699200000 // timestamp для 01.01.2025
+};
 
 interface UserData {
   first_name: string;
@@ -17,17 +33,45 @@ interface UserData {
   data_work_start: number;
 }
 
+interface DayData {
+  date: string;
+  time?: string; // опциональное время смены
+  isActive?: boolean; // активный день
+}
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserData | null>(mockUser); // Используем моковые данные
+  const [loading, setLoading] = useState(false); // Устанавливаем false для теста
+  const [mode, setMode] = useState<"week" | "month">("week");
+ const [days, setDays] = useState<DayData[]>([
+  { date: "Пн 17", time: "09:00-18:00", isActive: true },
+  { date: "Вт 18", time: "09:00-18:00", isActive: true },
+  { date: "Ср 19", time: "09:00-18:00" },
+  { date: "Чт 20", time: "09:00-18:00" },
+  { date: "Пт 21", time: "09:00-18:00" },
+  { date: "Сб 22" }, // выходной
+  { date: "Вс 23" }, // выходной
+]);
+
+  const goPrev = () => {
+    console.log("Предыдущий период");
+    // Реализуйте логику переключения периода
+  };
+
+  const goNext = () => {
+    console.log("Следующий период");
+    // Реализуйте логику переключения периода
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
-    useEffect(() => {
+  // ЗАКОММЕНТИРУЙТЕ ВЕСЬ useEffect для тестирования
+  /*
+  useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -59,14 +103,30 @@ const ProfilePage: React.FC = () => {
 
     fetchUser();
   }, []);
+  */
 
-    if (loading) {
+  // Закомментируйте проверку загрузки
+  /*
+  if (loading) {
     return <div className="profile-page">Загрузка...</div>;
   }
 
-    if (!user) {
+  if (!user) {
     return <div className="profile-page">Ошибка загрузки данных</div>;
   }
+  */
+
+  // Временный компонент для отображения дней
+const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
+  <div className={`day-card ${day.isActive ? 'active' : ''}`}>
+    <div className="day-header">
+      <div className="date">{day.date}</div>
+    </div>
+    <div className={`time-slots ${day.isActive ? 'active' : ''}`}>
+    {day.time && <div className="time">{day.time}</div>}
+    </div>
+  </div>
+);
 
   return (
     <div className="profile-page">
@@ -89,16 +149,16 @@ const ProfilePage: React.FC = () => {
             <h2>Информация о сотруднике</h2>
             <div className="employee-columns">
               <div className="info-left">
-                <p><p>ФИО:</p> {user.last_name} {user.first_name} {user.patronymic}</p>
-                <p><p>Должность:</p> {user.role_id === 1 ? "Бариста" : "Сотрудник"}</p>
-                <p><p>Почта:</p> {user.email}</p>
-                <p><p>Телефон:</p> {user.telephone}</p>
+                <p><strong>ФИО:</strong> {user?.last_name} {user?.first_name} {user?.patronymic}</p>
+                <p><strong>Должность:</strong> {user?.role_id === 1 ? "Бариста" : "Сотрудник"}</p>
+                <p><strong>Почта:</strong> {user?.email}</p>
+                <p><strong>Телефон:</strong> {user?.telephone}</p>
               </div>
               <div className="info-right">
-                <p><p>Опыт работы:</p> {user.work_experience} лет</p>
-                <p><p>Уровень аттестации:</p> {user.assessment_rate}</p>
-                <p><p>Часовая ставка:</p> {Number(user.hourly_rate)} ₽</p>
-                <p><p>Начало работы:</p> {user.data_work_start}</p>
+                <p><strong>Опыт работы:</strong> {user?.work_experience} лет</p>
+                <p><strong>Уровень аттестации:</strong> {user?.assessment_rate}</p>
+                <p><strong>Часовая ставка:</strong> {Number(user?.hourly_rate)} ₽</p>
+                <p><strong>Начало работы:</strong> {new Date(user?.data_work_start || 0).toLocaleDateString()}</p>
               </div>
             </div>
           </div>
@@ -145,14 +205,26 @@ const ProfilePage: React.FC = () => {
         {/* Отчёт на текущий месяц */}
         <section className="profile-card month-summary">
           <h2>Отчёт на текущий месяц</h2>
-          <p><p>Заработок:</p> 0.00 ₽</p>
-          <p><p>Премии:</p> 0.00 ₽</p>
-          <p><p>Штрафы:</p> 0.00 ₽</p>
+          <p><strong>Заработок:</strong> 0.00 ₽</p>
+          <p><strong>Премии:</strong> 0.00 ₽</p>
+          <p><strong>Штрафы:</strong> 0.00 ₽</p>
           <div className="next-shift">
             <p>Ближайшая смена:</p>
             <p className="date-pill orange">02.01.2025</p>
           </div>
         </section>
+
+        <WorkSchedule
+          currentLabel="1–7 Январь 2000"
+          mode={mode}
+          onPrev={goPrev}
+          onNext={goNext}
+          onChangeMode={setMode}
+        >
+          {days.map((day, index) => (
+            <DayCard key={index} day={day} />
+          ))}
+        </WorkSchedule>
       </main>
     </div>
   );
