@@ -62,7 +62,7 @@
 /* ——— Основная часть ——— */
 .profile-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
   gap: 20px;
   padding: 30px;
@@ -119,7 +119,7 @@ h2 {
 /* Отчёт */
 .report {
   padding: 16px 43px;
-
+  grid-column: 1 / 2;
 }
 
 .report-header {
@@ -188,6 +188,7 @@ h2 {
 .month-summary {
   display: flex;
   flex-direction: column;
+  grid-column: 2 / 3;
   gap: 4px;
   padding: 27px 43px;
 }
@@ -215,3 +216,4 @@ h2 {
   padding: 4px 10px;
   margin: 0;
 }
+
