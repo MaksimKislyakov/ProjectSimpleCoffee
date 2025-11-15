@@ -3,6 +3,7 @@
   background-color: #f5f5f5;
   min-height: 100vh;
   color: #333;
+  font-weight: 400;
 }
 
 /* ——— Верхняя панель ——— */
@@ -14,6 +15,28 @@
   padding: 14px 30px;
   border-bottom: 1px solid #ddd;
   box-shadow: #dcdcdc 0px 4px 12px -2px;
+}
+
+.navigation-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 34px;
+  font-size: 20px;
+}
+
+.navigation-btn {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background-color: #fff;
+  font-size: 20px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+}
+
+.navigation-btn:hover {
+  font-weight: 700;
 }
 
 .logo {
@@ -32,7 +55,7 @@
   transition: 0.3s;
 }
 
-.logout-btn:hover {
+.logout-icon:hover {
   color: #ff7b32;
 }
 
@@ -96,6 +119,7 @@ h2 {
 /* Отчёт */
 .report {
   padding: 16px 43px;
+
 }
 
 .report-header {
@@ -129,7 +153,6 @@ h2 {
 .stat-card {
   background: #f9f9f9;
   border-radius: 8px;
-  flex: 1;
   text-align: center;
   padding: 30px 9px;
   margin-right: 8px;

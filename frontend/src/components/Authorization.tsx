@@ -36,7 +36,7 @@ const Authorization: React.FC = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    user_id: Number(username),
+                    telephone: Number(username),
                     password}),
             })
             if (!response.ok) {

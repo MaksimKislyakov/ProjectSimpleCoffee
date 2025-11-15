@@ -1,22 +1,83 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
 import { useNavigate } from "react-router-dom";
 
+interface UserData {
+  first_name: string;
+  last_name: string;
+  patronymic: string;
+  email: string;
+  telephone: string;
+  role_id: number;
+  hourly_rate: string;
+  assessment_rate: number;
+  work_experience: number;
+  id: number;
+  data_work_start: number;
+}
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
+    useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/v1/user/me", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Ошибка загрузки данных пользователя");
+        }
+
+        const data: UserData = await res.json();
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        handleLogout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+    if (loading) {
+    return <div className="profile-page">Загрузка...</div>;
+  }
+
+    if (!user) {
+    return <div className="profile-page">Ошибка загрузки данных</div>;
+  }
+
   return (
     <div className="profile-page">
       {/* Верхняя панель */}
       <header className="profile-header">
           <Icons.LogoIcon className="logo" title="logo" />
-          <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти"/>
+          <div className="navigation-bar">
+            <button className="navigation-btn active">График работы</button>
+            <button className="navigation-btn">Отчёт</button>
+            <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти"/>
+          </div>
       </header>
 
       {/* Основное содержимое */}
@@ -28,16 +89,16 @@ const ProfilePage: React.FC = () => {
             <h2>Информация о сотруднике</h2>
             <div className="employee-columns">
               <div className="info-left">
-                <p><p>ФИО:</p> Иванов Иван Иванович</p>
-                <p><p>Должность:</p> Бариста</p>
-                <p><p>Почта:</p> mymail@mail.ru</p>
-                <p><p>Телефон:</p> +7 987 654 32 11</p>
+                <p><p>ФИО:</p> {user.last_name} {user.first_name} {user.patronymic}</p>
+                <p><p>Должность:</p> {user.role_id === 1 ? "Бариста" : "Сотрудник"}</p>
+                <p><p>Почта:</p> {user.email}</p>
+                <p><p>Телефон:</p> {user.telephone}</p>
               </div>
               <div className="info-right">
-                <p><p>Опыт работы:</p> 1 год</p>
-                <p><p>Уровень аттестации:</p> 1</p>
-                <p><p>Часовая ставка:</p> 250 ₽</p>
-                <p><p>Начало работы:</p> 01.01.2025</p>
+                <p><p>Опыт работы:</p> {user.work_experience} лет</p>
+                <p><p>Уровень аттестации:</p> {user.assessment_rate}</p>
+                <p><p>Часовая ставка:</p> {Number(user.hourly_rate)} ₽</p>
+                <p><p>Начало работы:</p> {user.data_work_start}</p>
               </div>
             </div>
           </div>
