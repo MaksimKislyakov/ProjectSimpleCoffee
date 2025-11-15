@@ -21,6 +21,8 @@ class AuthService:
         Raises:
             HTTPException: Если телефон или пароль неверны
         """
+
+
         user = await self.user_repo.get_by_phone(telephone)
 
         if not user or not verify_password(password, user.hashed_password):

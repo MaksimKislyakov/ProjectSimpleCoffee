@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Numeric
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Numeric
 from db.base import Base
+from datetime import datetime
 
 from models.roles import Roles
 # from models.coffeshops import CoffeeShops
@@ -19,6 +20,7 @@ class User(Base):
     hourly_rate = Column(Numeric(precision=6, scale=2), nullable=True)
     assessment_rate = Column(Integer, nullable=True, default=0)
     work_experience = Column(Integer, nullable=True, default=0)
+    data_work_start = Column(DateTime, nullable=True, default=datetime.utcnow)
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"
