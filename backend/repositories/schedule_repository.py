@@ -1,8 +1,9 @@
 from sqlalchemy.future import select
 from models.schedule import Schedule
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class ScheduleRepository:
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     async def get_all(self):
@@ -14,3 +15,16 @@ class ScheduleRepository:
         await self.session.commit()
         await self.session.refresh(schedule)
         return schedule
+
+    async def delete_schedule(self, schedule_id: int):
+        schedule = await self.session.get(Schedule, schedule_id)
+
+        if not schedule:
+            return None
+        
+        await self.session.delete(schedule)
+        await self.session.commit()
+
+        return schedule
+    
+    

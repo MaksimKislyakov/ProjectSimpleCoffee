@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 from typing import Optional
 from decimal import Decimal
 
@@ -9,10 +10,11 @@ class UserBase(BaseModel):
     email: EmailStr
     telephone: str
     role_id: int
-    # coffee_shop_id: int = None
+    coffee_shop_id: int
     hourly_rate: Decimal = None
     assessment_rate: Optional[int] = 0
     work_experience: Optional[int] = 0
+    data_work_start: datetime = datetime.now()
 
 class UserCreate(UserBase):
     hashed_password: str
