@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 
 from db.base import Base
 
-from models.user import User
+from models.user_model import User
 
 
 class CoffeeShops(Base):

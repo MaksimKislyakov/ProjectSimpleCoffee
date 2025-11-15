@@ -1,13 +1,14 @@
 from fastapi import HTTPException, status
 from repositories.schedule_repository import ScheduleRepository
 
-from models.user import User
-from models.schedule import Schedule
+from models.user_model import User
+from models.schedule_model import Schedule
 
 from schemas.schedule_schemas import ScheduleCreate
 from services.roleEnum import Roles
 
 import logging
+
 
 logger = logging.getLogger(__name__)
 

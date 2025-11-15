@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Numeric
 from db.base import Base
 from datetime import datetime
 
-from models.roles import Roles
+from models.roles_model import Roles
 # from models.coffeshops import CoffeeShops
 
 class User(Base):
