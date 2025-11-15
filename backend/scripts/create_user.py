@@ -1,6 +1,6 @@
 import asyncio
 from db.session import async_session
-from models.user import User
+from backend.models.user_model import User
 from core.security import hash_password
 import sys
 import os

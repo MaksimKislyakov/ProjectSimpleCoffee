@@ -1,13 +1,17 @@
 from fastapi import HTTPException, status
-from repositories.schedule_repository import ScheduleRepository
 
-from models.user import User
-from models.schedule import Schedule
+from repositories.schedule_repository import ScheduleRepository
+from repositories.coffee_shop_repository import CoffeShopsRepository
+
+from models.user_model import User
+from models.schedule_model import Schedule
 
 from schemas.schedule_schemas import ScheduleCreate
+
 from services.roleEnum import Roles
 
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +42,14 @@ class ScheduleService:
                 schedule_data[field] = schedule_data[field].replace(tzinfo=None)
         
         all_schedules = await self.schedule_repo.get_all()
+
         schedule = Schedule(**schedule_data)
 
         for existing_schedule in all_schedules:
             if (existing_schedule.schedule_start_time == schedule_data['schedule_start_time'] and
-                existing_schedule.coffee_shop_id == schedule_data['coffee_shop_id']):
+                existing_schedule.schedule_end_time == schedule_data['schedule_end_time'] and
+                existing_schedule.coffee_shop_id == schedule_data['coffee_shop_id'] and
+                existing_schedule.user_id == schedule_data['user_id']):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT, 
                     detail="Запись о расписании уже существует" 
@@ -57,8 +64,9 @@ class ScheduleService:
 
         del_schedule = await self.schedule_repo.delete_schedule(id_schedule)
 
+        if del_schedule is None:
+            raise HTTPException(status_code=404, detail='Запись о рабочей смене не найдена')
+        
         return del_schedule
-
-
     
 

@@ -3,8 +3,8 @@ from sqlalchemy.orm import relationship
 
 from db.base import Base
 
-from models.user import User
-from models.coffeshops import CoffeeShops
+from models.user_model import User
+from models.coffeshops_model import CoffeeShops
 
 
 class Schedule(Base):

@@ -1,5 +1,5 @@
 from sqlalchemy.future import select
-from models.user import User
+from models.user_model import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 

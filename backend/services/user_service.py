@@ -1,9 +1,10 @@
 from fastapi import HTTPException, status
 from repositories.user_repository import UserRepository
 from schemas.user_schemas import UserCreate, UserRead, UserBase
-from models.user import User
+from models.user_model import User
 from core.security import hash_password
 from services.roleEnum import Roles
+
 
 class UserService:
     def __init__(self, user_repo: UserRepository):

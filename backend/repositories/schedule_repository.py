@@ -1,5 +1,5 @@
 from sqlalchemy.future import select
-from models.schedule import Schedule
+from models.schedule_model import Schedule
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ScheduleRepository:

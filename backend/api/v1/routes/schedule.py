@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from schemas.schedule_schemas import ScheduleCreate, ScheduleRead, ScheduleDelete
 from services.schedule_service import ScheduleService
 from api.v1.dependencies import get_schedule_service, get_current_user
-from models.user import User
+from models.user_model import User
 
 
 router = APIRouter(prefix="/api/v1/schedule", tags=["schedule"])
