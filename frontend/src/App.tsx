@@ -12,14 +12,14 @@ function App() {
     <Router>
       <Routes>
         {/* Страница авторизации */}
-        <Route path="/" element={<Authorization />} />
+        <Route path="/" element={<ProfilePage />} />
 
         {/* Страница профиля — доступна только при наличии токена */}
         
         {/* ИЗМЕНИТЬ */}
         <Route
           path="/profile" 
-          element={token ? <ProfilePage /> : <Navigate to="/" />}
+          element={/*token ? */ <ProfilePage /> /*: <Navigate to="/" />*/}
         />
       </Routes>
     </Router>
