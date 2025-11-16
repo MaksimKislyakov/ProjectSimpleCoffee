@@ -11,13 +11,26 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Страница авторизации */}
-        <Route path="/" element={<Authorization />} />
-
-        {/* Страница профиля — доступна только при наличии токена */}
+        {/* Авторизация */}
         <Route
-          path="/profile" 
-          element={<ProfilePage />} // Убрал проверку токена для тестирования
+          path="/"
+          element={
+            token ? <Navigate to="/profile" replace /> : <Authorization />
+          }
+        />
+
+        {/* Профиль — только при наличии токена */}
+        <Route
+          path="/profile"
+          element={
+            token ? <ProfilePage /> : <Navigate to="/" replace />
+          }
+        />
+
+        {/* Редирект всех неизвестных маршрутов */}
+        <Route
+          path="*"
+          element={<Navigate to={token ? "/profile" : "/"} replace />}
         />
       </Routes>
     </Router>

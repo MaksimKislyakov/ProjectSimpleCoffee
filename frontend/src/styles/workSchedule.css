@@ -181,21 +181,21 @@
 
 
 .day-header .date {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 500;
     margin-bottom: 4px;
 }
 
 .time-slots .time {
-    font-size: 14px;
+    font-size: 16px;
     color: #666;
 }
 
-.time-slots.active .time {
+.time-slots.isWorkDay .time {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.time-slots.active {
+.time-slots.isWorkDay {
     background: #ff7b32;
     color: white;
     border-color: #ff7b32;
@@ -205,18 +205,20 @@
 
 /* Для месяца - более компактные карточки */
 .scheduleGrid.month-view {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(28, 1fr);
+    gap: 7px;
+}
+
+.scheduleGrid.month-view .day-header{
+    padding: 6px;
 }
 
 .scheduleGrid.month-view .day-card {
     min-height: 60px;
-    padding: 12px 8px;
+    width: 36px;
 }
 
-.scheduleGrid.month-view .date {
-    font-size: 14px;
-}
+
 
 .scheduleGrid.month-view .time {
     font-size: 12px;

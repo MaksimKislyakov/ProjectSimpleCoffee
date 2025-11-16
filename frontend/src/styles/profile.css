@@ -12,9 +12,10 @@
   justify-content: space-between;
   align-items: center;
   background: #fff;
-  padding: 14px 30px;
+  padding: 15px;
   border-bottom: 1px solid #ddd;
   box-shadow: #dcdcdc 0px 4px 12px -2px;
+  max-height: 67px;
 }
 
 .navigation-bar {
@@ -23,16 +24,6 @@
   align-items: center;
   gap: 34px;
   font-size: 20px;
-}
-
-.navigation-btn {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background-color: #fff;
-  font-size: 20px;
-  font-family: "Montserrat", sans-serif;
-  font-weight: 500;
 }
 
 .navigation-btn:hover {
@@ -51,12 +42,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #333;
   transition: 0.3s;
-}
-
-.logout-icon:hover {
-  color: #ff7b32;
 }
 
 /* ——— Основная часть ——— */
@@ -65,7 +51,7 @@
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
   gap: 20px;
-  padding: 30px;
+  padding: 25px;
 }
 
 /* Карточки */
@@ -87,10 +73,71 @@
 /* Блок информации */
 .employee-main {
   display: flex;
-  align-items: flex-start;
+  align-items: end;
+  justify-content: space-between;
   grid-column: 1 / 3;
   padding: 41px 43px;
 }
+
+/* Контейнер ФИО */
+.fio-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+/* Контейнер текст + popup */
+.fio-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Сокращённый текст */
+.fio-text {
+    cursor: default;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 24px;
+}
+
+/* Всплывающая подсказка */
+.fio-popup {
+    position: absolute;
+    top: -40px;               /* подвинуть над ФИО */
+    left: 0;
+    background: #ffffff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 1000;
+}
+
+/* Треугольник снизу */
+.fio-popup-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid #ffffff;
+}
+
+/* Показывать popup при наведении */
+.fio-container:hover .fio-popup {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 
 h2 {
   margin: 0;
@@ -98,22 +145,19 @@ h2 {
   margin-bottom: 30px;
 }
 
-.employee-columns {
-  display: flex;
-  gap: 60px;
-  width: 100%;
+
+
+.info-left,
+.info-right {
+  width: 500px;
 }
 
-.employee-columns p {
+.info-left p,
+.info-right p{
     display: flex;
     justify-content: space-between;
     margin: 4px 0;
     font-size: 24px;
-}
-
-.info-left,
-.info-right {
-  width: 400px;
 }
 
 /* Отчёт */
