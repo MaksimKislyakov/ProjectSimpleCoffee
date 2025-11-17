@@ -16,7 +16,7 @@ const Authorization: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isValid = username.trim().length > 5 && password.trim().length > 3;
+        const isValid = username.trim().length > 5 && password.trim().length > 3 && Number.isInteger(username);
         setIsFormValid(isValid);
   }, [username, password]);
 
