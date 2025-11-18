@@ -5,6 +5,7 @@ asyncpg
 alembic
 python-jose
 pydantic
+pydantic_settings
 pydantic[email]
 pydantic_settings
 psycopg2
