@@ -9,15 +9,18 @@ class UserBase(BaseModel):
     email: EmailStr
     telephone: str
     role_id: int
-    coffee_shop_id: int
-    hourly_rate: Decimal
+    # coffee_shop_id: int = None
+    hourly_rate: Decimal = None
     assessment_rate: Optional[int] = 0
     work_experience: Optional[int] = 0
 
 class UserCreate(UserBase):
-    password: str
+    hashed_password: str
 
 class UserRead(UserBase):
-    user_id: int
+    id: int
 
     model_config = {"from_attributes": True}
+
+class UserDelete(BaseModel):
+    id: int

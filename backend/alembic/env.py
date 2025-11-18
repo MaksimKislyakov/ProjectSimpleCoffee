@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from alembic import context
 from db.base import Base
 from core.config import settings
+from models.roles import Roles
 from models.user import User
 from models.schedule import Schedule
 
