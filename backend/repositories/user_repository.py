@@ -1,7 +1,5 @@
 from sqlalchemy.future import select
-from models.user import User
-from schemas.user_schemas import UserBase
-from core.security import hash_password
+from models.user_model import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 

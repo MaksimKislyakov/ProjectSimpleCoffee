@@ -4,9 +4,10 @@ from sqlalchemy import create_engine
 from alembic import context
 from db.base import Base
 from core.config import settings
-from models.roles import Roles
-from models.user import User
-from models.schedule import Schedule
+from models.roles_model import Roles
+from models.user_model import User
+from models.schedule_model import Schedule
+from models.coffeshops_model import CoffeeShops
 
 target_metadata = Base.metadata
 

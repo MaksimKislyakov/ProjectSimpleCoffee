@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from schemas.user_schemas import UserRead, UserCreate, UserDelete
 from services.user_service import UserService
-from models.user import User
+from models.user_model import User
 from api.v1.dependencies import get_user_service, get_current_user
 from typing import List
 
