@@ -1,10 +1,13 @@
 .wrapper {
     border-radius: 12px;
     background: #fff;
-    padding: 16px 43px;
+    padding: 16px 20px;
     margin-top: 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     grid-column: 1 / 3;
+    max-width: 100%;
+    width: 100%; /* Добавляем явную ширину */
+    box-sizing: border-box;
 }
 
 .header {
@@ -205,21 +208,33 @@
 
 /* Для месяца - более компактные карточки */
 .scheduleGrid.month-view {
-    grid-template-columns: repeat(28, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
     gap: 7px;
+    width: 100%;
 }
 
-.scheduleGrid.month-view .day-header{
-    padding: 6px;
+.scheduleGrid.month-view .day-header {
+    padding: 10px 4px;
+    min-width: auto; /* Убираем фиксированную минимальную ширину */
+    width: 100%; /* Занимает всю доступную ширину ячейки */
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
 .scheduleGrid.month-view .day-card {
-    min-height: 60px;
-    width: 36px;
+    min-height: 100px;
+    height: auto;
+    width: 100%;
 }
-
-
 
 .scheduleGrid.month-view .time {
     font-size: 12px;
+}
+
+.scheduleGrid.month-view .time-slots {
+    height: 145px;
+    min-height: 145px;
+    padding: 5px 2px;
+    width: 100%;
+    box-sizing: border-box;
 }
