@@ -11,8 +11,8 @@ class Schedule(Base):
     __tablename__ = "schedule"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    coffee_shop_id = Column(Integer, ForeignKey("coffeeshops.id"), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    coffee_shop_id = Column(Integer, ForeignKey("coffeeshops.id"), index=True, nullable=True)
     status = Column(String, nullable=True)
     schedule_start_time = Column(DateTime, nullable=False)
     schedule_end_time = Column(DateTime, nullable=False)

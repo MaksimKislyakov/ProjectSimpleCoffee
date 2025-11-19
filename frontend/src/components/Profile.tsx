@@ -29,6 +29,7 @@ const ProfilePage: React.FC = () => {
 
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shouldLogout, setShouldLogout] = useState(false);
   const [mode, setMode] = useState<"week" | "month">("week");
 
   const [days, setDays] = useState<DayData[]>([
@@ -47,7 +48,7 @@ const ProfilePage: React.FC = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        navigate("/");
+        setShouldLogout(true);
         return;
       }
 
@@ -60,14 +61,16 @@ const ProfilePage: React.FC = () => {
         });
 
         if (!res.ok) {
-          throw new Error("Ошибка загрузки данных пользователя");
+          setShouldLogout(true);
+          return;
         }
 
         const data: UserData = await res.json();
         setUser(data);
+        
       } catch (err) {
         console.error(err);
-        handleLogout();
+        setShouldLogout(true);
       } finally {
         setLoading(false);
       }
@@ -94,10 +97,14 @@ const ProfilePage: React.FC = () => {
     return `${years} лет`;
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
-  };
+  useEffect(() => {
+    if (shouldLogout) {
+      localStorage.removeItem("token");
+      navigate("/");
+    }
+  }, [shouldLogout, navigate]);
+
+  const handleLogout = () => setShouldLogout(true);
 
   const goPrev = () => console.log("Предыдущий период");
   const goNext = () => console.log("Следующий период");

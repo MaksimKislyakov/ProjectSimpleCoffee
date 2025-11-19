@@ -1,37 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from "react";
+import "./styles/App.css";
+import "./styles/fonts.css";
 import Authorization from "./components/Authorization.tsx";
 import ProfilePage from "./components/Profile.tsx";
-import "./styles/App.css";
-import "./styles/authorization.css";
-import "./styles/fonts.css";
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 function App() {
-  const token = localStorage.getItem("token");
-
   return (
     <Router>
       <Routes>
-        {/* Авторизация */}
-        <Route
-          path="/"
-          element={
-            token ? <Navigate to="/profile" replace /> : <Authorization />
-          }
-        />
+        <Route path="/" element={<Authorization />} />
 
-        {/* Профиль — только при наличии токена */}
         <Route
           path="/profile"
           element={
-            token ? <ProfilePage /> : <Navigate to="/" replace />
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
           }
         />
 
-        {/* Редирект всех неизвестных маршрутов */}
-        <Route
-          path="*"
-          element={<Navigate to={token ? "/profile" : "/"} replace />}
-        />
+        <Route path="*" element={<Authorization />} />
       </Routes>
     </Router>
   );
