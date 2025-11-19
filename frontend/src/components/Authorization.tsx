@@ -6,6 +6,7 @@ import "../styles/authorization.css";
 import * as Icons from "../icons/index.ts";
 import "../styles/fonts.css";
 
+
 const Authorization: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -16,9 +17,9 @@ const Authorization: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isValid = username.trim().length > 5 && password.trim().length > 3 && Number.isInteger(username);
+        const isValid = username.trim().length > 5 && password.trim().length > 3;
         setIsFormValid(isValid);
-  }, [username, password]);
+    }, [username, password]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +48,8 @@ const Authorization: React.FC = () => {
             // Сохранение токена в localStorage
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("token_type", data.token_type);
-            
+        
+
             setSuccess(true);
             setTimeout(() => {
             navigate("/profile");
@@ -106,7 +108,7 @@ const Authorization: React.FC = () => {
                         className={`login-button ${isFormValid ? "active" : ""}`}>
                             Войти
                         </button>
-}
+                    }
                     {success && <div className="login-success">Успешная авторизация!</div>}
                 </form>
             </div>
