@@ -22,6 +22,7 @@ interface DayData {
   date: string;
   time?: string;
   isWorkDay?: boolean;
+  isEmpty: boolean;
 }
 
 const ProfilePage: React.FC = () => {
@@ -32,15 +33,57 @@ const ProfilePage: React.FC = () => {
   const [shouldLogout, setShouldLogout] = useState(false);
   const [mode, setMode] = useState<"week" | "month">("week");
 
-  const [days, setDays] = useState<DayData[]>([
-    { date: "Пн 17", time: "09:00 18:00", isWorkDay: true },
-    { date: "Вт 18", time: "09:00 18:00", isWorkDay: true },
-    { date: "Ср 19", time: "09:00 18:00" },
-    { date: "Чт 20", time: "09:00 18:00" },
-    { date: "Пт 21", time: "09:00 18:00" },
-    { date: "Сб 22" },
-    { date: "Вс 23" }
-  ]);
+  const [days, setDays] = useState<DayData[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
+  const days: DayData[] = [];
+  const startOfWeek = new Date(startDate);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startOfWeek);
+    currentDate.setDate(startOfWeek.getDate() + i);
+    
+    const weekdayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const weekday = weekdayNames[currentDate.getDay()];
+    const dayNum = currentDate.getDate();
+
+    days.push({
+      date: `${weekday} ${dayNum}`,
+      isEmpty: true // По умолчанию все дни пустые
+    });
+  }
+
+  return days;
+};
+
+const generateMonthDays = (date: Date = new Date()): DayData[] => {
+  const days: DayData[] = [];
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  const currentDate = new Date(firstDay);
+  
+  while (currentDate <= lastDay) {
+    const weekdayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const weekday = weekdayNames[currentDate.getDay()];
+    const dayNum = currentDate.getDate();
+
+    days.push({
+      date: `${weekday} ${dayNum}`,
+      isEmpty: true // По умолчанию все дни пустые
+    });
+    
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return days;
+};
 
   /** === Подгрузка пользователя с backend === **/
   useEffect(() => {
@@ -79,6 +122,112 @@ const ProfilePage: React.FC = () => {
     fetchUser();
   }, []);
 
+useEffect(() => {
+  if (!user) return;
+
+  const fetchSchedule = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setScheduleLoading(true);
+
+    try {
+      // Сначала генерируем пустые дни для текущего режима
+      let emptyDays: DayData[] = [];
+      if (mode === "week") {
+        emptyDays = generateWeekDays();
+      } else {
+        emptyDays = generateMonthDays();
+      }
+
+      const res = await fetch("/api/v1/schedule/", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.status === 404 || !res.ok) {
+        // Если расписания нет, используем пустые дни
+        console.log("Расписание не найдено, используем пустые ячейки");
+        setDays(emptyDays.map(day => ({ ...day, isEmpty: true })));
+        return;
+      }
+
+      const schedule = await res.json();
+      console.log("Полученное расписание:", schedule);
+
+      const scheduleArray = Array.isArray(schedule) ? schedule : [schedule];
+      const userSchedule = scheduleArray.filter(
+        (item: any) => item.user_id === user.id
+      );
+
+      if (userSchedule.length === 0) {
+        // Нет смен для пользователя - используем пустые дни
+        setDays(emptyDays.map(day => ({ ...day, isEmpty: true })));
+        return;
+      }
+
+      // Обновляем дни данными из расписания
+      const updatedDays = emptyDays.map(emptyDay => {
+        // Находим смену для этого дня (простое сравнение по числу)
+        const scheduleItem = userSchedule.find((item: any) => {
+          if (!item.schedule_start_time || !item.schedule_end_time) {
+            return false; // Пропускаем элементы без времени
+          }
+          
+          const scheduleDate = new Date(item.schedule_start_time);
+          const emptyDayNumber = emptyDay.date.match(/\d+/)?.[0];
+          const scheduleDay = scheduleDate.getDate().toString();
+          
+          return emptyDayNumber === scheduleDay;
+        });
+
+        // Проверяем, есть ли данные о начале и конце рабочего дня
+        if (scheduleItem && 
+            scheduleItem.schedule_start_time && 
+            scheduleItem.schedule_end_time) {
+          
+          const start = new Date(scheduleItem.schedule_start_time);
+          const end = new Date(scheduleItem.schedule_end_time);
+
+          const formatTime = (d: Date) =>
+            d.toLocaleTimeString("ru-RU", {
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+
+          return {
+            date: emptyDay.date, // Сохраняем исходную дату
+            time: `${formatTime(start)} ${formatTime(end)}`,
+            isWorkDay: scheduleItem.status === "active",
+            isEmpty: false // Есть данные - не пустой
+          };
+        }
+
+        // Если нет данных о времени - день без расписания
+        return {
+          ...emptyDay,
+          isEmpty: true
+        };
+      });
+
+      setDays(updatedDays);
+
+    } catch (err) {
+      console.error("Ошибка получения расписания", err);
+      // При ошибке показываем пустые дни
+      const errorDays = mode === "week" ? generateWeekDays() : generateMonthDays();
+      setDays(errorDays.map(day => ({ ...day, isEmpty: true })));
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  fetchSchedule();
+}, [user, mode]); // Добавляем mode в зависимости
+
   /** === Форматирование имени и стажа === **/
 
   const getShortName = (fullName: string) => {
@@ -106,8 +255,62 @@ const ProfilePage: React.FC = () => {
 
   const handleLogout = () => setShouldLogout(true);
 
-  const goPrev = () => console.log("Предыдущий период");
-  const goNext = () => console.log("Следующий период");
+ const goPrev = () => {
+  const newDate = new Date(currentDate);
+  if (mode === "week") {
+    newDate.setDate(newDate.getDate() - 7);
+  } else {
+    newDate.setMonth(newDate.getMonth() - 1);
+  }
+  setCurrentDate(newDate);
+  if (mode === "week") {
+    setDays(generateWeekDays(newDate));
+  } else {
+    setDays(generateMonthDays(newDate));
+  }
+  };
+  const goNext = () => {
+  const newDate = new Date(currentDate);
+  if (mode === "week") {
+    newDate.setDate(newDate.getDate() + 7);
+  } else {
+    newDate.setMonth(newDate.getMonth() + 1);
+  }
+  setCurrentDate(newDate);
+  if (mode === "week") {
+    setDays(generateWeekDays(newDate));
+  } else {
+    setDays(generateMonthDays(newDate));
+  }
+  };
+
+  const onChangeMode = (newMode: "week" | "month") => {
+  setMode(newMode);
+  // При смене режима генерируем соответствующие дни
+  if (newMode === "week") {
+    setDays(generateWeekDays(currentDate));
+  } else {
+    setDays(generateMonthDays(currentDate));
+  }
+  };
+
+  const getWeekLabel = (date: Date): string => {
+  const startOfWeek = new Date(date);
+  startOfWeek.setDate(date.getDate() - date.getDay() + 1);
+  
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  
+  const formatDate = (d: Date) => 
+    d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  
+  return `${formatDate(startOfWeek)} – ${formatDate(endOfWeek)}`;
+};
+
+// Функция для получения заголовка месяца
+const getMonthLabel = (date: Date): string => {
+  return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+};
 
   // Пока загружаются данные
   if (loading) {
@@ -123,17 +326,19 @@ const ProfilePage: React.FC = () => {
   const fullFIO = `${user.last_name} ${user.first_name} ${user.patronymic}`;
   const shortFIO = getShortName(fullFIO);
 
-  /** === Компонент дня === **/
-  const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
-    <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""}`}>
-      <div className="day-header">
-        <div className="date">{day.date}</div>
-      </div>
-      <div className={`time-slots ${day.isWorkDay ? "isWorkDay" : ""}`}>
-        {day.time && <div className="time">{day.time}</div>}
-      </div>
+/** === Компонент дня === **/
+const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
+  <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
+    <div className="day-header">
+      <div className="date">{day.date}</div>
     </div>
-  );
+    <div className={`time-slots ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
+      {!day.isEmpty && day.time ? (
+        <div className="time">{day.time}</div>
+      ) : ("")}
+    </div>
+  </div>
+);
 
   return (
     <div className="profile-page">
@@ -230,11 +435,11 @@ const ProfilePage: React.FC = () => {
         </section>
 
         <WorkSchedule
-          currentLabel="1–7 Январь 2000"
+          currentLabel={mode === "week" ? getWeekLabel(currentDate) : getMonthLabel(currentDate)}
           mode={mode}
           onPrev={goPrev}
           onNext={goNext}
-          onChangeMode={setMode}
+          onChangeMode={onChangeMode}
         >
           {days.map((day, index) => (
             <DayCard key={index} day={day} />

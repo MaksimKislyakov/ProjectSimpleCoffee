@@ -17,7 +17,7 @@ const Authorization: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isValid = username.trim().length > 5 && password.trim().length > 3;
+        const isValid = username.trim().length > 5 && password.trim().length > 3 && /^\d+$/.test(username.trim());
         setIsFormValid(isValid);
     }, [username, password]);
 
@@ -109,7 +109,6 @@ const Authorization: React.FC = () => {
                             Войти
                         </button>
                     }
-                    {success && <div className="login-success">Успешная авторизация!</div>}
                 </form>
             </div>
             <img className="auth-img" src="/foxx.png" alt="маскот" />
