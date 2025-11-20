@@ -17,6 +17,19 @@
     margin-bottom: 17px;
 }
 
+.go-to-schedule {
+    display: flex;
+    align-items: center;
+}
+
+.go-to-schedule p {
+    font-size: 30px;
+    color: #333;
+    margin: 0;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
 .title {
     display: flex;
     font-size: 30px;

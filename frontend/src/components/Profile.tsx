@@ -4,6 +4,14 @@ import * as Icons from "../icons/index.ts";
 import { useNavigate } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
+import {
+  DayData,
+  generateWeekDays,
+  generateMonthDays,
+  getWeekLabel,
+  getMonthLabel
+} from "../components/useScheduleUtils.tsx";
+
 
 interface UserData {
   first_name: string;
@@ -20,15 +28,6 @@ interface UserData {
   coffee_shop_id: number;
 }
 
-interface DayData {
-  date: string;
-  time?: string;
-  isWorkDay?: boolean;
-  isEmpty: boolean;
-  fullDate: Date;
-  status?: string;
-  comment?: string;
-}
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,55 +42,6 @@ const ProfilePage: React.FC = () => {
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
-  const days: DayData[] = [];
-  const startOfWeek = new Date(startDate);
-  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
-
-  for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(startOfWeek);
-    currentDate.setDate(startOfWeek.getDate() + i);
-    
-    const weekdayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-    const weekday = weekdayNames[currentDate.getDay()];
-    const dayNum = currentDate.getDate();
-
-    days.push({
-      date: `${weekday} ${dayNum}`,
-      fullDate: new Date(currentDate),
-      isEmpty: true // По умолчанию все дни пустые
-    });
-  }
-
-  return days;
-};
-
-const generateMonthDays = (date: Date = new Date()): DayData[] => {
-  const days: DayData[] = [];
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  
-  const currentDate = new Date(firstDay);
-  
-  while (currentDate <= lastDay) {
-    const weekdayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-    const weekday = weekdayNames[currentDate.getDay()];
-    const dayNum = currentDate.getDate();
-
-    days.push({
-      date: `${weekday} ${dayNum}`,
-      fullDate: new Date(currentDate),
-      isEmpty: true // По умолчанию все дни пустые
-    });
-    
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return days;
-};
 
   /** === Подгрузка пользователя с backend === **/
   useEffect(() => {
@@ -327,24 +277,6 @@ const handleAddSchedule = async (data: any) => {
   // При смене режима генерируем соответствующие дни
   setMode(newMode);
   };
-
-  const getWeekLabel = (date: Date): string => {
-  const startOfWeek = new Date(date);
-  startOfWeek.setDate(date.getDate() - date.getDay() + 1);
-  
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  
-  const formatDate = (d: Date) => 
-    d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  
-  return `${formatDate(startOfWeek)} – ${formatDate(endOfWeek)}`;
-};
-
-// Функция для получения заголовка месяца
-const getMonthLabel = (date: Date): string => {
-  return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-};
 
   // Пока загружаются данные
   if (loading) {

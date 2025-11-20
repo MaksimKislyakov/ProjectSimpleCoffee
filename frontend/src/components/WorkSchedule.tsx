@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/workSchedule.css";
 import * as Icons from "../icons/index.ts";
 
@@ -11,21 +11,23 @@ interface WorkScheduleProps {
   children: React.ReactNode;
 }
 
+
 export const WorkSchedule: React.FC<WorkScheduleProps> = ({
   currentLabel,
   onPrev,
   onNext,
   mode,
   onChangeMode,
-  children
+  children,
 }) => {
+  const navigate = useNavigate();
   return (
     <section className="wrapper">
       {/* Заголовок */}
         <div className="header">
-            <Link to="/schedule" className="title">
-            График работы <Icons.ArrowIcon />
-            </Link>
+            <div className="go-to-schedule" onClick={() => navigate("/schedule")}>
+              <p>График работы</p> <Icons.ArrowIcon />
+            </div>
             <div className="currentPeriod">
                 <div className="calendar">
                     <Icons.CalendarIcon title="календарь"/>
