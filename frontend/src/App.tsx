@@ -5,6 +5,7 @@ import "./styles/fonts.css";
 import Authorization from "./components/Authorization.tsx";
 import ProfilePage from "./components/Profile.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import WorkSchedulePage from "./components/WorkSchedulePage.tsx";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         />
 
         <Route path="*" element={<Authorization />} />
+        <Route path="/schedule" element={<WorkSchedulePage />} />
       </Routes>
     </Router>
   );
