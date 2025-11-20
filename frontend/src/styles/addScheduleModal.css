@@ -1,0 +1,99 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  z-index: 999;
+  margin: 40px;
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    background-color: #F4F4F4;
+    padding: 15px 20px;
+    border-radius: 20px;
+    border: 1px solid #B7B7B7;
+    gap: 7px;
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.modal-window {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.modal-window  p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.time-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+textarea {
+  resize: none;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 10px;
+  min-height: 60px;
+  outline: none;
+}
+
+input[type="time"] {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  border-color: #B7B7B7;
+  outline: none;
+}
+
+
+.comment {
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.modal-button {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save {
+  background: #ff7b32;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  border-color: #B7B7B7;
+}
+
+.cancel {
+  background: #ddd;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  border-color: #B7B7B7;
+}

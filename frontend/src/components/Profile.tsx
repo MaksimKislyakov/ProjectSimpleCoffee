@@ -3,6 +3,7 @@ import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
 import { useNavigate } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
+import AddScheduleModal from "./AddScheduleModal.tsx";
 
 interface UserData {
   first_name: string;
@@ -16,6 +17,7 @@ interface UserData {
   work_experience: number;
   id: number;
   data_work_start: number;
+  coffee_shop_id: number;
 }
 
 interface DayData {
@@ -23,6 +25,9 @@ interface DayData {
   time?: string;
   isWorkDay?: boolean;
   isEmpty: boolean;
+  fullDate: Date;
+  status?: string;
+  comment?: string;
 }
 
 const ProfilePage: React.FC = () => {
@@ -34,6 +39,7 @@ const ProfilePage: React.FC = () => {
   const [mode, setMode] = useState<"week" | "month">("week");
 
   const [days, setDays] = useState<DayData[]>([]);
+  const [modalDate, setModalDate] = useState<Date | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -52,6 +58,7 @@ const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
 
     days.push({
       date: `${weekday} ${dayNum}`,
+      fullDate: new Date(currentDate),
       isEmpty: true // По умолчанию все дни пустые
     });
   }
@@ -76,6 +83,7 @@ const generateMonthDays = (date: Date = new Date()): DayData[] => {
 
     days.push({
       date: `${weekday} ${dayNum}`,
+      fullDate: new Date(currentDate),
       isEmpty: true // По умолчанию все дни пустые
     });
     
@@ -122,10 +130,8 @@ const generateMonthDays = (date: Date = new Date()): DayData[] => {
     fetchUser();
   }, []);
 
-useEffect(() => {
-  if (!user) return;
-
   const fetchSchedule = async () => {
+    if (!user) return;
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -135,9 +141,9 @@ useEffect(() => {
       // Сначала генерируем пустые дни для текущего режима
       let emptyDays: DayData[] = [];
       if (mode === "week") {
-        emptyDays = generateWeekDays();
+        emptyDays = generateWeekDays(currentDate);
       } else {
-        emptyDays = generateMonthDays();
+        emptyDays = generateMonthDays(currentDate);
       }
 
       const res = await fetch("/api/v1/schedule/", {
@@ -178,10 +184,12 @@ useEffect(() => {
           }
           
           const scheduleDate = new Date(item.schedule_start_time);
-          const emptyDayNumber = emptyDay.date.match(/\d+/)?.[0];
-          const scheduleDay = scheduleDate.getDate().toString();
-          
-          return emptyDayNumber === scheduleDay;
+
+          return (
+            scheduleDate.getFullYear() === emptyDay.fullDate.getFullYear() &&
+            scheduleDate.getMonth() === emptyDay.fullDate.getMonth() &&
+            scheduleDate.getDate() === emptyDay.fullDate.getDate()
+          );
         });
 
         // Проверяем, есть ли данные о начале и конце рабочего дня
@@ -195,10 +203,12 @@ useEffect(() => {
           const formatTime = (d: Date) =>
             d.toLocaleTimeString("ru-RU", {
               hour: "2-digit",
-              minute: "2-digit"
+              minute: "2-digit",
+              hour12: false
             });
 
           return {
+            ...emptyDay,
             date: emptyDay.date, // Сохраняем исходную дату
             time: `${formatTime(start)} ${formatTime(end)}`,
             isWorkDay: scheduleItem.status === "active",
@@ -225,8 +235,48 @@ useEffect(() => {
     }
   };
 
-  fetchSchedule();
-}, [user, mode]); // Добавляем mode в зависимости
+useEffect(() => {
+  if (user) fetchSchedule();
+}, [user, mode, currentDate]);
+
+const handleAddSchedule = async (data: any) => {
+  if (!user) return;
+  const token = localStorage.getItem("token");
+
+  const body = {
+    user_id: user?.id,            // обязательно
+    coffee_shop_id: user?.coffee_shop_id,
+    status: data.status,
+    schedule_start_time: data.schedule_start_time,
+    schedule_end_time: data.schedule_end_time
+  };
+
+  try {
+    await fetch("/api/v1/schedule/", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    // Закрываем модалку
+    setModalDate(null);
+    await fetchSchedule();
+
+    // Перезагружаем расписание
+    if (mode === "week") {
+      setDays(generateWeekDays(currentDate));
+    } else {
+      setDays(generateMonthDays(currentDate));
+    }
+
+  } catch (err) {
+    console.error("Ошибка добавления расписания", err);
+  }
+};
+
 
   /** === Форматирование имени и стажа === **/
 
@@ -257,18 +307,11 @@ useEffect(() => {
 
  const goPrev = () => {
   const newDate = new Date(currentDate);
-  if (mode === "week") {
-    newDate.setDate(newDate.getDate() - 7);
-  } else {
-    newDate.setMonth(newDate.getMonth() - 1);
-  }
+  if (mode === "week") newDate.setDate(newDate.getDate() - 7);
+  else newDate.setMonth(newDate.getMonth() - 1);
   setCurrentDate(newDate);
-  if (mode === "week") {
-    setDays(generateWeekDays(newDate));
-  } else {
-    setDays(generateMonthDays(newDate));
-  }
-  };
+};
+
   const goNext = () => {
   const newDate = new Date(currentDate);
   if (mode === "week") {
@@ -277,21 +320,12 @@ useEffect(() => {
     newDate.setMonth(newDate.getMonth() + 1);
   }
   setCurrentDate(newDate);
-  if (mode === "week") {
-    setDays(generateWeekDays(newDate));
-  } else {
-    setDays(generateMonthDays(newDate));
-  }
   };
 
   const onChangeMode = (newMode: "week" | "month") => {
   setMode(newMode);
   // При смене режима генерируем соответствующие дни
-  if (newMode === "week") {
-    setDays(generateWeekDays(currentDate));
-  } else {
-    setDays(generateMonthDays(currentDate));
-  }
+  setMode(newMode);
   };
 
   const getWeekLabel = (date: Date): string => {
@@ -328,7 +362,9 @@ const getMonthLabel = (date: Date): string => {
 
 /** === Компонент дня === **/
 const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
-  <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
+  <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}
+    onClick={() => setModalDate(day.fullDate)}
+  >
     <div className="day-header">
       <div className="date">{day.date}</div>
     </div>
@@ -337,6 +373,12 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
         <div className="time">{day.time}</div>
       ) : ("")}
     </div>
+    <div className="day-icon">
+      {day.status === "active" && <Icons.BriefcaseIcon />}
+      {day.status === "vacation" && <Icons.VacationIcon />}
+      {day.status === "sick" && <Icons.MedicalIcon />}
+    </div>
+    <div className="comment-popup">{day.comment}</div>
   </div>
 );
 
@@ -445,6 +487,12 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             <DayCard key={index} day={day} />
           ))}
         </WorkSchedule>
+        <AddScheduleModal
+          date={modalDate}
+          onClose={() => setModalDate(null)}
+          onSubmit={handleAddSchedule}
+        />
+
       </main>
     </div>
   );
