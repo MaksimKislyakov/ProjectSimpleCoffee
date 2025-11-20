@@ -1,6 +1,7 @@
 from sqlalchemy.future import select
 from models.schedule_model import Schedule
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
 class ScheduleRepository:
     def __init__(self, session: AsyncSession):
@@ -30,6 +31,10 @@ class ScheduleRepository:
     async def get_all_is_confirmed_false(self):
         result = await self.session.execute(select(Schedule).where(Schedule.is_confirmed == False))
         return result.scalars().all()
+    
+    async def get_schedules_one_user(self, user_id: int) -> List[Schedule]:
+        schedules_one_user = await self.session.execute(select(Schedule).where(Schedule.user_id == user_id))
+        return schedules_one_user.scalars().all()
 
 
     
