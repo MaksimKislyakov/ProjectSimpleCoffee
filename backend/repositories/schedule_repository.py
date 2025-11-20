@@ -27,4 +27,9 @@ class ScheduleRepository:
 
         return schedule
     
+    async def get_all_is_confirmed_false(self):
+        result = await self.session.execute(select(Schedule).where(Schedule.is_confirmed == False))
+        return result.scalars().all()
+
+
     
