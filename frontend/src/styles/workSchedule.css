@@ -208,7 +208,7 @@
 
 /* Для месяца - более компактные карточки */
 .scheduleGrid.month-view {
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
     gap: 7px;
     width: 100%;
 }
