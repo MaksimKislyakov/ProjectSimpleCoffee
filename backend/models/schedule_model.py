@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from db.base import Base
@@ -18,5 +18,4 @@ class Schedule(Base):
     schedule_end_time = Column(DateTime, nullable=False)
     actual_start_time = Column(DateTime, nullable=True)
     actual_end_time = Column(DateTime, nullable=True)
-
-    # user = relationship("User", backref="schedules")
+    is_confirmed = Column(Boolean, nullable=True)    
