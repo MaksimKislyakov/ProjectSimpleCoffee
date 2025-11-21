@@ -1,4 +1,3 @@
-# docker-compose.frontend.yml
 version: '3.8'
 
 services:
@@ -8,7 +7,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://irit-rtf-ep.ru
+      - REACT_APP_API_URL=http://irit-rtf-ep.ru/api
     networks:
       - backend_default
 

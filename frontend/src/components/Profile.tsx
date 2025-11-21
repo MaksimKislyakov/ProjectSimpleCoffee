@@ -28,12 +28,20 @@ interface UserData {
   coffee_shop_id: number;
 }
 
+interface ReportData {
+  work_days: number;
+  work_hours: number;
+  total_earnings: string;
+}
+
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState<UserData | null>(null);
+  const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [shouldLogout, setShouldLogout] = useState(false);
   const [mode, setMode] = useState<"week" | "month">("week");
 
@@ -188,6 +196,90 @@ const ProfilePage: React.FC = () => {
 useEffect(() => {
   if (user) fetchSchedule();
 }, [user, mode, currentDate]);
+
+const fetchReport = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    setShouldLogout(true);
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/v1/report/get_my_report", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Ошибка загрузки отчета:", res.status);
+      return;
+    }
+
+    const reportData: ReportData = await res.json();
+    setReport(reportData);
+    
+  } catch (err) {
+    console.error("Ошибка получения отчета", err);
+  } finally {
+    setReportLoading(false);
+  }
+};
+
+useEffect(() => {
+  const fetchUser = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setShouldLogout(true);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/v1/user/me", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        setShouldLogout(true);
+        return;
+      }
+
+      const data: UserData = await res.json();
+      setUser(data);
+      
+      // После успешной загрузки пользователя загружаем отчет
+      await fetchReport();
+      
+    } catch (err) {
+      console.error(err);
+      setShouldLogout(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchUser();
+}, []);
+
+
+const formatEarnings = (earnings: string): string => {
+  try {
+    // Преобразуем строку в число и округляем до 2 знаков
+    const amount = parseFloat(earnings);
+    if (isNaN(amount)) return "0.00 ₽";
+    
+    return `${amount.toFixed(2)} ₽`;
+  } catch (error) {
+    console.error("Ошибка форматирования заработка:", error);
+    return "0.00 ₽";
+  }
+};
 
 const handleAddSchedule = async (data: any) => {
   if (!user) return;
@@ -364,7 +456,7 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             <div className="report-container">
               <div className="date-pill">
                 <Icons.CalendarWhiteIcon title="calendar" />
-                <span>1–7 Января 2000</span>
+                <span>Текущий период</span>
               </div>
               <Icons.ArrowsIcon title="arrows" />
             </div>
@@ -376,7 +468,9 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                 <Icons.TimeIcon width={20} height={20} title="time" />
                 <p>Рабочие часы</p>
               </div>
-              <h3>156</h3>
+              <h3>
+                {reportLoading ? "..." : (report?.work_hours || 0)}
+              </h3>
             </div>
 
             <div className="stat-card">
@@ -384,7 +478,9 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                 <Icons.BriefcaseIcon width={20} height={20} title="briefcase" />
                 <p>Смены</p>
               </div>
-              <h3>13</h3>
+              <h3>
+                {reportLoading ? "..." : (report?.work_days || 0)}
+              </h3>
             </div>
 
             <div className="stat-card">
@@ -392,7 +488,9 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                 <Icons.RubleIcon width={20} height={20} title="ruble" />
                 <p>Заработок</p>
               </div>
-              <h3>40000 ₽</h3>
+              <h3>
+                {reportLoading ? "..." : formatEarnings(report?.total_earnings || "0")}
+              </h3>
             </div>
           </div>
         </section>
