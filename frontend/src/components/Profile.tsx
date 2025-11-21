@@ -96,7 +96,7 @@ const ProfilePage: React.FC = () => {
         emptyDays = generateMonthDays(currentDate);
       }
 
-      const res = await fetch("/api/v1/schedule/", {
+      const res = await fetch("/api/v1/schedule/get_all_schedule", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -198,11 +198,12 @@ const handleAddSchedule = async (data: any) => {
     coffee_shop_id: user?.coffee_shop_id,
     status: data.status,
     schedule_start_time: data.schedule_start_time,
-    schedule_end_time: data.schedule_end_time
+    schedule_end_time: data.schedule_end_time,
+    is_confirmed: false
   };
 
   try {
-    await fetch("/api/v1/schedule/", {
+    await fetch("/api/v1/schedule/create_schedule", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
