@@ -1,0 +1,144 @@
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: first baseline;
+  height: 100vh;
+  background-color: #f4f4f4;
+  font-family: "Montserrat", sans-serif;
+}
+
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f4f4f4;
+  padding: 40px 60px;
+  width: 400px;
+  max-width: 90vw;
+  border-radius: 8px;
+  z-index: 2;
+}
+
+.auth-title {
+  font-size: 48px;
+  font-weight: 600;
+  margin-bottom: 40px;
+  color: #333;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Общий стиль для обоих инпутов */
+.login-input {
+  width: 100%;
+  height: 70px;
+  padding: 0 18px;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  font-size: 24px;
+  font-family: "Montserrat", sans-serif;
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: #B7B7B7;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.login-input:focus,
+.login-input.filled {
+  background-color: #fff; /* становится плотнее */
+  border-color: #ff7b32; /* появляется оранжевая обводка */
+  color: #000;
+}
+
+/* Контейнер для пароля */
+.password-wrapper {
+  position: relative;
+}
+
+/* Иконка-глаз */
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 20px; /* ✅ отступ справа */
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+/* Кнопка "Войти" */
+.login-button {
+  background-color: #ff7b32;
+  color: #fff;
+  border-radius: 20px;
+  height: 70px;
+  font-size: 33px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: "Montserrat", sans-serif;
+  opacity: 0.6; /* 🔸 по умолчанию неактивная */
+}
+
+.login-button.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.login-button:hover {
+  background-color: #ff9c5a;
+}
+
+.login-error {
+  color: red;
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-success {
+  position: fixed;
+  top: 100px;
+  right: 650px;
+  background-color: #4caf50;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 8px;
+  animation: fadeInOut 3s ease forwards;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.auth-img { 
+  position: absolute; 
+  bottom: 0; 
+  right: 0; 
+  width: 580px; 
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(20px); }
+}
