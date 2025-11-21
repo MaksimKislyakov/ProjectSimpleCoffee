@@ -3,6 +3,10 @@
   background-color: #f5f5f5;
   min-height: 100vh;
   color: #333;
+<<<<<<< HEAD
+=======
+  font-weight: 400;
+>>>>>>> frontend
 }
 
 /* ——— Верхняя панель ——— */
@@ -11,9 +15,28 @@
   justify-content: space-between;
   align-items: center;
   background: #fff;
+<<<<<<< HEAD
   padding: 14px 30px;
   border-bottom: 1px solid #ddd;
   box-shadow: #dcdcdc 0px 4px 12px -2px;
+=======
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  box-shadow: #dcdcdc 0px 4px 12px -2px;
+  max-height: 67px;
+}
+
+.navigation-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 34px;
+  font-size: 20px;
+}
+
+.navigation-btn:hover {
+  font-weight: 700;
+>>>>>>> frontend
 }
 
 .logo {
@@ -28,6 +51,7 @@
   background: none;
   border: none;
   cursor: pointer;
+<<<<<<< HEAD
   color: #333;
   transition: 0.3s;
 }
@@ -43,6 +67,18 @@
   grid-template-rows: auto auto;
   gap: 20px;
   padding: 30px;
+=======
+  transition: 0.3s;
+}
+
+/* ——— Основная часть ——— */
+.profile-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  padding: 25px;
+>>>>>>> frontend
 }
 
 /* Карточки */
@@ -64,17 +100,86 @@
 /* Блок информации */
 .employee-main {
   display: flex;
+<<<<<<< HEAD
   align-items: flex-start;
+=======
+  align-items: end;
+  justify-content: space-between;
+>>>>>>> frontend
   grid-column: 1 / 3;
   padding: 41px 43px;
 }
 
+<<<<<<< HEAD
+=======
+/* Контейнер ФИО */
+.fio-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+/* Контейнер текст + popup */
+.fio-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Сокращённый текст */
+.fio-text {
+    cursor: default;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 24px;
+}
+
+/* Всплывающая подсказка */
+.fio-popup {
+    position: absolute;
+    top: -40px;               /* подвинуть над ФИО */
+    left: 0;
+    background: #ffffff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 1000;
+}
+
+/* Треугольник снизу */
+.fio-popup-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid #ffffff;
+}
+
+/* Показывать popup при наведении */
+.fio-container:hover .fio-popup {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+
+>>>>>>> frontend
 h2 {
   margin: 0;
   font-size: 30px;
   margin-bottom: 30px;
 }
 
+<<<<<<< HEAD
 .employee-columns {
   display: flex;
   gap: 60px;
@@ -82,12 +187,24 @@ h2 {
 }
 
 .employee-columns p {
+=======
+
+
+.info-left,
+.info-right {
+  width: 500px;
+}
+
+.info-left p,
+.info-right p{
+>>>>>>> frontend
     display: flex;
     justify-content: space-between;
     margin: 4px 0;
     font-size: 24px;
 }
 
+<<<<<<< HEAD
 .info-left,
 .info-right {
   width: 400px;
@@ -96,6 +213,12 @@ h2 {
 /* Отчёт */
 .report {
   padding: 16px 43px;
+=======
+/* Отчёт */
+.report {
+  padding: 16px 43px;
+  grid-column: 1 / 2;
+>>>>>>> frontend
 }
 
 .report-header {
@@ -129,7 +252,10 @@ h2 {
 .stat-card {
   background: #f9f9f9;
   border-radius: 8px;
+<<<<<<< HEAD
   flex: 1;
+=======
+>>>>>>> frontend
   text-align: center;
   padding: 30px 9px;
   margin-right: 8px;
@@ -165,6 +291,10 @@ h2 {
 .month-summary {
   display: flex;
   flex-direction: column;
+<<<<<<< HEAD
+=======
+  grid-column: 2 / 3;
+>>>>>>> frontend
   gap: 4px;
   padding: 27px 43px;
 }
@@ -191,4 +321,22 @@ h2 {
   border-radius: 6px;
   padding: 4px 10px;
   margin: 0;
+<<<<<<< HEAD
 }
+=======
+}
+
+.comment-popup {
+  display: none;
+  position: absolute;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  white-space: nowrap;
+}
+
+.day-card:hover .comment-popup {
+  display: block;
+}
+>>>>>>> frontend

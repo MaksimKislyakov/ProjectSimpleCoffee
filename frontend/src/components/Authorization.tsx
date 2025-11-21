@@ -5,6 +5,10 @@ import "../styles/authorization.css";
 //import { API_URL } from "../Global.tsx";
 import * as Icons from "../icons/index.ts";
 import "../styles/fonts.css";
+<<<<<<< HEAD
+=======
+
+>>>>>>> frontend
 
 const Authorization: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -16,9 +20,15 @@ const Authorization: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+<<<<<<< HEAD
         const isValid = username.trim().length > 5 && password.trim().length > 3;
         setIsFormValid(isValid);
   }, [username, password]);
+=======
+        const isValid = username.trim().length > 5 && password.trim().length > 3 && /^\d+$/.test(username.trim());
+        setIsFormValid(isValid);
+    }, [username, password]);
+>>>>>>> frontend
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +57,8 @@ const Authorization: React.FC = () => {
             // Сохранение токена в localStorage
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("token_type", data.token_type);
-            
+        
+
             setSuccess(true);
             setTimeout(() => {
             navigate("/profile");
@@ -106,8 +117,12 @@ const Authorization: React.FC = () => {
                         className={`login-button ${isFormValid ? "active" : ""}`}>
                             Войти
                         </button>
+<<<<<<< HEAD
 }
                     {success && <div className="login-success">Успешная авторизация!</div>}
+=======
+                    }
+>>>>>>> frontend
                 </form>
             </div>
             <img className="auth-img" src="/foxx.png" alt="маскот" />

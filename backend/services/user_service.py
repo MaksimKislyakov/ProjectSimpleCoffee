@@ -3,7 +3,7 @@ from repositories.user_repository import UserRepository
 from schemas.user_schemas import UserCreate, UserRead, UserBase
 from models.user_model import User
 from core.security import hash_password
-from services.roleEnum import Roles
+from models.roleEnum import RolesEnum
 
 
 class UserService:
@@ -19,7 +19,7 @@ class UserService:
         return user
     
     async def create_new_user(self, user_data: UserCreate, current_user: User):
-        if current_user.role_id != Roles.admin:
+        if current_user.role_id != RolesEnum.admin:
             raise HTTPException(status_code=403, detail="Не достаточно прав")
         
         hashed_password = hash_password(user_data.hashed_password)
@@ -44,13 +44,13 @@ class UserService:
         return new_user
     
     async def get_all_users(self, current_user: User):
-        if current_user.role_id >= Roles.barista:
+        if current_user.role_id >= RolesEnum.barista:
             raise HTTPException(status_code=403, detail='Не достаточно прав')
         all_users = await self.user_repo.get_all_users()
         return all_users
     
     async def delete_user(self, id_user_del, current_user: User) -> User:
-        if current_user.role_id != Roles.admin:
+        if current_user.role_id != RolesEnum.admin:
             raise HTTPException(status_code=403, detail='Не достаточно прав')
         
         del_user = await self.user_repo.delete_user(id_user_del)

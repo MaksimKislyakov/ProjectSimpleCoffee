@@ -4,10 +4,10 @@ from sqlalchemy import create_engine
 from alembic import context
 from db.base import Base
 from core.config import settings
-from backend.models.roles_model import Roles
-from backend.models.user_model import User
-from backend.models.schedule_model import Schedule
-from backend.models.coffeshops_model import CoffeeShops
+from models.roles_model import Roles
+from models.user_model import User
+from models.schedule_model import Schedule
+from models.coffeshops_model import CoffeeShops
 
 target_metadata = Base.metadata
 

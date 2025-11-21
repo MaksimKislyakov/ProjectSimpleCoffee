@@ -9,5 +9,5 @@ class CoffeeShops(Base):
     __tablename__ = "coffeeshops"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    manager_id = Column(Integer, ForeignKey("users.id"))
+    manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     adress = Column(String, nullable=False)

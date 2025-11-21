@@ -13,4 +13,9 @@ export { ReactComponent as RollUpIcon } from "./roll_up.svg";
 export { ReactComponent as SettingsIcon } from "./settings.svg";
 export { ReactComponent as TimeIcon } from "./time.svg";
 export { ReactComponent as VacationIcon } from "./vacation.svg";
+<<<<<<< HEAD
 export { ReactComponent as CalendarWhiteIcon } from "./calendarWhite.svg";
+=======
+export { ReactComponent as CalendarWhiteIcon } from "./calendarWhite.svg";
+export { ReactComponent as ArrowIcon } from "./arrow.svg";
+>>>>>>> frontend
