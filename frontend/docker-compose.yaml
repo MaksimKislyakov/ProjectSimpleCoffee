@@ -1,0 +1,15 @@
+services:
+  frontend:
+    build: .
+    container_name: frontend-react
+    ports:
+      - "3000:80"  # Фронт на порту 3000
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - backend_default  # Подключаемся к сети бэкенда
+
+networks:
+  backend_default:
+    external: true  # Используем существующую сеть бэкенда
