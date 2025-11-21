@@ -286,7 +286,7 @@ const handleAddSchedule = async (data: any) => {
   const token = localStorage.getItem("token");
 
   const body = {
-    user_id: user?.id,            // обязательно
+    user_id: user?.id,
     coffee_shop_id: user?.coffee_shop_id,
     status: data.status,
     schedule_start_time: data.schedule_start_time,
@@ -295,7 +295,7 @@ const handleAddSchedule = async (data: any) => {
   };
 
   try {
-    await fetch("/api/v1/schedule/create_schedule", {
+    const response = await fetch("/api/v1/schedule/create_schedule", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -304,16 +304,20 @@ const handleAddSchedule = async (data: any) => {
       body: JSON.stringify(body)
     });
 
+    if (!response.ok) {
+      throw new Error('Ошибка создания смены');
+    }
+
     // Закрываем модалку
     setModalDate(null);
+    
+    // Обновляем расписание
     await fetchSchedule();
+    
+    // Обновляем отчет
+    await fetchReport();
 
-    // Перезагружаем расписание
-    if (mode === "week") {
-      setDays(generateWeekDays(currentDate));
-    } else {
-      setDays(generateMonthDays(currentDate));
-    }
+    console.log("Смена создана, данные обновлены");
 
   } catch (err) {
     console.error("Ошибка добавления расписания", err);
