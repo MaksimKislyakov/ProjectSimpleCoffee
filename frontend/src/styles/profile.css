@@ -164,6 +164,11 @@ h2 {
 .report {
   padding: 16px 43px;
   grid-column: 1 / 2;
+<<<<<<< HEAD
+=======
+  background: #f9f9f9; /* Добавьте серый фон ко всей карточке */
+  border-radius: 12px;
+>>>>>>> 3d81777eaa334fda906573f7ee83c50a21827d6a
 }
 
 .report-header {
@@ -192,6 +197,7 @@ h2 {
 .report-stats {
   display: flex;
   justify-content: space-between;
+<<<<<<< HEAD
 }
 
 .stat-card {
@@ -204,6 +210,18 @@ h2 {
 
 .stat-card:last-child {
   margin-right: 0;
+=======
+  gap: 8px; /* Добавьте равномерные отступы между карточками */
+}
+
+.stat-card {
+  background: #ffffff; /* Белый фон для контраста */
+  border-radius: 8px;
+  text-align: center;
+  padding: 30px 9px;
+  flex: 1; /* Равномерное распределение ширины */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Легкая тень для разделения */
+>>>>>>> 3d81777eaa334fda906573f7ee83c50a21827d6a
 }
 
 .stat-card h3 {

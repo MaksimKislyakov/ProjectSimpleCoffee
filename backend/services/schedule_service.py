@@ -8,7 +8,7 @@ from models.schedule_model import Schedule
 
 from schemas.schedule_schemas import ScheduleCreate
 
-from services.roleEnum import Roles
+from models.roleEnum import RolesEnum
 
 import logging
 
@@ -20,7 +20,7 @@ class ScheduleService:
         self.schedule_repo = schedule_repo
 
     async def get_all_schedules(self, current_user: User):
-        if current_user.role_id >= Roles.barista:
+        if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         
         all_schedules = await self.schedule_repo.get_all()
@@ -31,7 +31,7 @@ class ScheduleService:
         return all_schedules
     
     async def create_new_item_schedule(self, data: ScheduleCreate, current_user: User):
-        if current_user.role_id >= Roles.barista:
+        if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Не достаточно прав")
         
         schedule_data = data.model_dump()
@@ -59,7 +59,7 @@ class ScheduleService:
         return await new_item_schedule
         
     async def delete_item_schedule(self, id_schedule: int, current_user: User):
-        if current_user.role_id != Roles.admin:
+        if current_user.role_id != RolesEnum.admin:
             raise HTTPException(status_code=403, detail="Недостаточно прав")
 
         del_schedule = await self.schedule_repo.delete_schedule(id_schedule)
@@ -69,4 +69,13 @@ class ScheduleService:
         
         return del_schedule
     
+    async def get_all_schedules_is_confirmed_false(self, current_user: User):
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+            raise HTTPException(status_code=403, detail="Недостаточно прав")
+        
+        all_schedules_is_confirmed_false = await self.schedule_repo.get_all_is_confirmed_false()
 
+        if all_schedules_is_confirmed_false is None:
+            raise HTTPException(status_code=204, detail='Нет неподтвержденных смен')
+
+        return all_schedules_is_confirmed_false

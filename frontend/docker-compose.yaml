@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    container_name: frontend-react
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://irit-rtf-ep.ru/api
+    networks:
+      - backend_default
+
+networks:
+  backend_default:
+    external: true
