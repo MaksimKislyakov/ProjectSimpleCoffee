@@ -5,9 +5,14 @@ from datetime import datetime
 class CalculateServices:
     def _count_work_time(dates: List[List[datetime]]) -> Tuple[int, int]:
         total_seconds = 0
+        now = datetime.now()
         
         for start_time, end_time, _ in dates:
-            if start_time and end_time and end_time > start_time:
+            if (not start_time or not end_time):
+                continue
+                
+            # смены только до текущего дня
+            if end_time <= now and end_time > start_time:
                 duration = end_time - start_time
                 total_seconds += duration.total_seconds()
         
@@ -19,9 +24,10 @@ class CalculateServices:
     
     def _count_shifts_day(dates: List[List[datetime]]) -> int:
         work_days = 0
+        now = datetime.now()
 
-        for _, _, status in dates:
-            if status == "Рабочая смена":
+        for start_time, end_time, status in dates:
+            if status == "Рабочая смена" and end_time <= now and end_time > start_time:
                 work_days += 1
 
         return work_days
