@@ -55,4 +55,7 @@ class UserService:
         
         del_user = await self.user_repo.delete_user(id_user_del)
 
+        if del_user is None:
+            raise HTTPException(status_code=404, detail='пиздец')
+
         return del_user

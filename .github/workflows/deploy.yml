@@ -22,9 +22,4 @@ jobs:
           cd /home/ProjectSimpleCoffee
           git pull origin backend
           cd backend
-          pip install -r requirements.txt
-          # Если используете миграции - раскомментируйте:
-          # alembic upgrade head
-          # Если используете systemd сервис - раскомментируйте и укажите имя:
-          # sudo systemctl restart your-service-name
           echo "✅ Deploy completed successfully!"

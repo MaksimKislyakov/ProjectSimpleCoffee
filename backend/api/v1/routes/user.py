@@ -23,8 +23,8 @@ async def get_users(user_service: UserService = Depends(get_user_service),
                     user: User = Depends(get_current_user)):
     return await user_service.get_all_users(user)
 
-@router.delete("/delete_user", response_model=UserCreate, tags=['admin'])
-async def delete_user(user_del: UserDelete,
+@router.delete("/delete_user/{user_id}", response_model=UserCreate, tags=['admin'])
+async def delete_user(user_id: int,
                       user_service: UserService = Depends(get_user_service),
                       user: User = Depends(get_current_user)):
-    return await user_service.delete_user(id_user_del=user_del.id, current_user=user)
+    return await user_service.delete_user(id_user_del=user_id, current_user=user)
