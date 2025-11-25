@@ -4,6 +4,14 @@ from datetime import datetime
 
 class CalculateServices:
     def _count_work_time(dates: List[List[datetime]]) -> Tuple[int, int]:
+        """Подсчитывает общее отработанное время из списка смен.
+        
+        Args:
+            dates: Список смен в формате [[start_time, end_time, status], ...]
+            
+        Returns:
+            Tuple[int, int]: Кортеж (часы, минуты) общего отработанного времени
+        """
         total_seconds = 0
         now = datetime.now()
         
@@ -23,6 +31,14 @@ class CalculateServices:
         return hours, minutes
     
     def _count_shifts_day(dates: List[List[datetime]]) -> int:
+        """Подсчитывает количество отработанных дней/смен.
+        
+        Args:
+            dates: Список смен в формате [[start_time, end_time, status], ...]
+            
+        Returns:
+            int: Количество завершенных рабочих смен
+        """
         work_days = 0
         now = datetime.now()
 
@@ -32,6 +48,15 @@ class CalculateServices:
 
         return work_days
     
-    def _count_total_salary(hourly_rate: int, total_hours: int) -> float:
+    def _count_total_salary(hourly_rate: float, total_hours: float) -> float:
+        """Рассчитывает общую заработную плату.
+        
+        Args:
+            hourly_rate: Почасовая ставка
+            total_hours: Общее количество отработанных часов
+            
+        Returns:
+            float: Общая сумма заработка
+        """
         total_salary = hourly_rate * total_hours
         return total_salary

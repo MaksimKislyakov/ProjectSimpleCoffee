@@ -46,7 +46,7 @@ async def get_report_service(repo_report: ReportRepository = Depends(get_report_
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Проверяет Bearer-токен, декодирует JWT и возвращает текущего пользователя."""
-    print("TOKEN RECEIVED:", token)
+    # print("TOKEN RECEIVED:", token)
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

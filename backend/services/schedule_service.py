@@ -210,7 +210,7 @@ class ScheduleService:
         self._validate_schedule_no_time_conflicts(data, all_schedules)
 
         schedule = Schedule(**schedule_data)
-        new_item_schedule = await self.schedule_repo.create(schedule)
+        new_item_schedule = await self.schedule_repo.create_schedule(schedule)
         return new_item_schedule
         
     async def delete_item_schedule(self, id_schedule: int, current_user: User):

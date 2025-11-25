@@ -8,6 +8,19 @@ from models.coffeshops_model import CoffeeShops
 
 
 class Schedule(Base):
+    """Модель рабочей смены сотрудника.
+    
+    Attributes:
+        id: Уникальный идентификатор смены (autoincrement)
+        user_id: ID пользователя, ForeignKey к users.id
+        coffee_shop_id: ID кофейни, ForeignKey к coffeeshops.id
+        status: Статус смены ("рабочая смена", "выходной", "больничный")
+        schedule_start_time: Запланированное время начала смены
+        schedule_end_time: Запланированное время окончания смены
+        actual_start_time: Фактическое время начала смены
+        actual_end_time: Фактическое время окончания смены
+        is_confirmed: Флаг подтверждения смены
+    """
     __tablename__ = "schedule"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

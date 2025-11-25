@@ -26,9 +26,28 @@ logger = logging.getLogger(__name__)
 
 class ReportService:
     def __init__(self, reports_repository: ReportRepository):
+        """Инициализация сервиса отчетов.
+        
+        Args:
+            reports_repository: Репозиторий для работы с отчетами
+        """
         self.reports_repo = reports_repository
 
     async def get_my_report_of_all_time(self, current_user: User):
+        """Генерирует отчет о работе за все время для текущего пользователя.
+        
+        Args:
+            current_user: Текущий аутентифицированный пользователь
+            
+        Returns:
+            dict: Отчет с данными о работе содержащий:
+                - work_hours (int): Общее количество отработанных часов
+                - work_days (int): Количество рабочих дней  
+                - total_earnings (float): Общий заработок
+                
+        Raises:
+            HTTPException: 403 если недостаточно прав
+        """
         if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         
