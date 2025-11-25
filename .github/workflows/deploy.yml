@@ -1,0 +1,30 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ backend ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: 194.164.245.10
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        script: |
+          cd /home/ProjectSimpleCoffee
+          git pull origin backend
+          cd backend
+          pip install -r requirements.txt
+          # Если используете миграции - раскомментируйте:
+          # alembic upgrade head
+          # Если используете systemd сервис - раскомментируйте и укажите имя:
+          # sudo systemctl restart your-service-name
+          echo "✅ Deploy completed successfully!"
