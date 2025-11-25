@@ -22,12 +22,27 @@ class ScheduleService:
         self.schedule_repo = schedule_repo
 
     def _normalize_datetime(self, dt: datetime.datetime) -> datetime.datetime:
-        """Приводит datetime к offset-naive формату (без временной зоны)"""
+        """Приводит datetime к offset-naive формату.
+        
+        Args:
+            dt: datetime объект для нормализации
+            
+        Returns:
+            datetime: Нормализованный datetime без временной зоны
+        """
         if dt and dt.tzinfo is not None:
             return dt.replace(tzinfo=None)
         return dt
 
     def _validate_schedule_data_start_time_more_end_time(self, schedule_data: ScheduleCreate):
+        """Валидирует что время начала смены раньше времени окончания.
+        
+        Args:
+            schedule_data: Данные создаваемой смены
+            
+        Raises:
+            HTTPException: 400 если время начала >= времени окончания
+        """
         start_time = self._normalize_datetime(schedule_data.schedule_start_time)
         end_time = self._normalize_datetime(schedule_data.schedule_end_time)
         
@@ -38,7 +53,15 @@ class ScheduleService:
                 detail="Дата начала смены должна быть раньше даты окончания"
             )
         
-    def _validate_schedule_time_max_and_min_time(self, schedule_data: ScheduleCreate):    
+    def _validate_schedule_time_max_and_min_time(self, schedule_data: ScheduleCreate):  
+        """Валидирует продолжительность смены в допустимых пределах.
+        
+        Args:
+            schedule_data: Данные создаваемой смены
+            
+        Raises:
+            HTTPException: 400 если смена короче 1 часа или длиннее 12 часов
+        """  
         start_time = self._normalize_datetime(schedule_data.schedule_start_time)
         end_time = self._normalize_datetime(schedule_data.schedule_end_time)
         
@@ -58,6 +81,15 @@ class ScheduleService:
             )
 
     def _validate_schedule_no_time_conflicts(self, schedule_data: ScheduleCreate, all_schedules: List[Schedule]):        
+        """Проверяет отсутствие пересечений с существующими сменами.
+        
+        Args:
+            schedule_data: Данные создаваемой смены
+            all_schedules: Список всех существующих смен
+            
+        Raises:
+            HTTPException: 409 если найдено пересечение с существующей сменой
+        """
         # Нормализуем даты новой смены
         new_start = self._normalize_datetime(schedule_data.schedule_start_time)
         new_end = self._normalize_datetime(schedule_data.schedule_end_time)
@@ -80,7 +112,17 @@ class ScheduleService:
                     )
 
     def _check_time_overlap(self, start1: datetime, end1: datetime, start2: datetime, end2: datetime) -> bool:
-        """Проверяет пересекаются ли два временных интервала"""
+        """Проверяет пересекаются ли два временных интервала.
+        
+        Args:
+            start1: Начало первого интервала
+            end1: Конец первого интервала
+            start2: Начало второго интервала
+            end2: Конец второго интервала
+            
+        Returns:
+            bool: True если интервалы пересекаются, иначе False
+        """
         
         # 1. Новая смена начинается внутри существующей
         if start1 >= start2 and start1 < end2:
@@ -101,12 +143,29 @@ class ScheduleService:
         return False
     
     def _normalize_time_marks(self, schedule_data):
+        """Нормализует временные метки в данных смены.
+        
+        Args:
+            schedule_data: Данные смены для нормализации
+        """
         datetime_fields = ['schedule_start_time', 'schedule_end_time', 'actual_start_time', 'actual_end_time']
         for field in datetime_fields:
             if field in schedule_data and schedule_data[field]:
                 schedule_data[field] = self._normalize_datetime(schedule_data[field])
 
     async def get_all_schedules(self, current_user: User):
+        """Возвращает все смены из системы.
+        
+        Args:
+            current_user: Текущий аутентифицированный пользователь
+            
+        Returns:
+            List[Schedule]: Список всех смен
+            
+        Raises:
+            HTTPException: 403 если недостаточно прав
+            HTTPException: 404 если смены не найдены
+        """
         if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         
@@ -118,6 +177,20 @@ class ScheduleService:
         return all_schedules
     
     async def create_new_item_schedule(self, data: ScheduleCreate, current_user: User):
+        """Создает новую смену с комплексной валидацией.
+        
+        Args:
+            data: Данные для создания смены
+            current_user: Текущий аутентифицированный пользователь
+            
+        Returns:
+            Schedule: Созданная смена
+            
+        Raises:
+            HTTPException: 403 если недостаточно прав
+            HTTPException: 400 если данные не прошли валидацию
+            HTTPException: 409 если есть конфликт с существующими сменами
+        """
         if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Не достаточно прав")
         
@@ -141,6 +214,19 @@ class ScheduleService:
         return new_item_schedule
         
     async def delete_item_schedule(self, id_schedule: int, current_user: User):
+        """Удаляет смену по идентификатору.
+        
+        Args:
+            id_schedule: ID смены для удаления
+            current_user: Текущий аутентифицированный пользователь
+            
+        Returns:
+            Schedule: Удаленная смена
+            
+        Raises:
+            HTTPException: 403 если недостаточно прав
+            HTTPException: 404 если смена не найдена
+        """
         if current_user.role_id != RolesEnum.admin:
             raise HTTPException(status_code=403, detail="Недостаточно прав")
 
@@ -152,6 +238,18 @@ class ScheduleService:
         return del_schedule
     
     async def get_all_schedules_is_confirmed_false(self, current_user: User):
+        """Возвращает все неподтвержденные смены.
+        
+        Args:
+            current_user: Текущий аутентифицированный пользователь
+            
+        Returns:
+            List[Schedule]: Список неподтвержденных смен
+            
+        Raises:
+            HTTPException: 403 если недостаточно прав
+            HTTPException: 204 если неподтвержденных смен нет
+        """
         if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         
