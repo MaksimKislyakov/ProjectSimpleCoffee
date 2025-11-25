@@ -9,12 +9,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d simplecoffee"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build: .
     command: >
-      sh -c "sleep 10 && 
-             alembic upgrade head && 
+      sh -c "alembic upgrade head && 
              uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/simplecoffee
