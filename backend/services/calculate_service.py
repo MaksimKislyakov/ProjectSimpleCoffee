@@ -60,3 +60,14 @@ class CalculateServices:
         """
         total_salary = hourly_rate * total_hours
         return total_salary
+    
+    def _count_total_award_and_fine(data_total_award_and_fine):
+        total_award_sum = 0
+        total_fine_sum = 0 
+        
+        for award, fine in data_total_award_and_fine: 
+            total_award_sum += award if award else 0  
+            total_fine_sum += fine if fine else 0     
+
+        return total_award_sum, total_fine_sum
+        

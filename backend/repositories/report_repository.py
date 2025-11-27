@@ -1,5 +1,6 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
 from models.report_model import ReportModel
 
@@ -19,7 +20,7 @@ class ReportRepository(ScheduleRepository):
 
         return report
     
-    async def get_total_adwards_and_fine(self, user_id: int):
+    async def get_total_adwards_and_fine(self, user_id: int) -> List[ReportModel]:
         result = await self.session.execute(select(ReportModel).where(ReportModel.user_id == user_id))
 
         return result.scalars().all()

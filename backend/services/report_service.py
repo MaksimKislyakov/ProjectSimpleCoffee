@@ -66,9 +66,21 @@ class ReportService:
         work_days = CalculateServices._count_shifts_day(dates)
         total_salary = CalculateServices._count_total_salary(current_user.hourly_rate, total_hours)
 
+        total_award_and_fine = await self.reports_repo.get_total_adwards_and_fine(current_user.id)
+
+        data_total_award_and_fine = [
+            [aw_and_fn.total_award, aw_and_fn.total_fine]
+                for aw_and_fn in total_award_and_fine
+        ]
+        
+        total_award, total_fine = CalculateServices._count_total_award_and_fine(data_total_award_and_fine)
+
         return {"work_hours": total_hours, 
                 "work_days": work_days,
-                "total_earnings": total_salary}
+                "total_earnings": total_salary,
+                "total_award": total_award,
+                "total_fine": total_fine,
+                "user_id": current_user.id}
     
     async def create_total_award_or_fine(self, data: CreateReport, current_user):
         if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
@@ -82,7 +94,7 @@ class ReportService:
         )
 
         new_report_award_or_fine = await self.reports_repo.create_total_adward_or_fine(report_award_and_fine)
-        
+
         return new_report_award_or_fine
 
 
