@@ -2,6 +2,9 @@ from sqlalchemy.future import select
 from models.schedule_model import Schedule
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from datetime import datetime
+from fastapi import HTTPException
+
 
 class ScheduleRepository:
     def __init__(self, session: AsyncSession):
@@ -74,6 +77,35 @@ class ScheduleRepository:
         """
         schedules_one_user = await self.session.execute(select(Schedule).where(Schedule.user_id == user_id))
         return schedules_one_user.scalars().all()
+    
+    async def update_schedule_actual_time(self, schedule_id: int, actual_start_time: datetime = None, actual_end_time: datetime = None):
+        """Обновляет фактическое время начала и/или окончания смены.
+        
+        Args:
+            schedule_id: ID смены для обновления
+            actual_start_time: Фактическое время начала смены
+            actual_end_time: Фактическое время окончания смены
+            
+        Returns:
+            Schedule: Обновленная смена
+            
+        Raises:
+            ValueError: Если смена не найдена
+        """
+        schedule = await self.session.get(Schedule, schedule_id)
+        if not schedule:
+            raise HTTPException(status_code=403, detail='Нет записи о смене')
+        
+        if actual_start_time is not None:
+            schedule.actual_start_time = actual_start_time
+            
+        if actual_end_time is not None:
+            schedule.actual_end_time = actual_end_time
+        
+        await self.session.commit()
+        await self.session.refresh(schedule)
+        
+        return schedule
 
 
     

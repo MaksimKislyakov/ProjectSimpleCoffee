@@ -3,6 +3,8 @@ from schemas.schedule_schemas import ScheduleCreate, ScheduleRead, ScheduleDelet
 from services.schedule_service import ScheduleService
 from api.v1.dependencies import get_schedule_service, get_current_user
 from models.user_model import User
+from typing import Optional
+from datetime import datetime
 
 
 router = APIRouter(prefix="/api/v1/schedule", tags=["schedule"])
@@ -28,3 +30,18 @@ async def delete_schedule(schedule_id: int,
 async def get_all_schedule_is_confirmed_false(schedule_service: ScheduleService = Depends(get_schedule_service),
                                               user: User = Depends(get_current_user)):
     return await schedule_service.get_all_schedules_is_confirmed_false(user)
+
+@router.patch("/{schedule_id}/actual-time")
+async def update_schedule_actual_time(
+    schedule_id: int,
+    actual_start_time: Optional[datetime] = None,
+    actual_end_time: Optional[datetime] = None,
+    schedule_service: ScheduleService = Depends(get_schedule_service),
+    current_user: User = Depends(get_current_user)
+):
+    return await schedule_service.update_schedule_actual_time(
+        schedule_id=schedule_id,
+        current_user=current_user,
+        actual_start_time=actual_start_time,
+        actual_end_time=actual_end_time
+    )

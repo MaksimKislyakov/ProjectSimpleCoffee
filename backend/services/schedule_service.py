@@ -259,3 +259,25 @@ class ScheduleService:
             raise HTTPException(status_code=204, detail='Нет неподтвержденных смен')
 
         return all_schedules_is_confirmed_false
+    
+    async def update_schedule_actual_time(
+                                            self, 
+                                            schedule_id: int, 
+                                            current_user: User,
+                                            actual_start_time: datetime = None,
+                                            actual_end_time: datetime = None
+                                        ):
+        """Обновляет фактическое время смены."""
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+            raise HTTPException(status_code=403, detail="Недостаточно прав")
+        
+        if actual_start_time is None and actual_end_time is None:
+            raise HTTPException(status_code=400, detail="Укажите время начала или окончания")
+        
+        updated_schedule = await self.schedule_repo.update_schedule_actual_time(
+            schedule_id=schedule_id,
+            actual_start_time=actual_start_time,
+            actual_end_time=actual_end_time
+        )
+        return updated_schedule
+        

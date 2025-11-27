@@ -1,6 +1,7 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from datetime import datetime
 
 from models.report_model import ReportModel
 
@@ -20,8 +21,14 @@ class ReportRepository(ScheduleRepository):
 
         return report
     
-    async def get_total_adwards_and_fine(self, user_id: int) -> List[ReportModel]:
-        result = await self.session.execute(select(ReportModel).where(ReportModel.user_id == user_id))
-
+    async def get_total_adwards_and_fine(self, user_id: int, start_date: datetime, end_date: datetime) -> List[ReportModel]:
+        period_start = datetime.combine(start_date.date(), datetime.min.time())
+        period_end = datetime.combine(end_date.date(), datetime.max.time())
+        
+        query = select(ReportModel).where(
+            ReportModel.user_id == user_id,
+            ReportModel.date_of_issue >= period_start,
+            ReportModel.date_of_issue <= period_end
+        )
+        result = await self.session.execute(query)
         return result.scalars().all()
-    

@@ -69,4 +69,3 @@ class CalculateServices:
             total_fine_sum += fine if fine else 0     
 
         return total_award_sum, total_fine_sum
-    
