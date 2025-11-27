@@ -31,7 +31,7 @@ async def get_all_schedule_is_confirmed_false(schedule_service: ScheduleService 
                                               user: User = Depends(get_current_user)):
     return await schedule_service.get_all_schedules_is_confirmed_false(user)
 
-@router.patch("/{schedule_id}/actual-time")
+@router.patch("/{schedule_id}/actual-time", response_model=ScheduleRead)
 async def update_schedule_actual_time(
     schedule_id: int,
     actual_start_time: Optional[datetime] = None,

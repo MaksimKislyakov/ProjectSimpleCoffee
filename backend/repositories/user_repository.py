@@ -79,3 +79,8 @@ class UserRepository:
         await self.session.commit()
 
         return user
+
+    async def get_users_for_coffeshop(self, coffee_shop_id: int) -> List[User]:
+        result = await self.session.execute(select(User).where(User.coffee_shop_id == coffee_shop_id))
+
+        return result.scalars().all()

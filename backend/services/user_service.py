@@ -115,3 +115,11 @@ class UserService:
             raise HTTPException(status_code=404, detail='Пользователь не найден')
 
         return del_user
+    
+    async def get_all_users_for_coffeshop(self, coffee_shop_id: int, current_user: User):
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+            raise HTTPException(status_code=403, detail='Не достаточно прав')
+        
+        users = await self.user_repo.get_users_for_coffeshop(coffee_shop_id)
+
+        return users
