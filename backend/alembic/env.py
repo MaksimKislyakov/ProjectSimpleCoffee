@@ -8,6 +8,7 @@ from models.roles_model import Roles
 from models.user_model import User
 from models.schedule_model import Schedule
 from models.coffeshops_model import CoffeeShops
+from models.report_model import ReportModel
 
 target_metadata = Base.metadata
 

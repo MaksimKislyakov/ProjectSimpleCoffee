@@ -22,4 +22,5 @@ jobs:
           cd /home/ProjectSimpleCoffee
           git pull origin backend
           cd backend
+          docker exec -it backend-api-1 alembic upgrade head
           echo "✅ Deploy completed successfully!"

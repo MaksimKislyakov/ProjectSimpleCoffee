@@ -8,9 +8,9 @@ from repositories.user_repository import UserRepository
 from repositories.report_repository import ReportRepository
 
 from models.user_model import User
-from models.schedule_model import Schedule
+from models.report_model import ReportModel
 
-from schemas.schedule_schemas import ScheduleCreate
+from schemas.report_schemas import ReportSchema, CreateReport
 
 from models.roleEnum import RolesEnum
 
@@ -32,6 +32,11 @@ class ReportService:
             reports_repository: Репозиторий для работы с отчетами
         """
         self.reports_repo = reports_repository
+
+    def _get_total_award_and_fine(self, user_id: int):        
+        award_and_fine = self.reports_repo.get_total_adwards_and_fine(user_id)
+
+        return award_and_fine
 
     async def get_my_report_of_all_time(self, current_user: User):
         """Генерирует отчет о работе за все время для текущего пользователя.
@@ -64,3 +69,21 @@ class ReportService:
         return {"work_hours": total_hours, 
                 "work_days": work_days,
                 "total_earnings": total_salary}
+    
+    async def create_total_award_or_fine(self, data: CreateReport, current_user):
+        if current_user.role_id not in (RolesEnum.barista, RolesEnum.admin, RolesEnum.manager):
+            raise HTTPException(status_code=403, detail="Недостаточно прав")
+        
+        report_award_and_fine = ReportModel(
+            user_id = data.user_id,
+            total_award = data.total_award,
+            total_fine = data.total_fine,
+            date_of_issue = datetime.now()
+        )
+
+        new_report_award_or_fine = await self.reports_repo.create_total_adward_or_fine(report_award_and_fine)
+        
+        return new_report_award_or_fine
+
+
+        
