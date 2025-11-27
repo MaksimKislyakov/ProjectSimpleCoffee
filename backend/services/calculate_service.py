@@ -13,14 +13,13 @@ class CalculateServices:
             Tuple[int, int]: Кортеж (часы, минуты) общего отработанного времени
         """
         total_seconds = 0
-        now = datetime.now()
         
         for start_time, end_time, _ in dates:
             if (not start_time or not end_time):
                 continue
                 
-            # смены только до текущего дня
-            if end_time <= now and end_time > start_time:
+            # Убираем проверку на текущую дату, так как мы уже отфильтровали по периоду
+            if end_time > start_time:
                 duration = end_time - start_time
                 total_seconds += duration.total_seconds()
         
@@ -40,14 +39,14 @@ class CalculateServices:
             int: Количество завершенных рабочих смен
         """
         work_days = 0
-        now = datetime.now()
 
         for start_time, end_time, status in dates:
-            if status == "Рабочая смена" and end_time <= now and end_time > start_time:
+            if status == "Рабочая смена" and end_time > start_time:
                 work_days += 1
 
         return work_days
     
+    # Остальные методы остаются без изменений
     def _count_total_salary(hourly_rate: float, total_hours: float) -> float:
         """Рассчитывает общую заработную плату.
         
@@ -70,4 +69,4 @@ class CalculateServices:
             total_fine_sum += fine if fine else 0     
 
         return total_award_sum, total_fine_sum
-        
+    
