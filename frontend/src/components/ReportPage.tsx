@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/managerPage.css";
+import "../styles/reportPage.css";
 import * as Icons from "../icons/index.ts";
-import { DayData, getMonthLabel } from "../components/useScheduleUtils.tsx";
-import { computeReport, ReportRow } from "../components/useReportUtils.tsx";
+import { getMonthLabel } from "./useScheduleUtils.tsx";
+import { computeReport, ReportRow } from "./useReportUtils.tsx";
 
-const ManagerPage: React.FC = () => {
+const ReportPage: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
@@ -15,6 +15,13 @@ const ManagerPage: React.FC = () => {
   const [shouldLogout, setShouldLogout] = useState(false);
 
   const token = localStorage.getItem("token") || "";
+  const role_id = Number(localStorage.getItem("role_id"));
+
+  useEffect(() => {
+    if (role_id === 3) {
+      navigate("/profile");
+    }
+  }, [role_id, navigate]);
 
   const loadUsers = async () => {
     try {
@@ -61,11 +68,10 @@ const ManagerPage: React.FC = () => {
   }, []);
 
   // пересчитываем отчёт при изменении данных / даты
-  useEffect(() => {
-    const r = computeReport(users, schedule, currentDate);
-    setReportData(r);
-  }, [users, schedule, currentDate]);
-
+    useEffect(() => {
+      setReportData(computeReport(users, schedule, currentDate));
+    }, [users, schedule, currentDate]);
+    
   const goPrev = () => {
     const d = new Date(currentDate);
     d.setMonth(d.getMonth() - 1);
@@ -150,4 +156,4 @@ const ManagerPage: React.FC = () => {
   );
 };
 
-export default ManagerPage;
+export default ReportPage;

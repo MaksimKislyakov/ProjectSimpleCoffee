@@ -51,43 +51,6 @@ const ProfilePage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
 
-  /** === Подгрузка пользователя с backend === **/
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setShouldLogout(true);
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/v1/user/me", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          setShouldLogout(true);
-          return;
-        }
-
-        const data: UserData = await res.json();
-        setUser(data);
-        
-      } catch (err) {
-        console.error(err);
-        setShouldLogout(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
   const fetchSchedule = async () => {
     if (!user) return;
     const token = localStorage.getItem("token");
@@ -227,6 +190,7 @@ const fetchReport = async () => {
   }
 };
 
+// загрузка пользователя 
 useEffect(() => {
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
@@ -345,6 +309,7 @@ const handleAddSchedule = async (data: any) => {
   useEffect(() => {
     if (shouldLogout) {
       localStorage.removeItem("token");
+      localStorage.removeItem("role_id");
       navigate("/");
     }
   }, [shouldLogout, navigate]);
@@ -416,6 +381,11 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
       {/* Верхняя панель */}
       <header className="profile-header">
         <Icons.LogoIcon className="logo" title="logo" />
+        {user.role_id === 2 && (
+            <button className="link-btn" onClick={() => navigate("/profile/report")}>
+              Отчёт
+            </button>
+          )}
         <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
       </header>
 
@@ -440,7 +410,7 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
               </div>
             </div>
 
-            <p><p>Должность:</p> {user.role_id === 1 ? "Бариста" : "Сотрудник"}</p>
+            <p><p>Должность:</p> {user.role_id}</p>
             <p><p>Почта:</p> {user.email}</p>
             <p><p>Телефон:</p> {user.telephone}</p>
           </div>

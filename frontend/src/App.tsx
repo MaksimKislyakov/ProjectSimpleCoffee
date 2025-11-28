@@ -6,7 +6,7 @@ import Authorization from "./components/Authorization.tsx";
 import ProfilePage from "./components/Profile.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import WorkSchedulePage from "./components/WorkSchedulePage.tsx";
-import ManagerPage from "./components/ManagerPage.tsx";
+import ManagerPage from "./components/ReportPage.tsx";
 
 function App() {
   return (
