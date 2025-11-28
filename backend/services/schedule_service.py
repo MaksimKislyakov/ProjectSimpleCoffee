@@ -280,4 +280,18 @@ class ScheduleService:
             actual_end_time=actual_end_time
         )
         return updated_schedule
+    
+    async def update_schedule_is_confirmed(self, schedule_id: int, is_confirmed: bool, current_user: User):
+        """Обновляет статус подтверждения смены."""
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+            raise HTTPException(status_code=403, detail="Недостаточно прав")
+        
+        
+        updated_schedule = await self.schedule_repo.update_schedule_is_confirmed(
+            schedule_id=schedule_id,
+            is_confirmed=is_confirmed
+        )
+
+        return updated_schedule
+
         

@@ -107,5 +107,14 @@ class ScheduleRepository:
         
         return schedule
 
-
+    async def update_schedule_is_confirmed(self, schedule_id: int, is_confirmed: bool):
+        """Обновляет статус подтверждения смены."""
+        schedule = await self.session.get(Schedule, schedule_id)
+        if not schedule:
+            raise HTTPException(status_code=404, detail='Смена не найдена')
+        print(schedule_id, schedule)
+        schedule.is_confirmed = is_confirmed
+        await self.session.commit()
+        await self.session.refresh(schedule)
+        return schedule
     
