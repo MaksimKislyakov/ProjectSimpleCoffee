@@ -32,23 +32,30 @@ const WorkScheduleHeader: React.FC<Props> = ({
       <div className="go-to-schedule" onClick={() => navigate("/profile")}>
         <Icons.ArrowIcon className="go-to-icon"/> <p>График работы</p> 
       </div>
-      <button onClick={onPrev}>‹</button>
-      <span className="label">{monthName}</span>
-      <button onClick={onNext}>›</button>
-
-      <div className="mode-switch">
+      <div className="currentPeriod">
+        <div className="calendar">
+          <Icons.CalendarIcon title="календарь"/>
+          <span className="label">{monthName}</span>
+        </div>
+        <div className="arrows">
+          <button className="arrowBtn" onClick={onPrev}>‹</button>
+          <button className="arrowBtn" onClick={onNext}>›</button>
+        </div>
+      </div>
+      <div className="filters">
         <button
-          className={mode === "week" ? "active" : ""}
+          className={`filterBtn ${mode === "week" ? "active" : ""}`}
           onClick={() => onModeChange("week")}
         >
           Неделя
         </button>
         <button
-          className={mode === "month" ? "active" : ""}
+          className={`filterBtn ${mode === "month" ? "active" : ""}`}
           onClick={() => onModeChange("month")}
         >
           Месяц
         </button>
+        <Icons.SettingsIcon className="settingsBtn"/>
       </div>
     </div>
   )

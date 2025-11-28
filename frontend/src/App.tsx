@@ -6,6 +6,7 @@ import Authorization from "./components/Authorization.tsx";
 import ProfilePage from "./components/Profile.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import WorkSchedulePage from "./components/WorkSchedulePage.tsx";
+import ManagerPage from "./components/ManagerPage.tsx";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
 
         <Route path="*" element={<Authorization />} />
         <Route path="/schedule" element={<WorkSchedulePage />} />
+        <Route path="/manager" element={<ManagerPage />} />
       </Routes>
     </Router>
   );

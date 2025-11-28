@@ -1,0 +1,163 @@
+/* managerPage.css */
+
+.manager-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: "Montserrat", sans-serif;
+  background: #F4F4F4;
+}
+
+.manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 28px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.manager-controls {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-right: 16px;
+}
+
+.link-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.link-btn.active {
+  background: #ff7b32;
+  color: #fff;
+  border-color: #ff7b32;
+}
+
+.period-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-pill {
+  background: #ff7b32;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+  font-weight: 600;
+}
+
+.arrows .arrow {
+  border: none;
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.settings {
+  margin-left: 12px;
+  cursor: pointer;
+}
+
+.logout {
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+/* контейнер */
+.manager-container {
+  padding: 24px 34px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.manager-title {
+  margin: 6px 0 18px 0;
+  font-size: 26px;
+}
+
+/* таблица */
+.report-table {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  overflow-x: auto;
+}
+
+.report-header-row, .report-row {
+  display: grid;
+  grid-template-columns: 320px repeat(6, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.report-header-row {
+  font-weight: 600;
+  color: #6b6b6b;
+  background: #fafafa;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.report-row {
+  background: transparent;
+}
+
+.employee-col {
+  display: flex;
+  align-items: center;
+}
+
+/* карточка сотрудника */
+.employee-card {
+  background: #f4f4f4;
+  padding: 12px 14px;
+  border-radius: 10px;
+  width: 100%;
+}
+
+.employee-name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.employee-role {
+  color: #8a8a8a;
+  font-size: 14px;
+}
+
+/* мобильная подгонка */
+@media (max-width: 920px) {
+  .report-header-row, .report-row {
+    grid-template-columns: 220px repeat(6, 1fr);
+  }
+}
+
+/* подсказка загрузки */
+.loading {
+  padding: 24px;
+  text-align: center;
+  color: #888;
+}

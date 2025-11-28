@@ -120,7 +120,6 @@ const ProfilePage: React.FC = () => {
       }
 
       const schedule = await res.json();
-      console.log("Полученное расписание:", schedule);
 
       const scheduleArray = Array.isArray(schedule) ? schedule : [schedule];
       const userSchedule = scheduleArray.filter(
@@ -395,7 +394,8 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
     onClick={() => setModalDate(day.fullDate)}
   >
     <div className="day-header">
-      <div className="date">{day.date}</div>
+      <div className="dow">{day.weekday}</div>
+      <div className="day-num">{day.dayNumber}</div>
     </div>
     <div className={`time-slots ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
       {!day.isEmpty && day.time ? (
@@ -518,8 +518,11 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
           onNext={goNext}
           onChangeMode={onChangeMode}
         >
-          {days.map((day, index) => (
-            <DayCard key={index} day={day} />
+          {days.map((d, i) => (
+            <div className="day-col" key={i}>
+              <div className="dow">{d.weekday}</div>
+              <div className="day-num">{d.dayNumber}</div>
+            </div>
           ))}
         </WorkSchedule>
         <AddScheduleModal

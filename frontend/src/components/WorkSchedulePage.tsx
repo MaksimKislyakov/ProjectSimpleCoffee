@@ -43,7 +43,7 @@ const WorkSchedulePage: React.FC = () => {
 
   const loadSchedule = async () => {
   try {
-    const res = await fetch("/api/v1/schedule/", {
+    const res = await fetch("/api/v1/schedule/get_all_schedule", {
       headers: { "Authorization": `Bearer ${token}` }
     });
 

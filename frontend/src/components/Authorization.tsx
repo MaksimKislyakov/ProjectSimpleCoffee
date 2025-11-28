@@ -48,12 +48,18 @@ const Authorization: React.FC = () => {
             // Сохранение токена в localStorage
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("token_type", data.token_type);
+
+            localStorage.setItem("role_id", String(data.user.role_id));
         
 
             setSuccess(true);
             setTimeout(() => {
-            navigate("/profile");
-            }, 1500);
+            const role = Number(localStorage.getItem("role_id"));
+
+                if (role === 1) navigate("/admin");
+                else if (role === 2) navigate("/manager");
+                else navigate("/profile"); // barista
+            }, 1000);
 
             setTimeout(() => setSuccess(false), 2000);
 

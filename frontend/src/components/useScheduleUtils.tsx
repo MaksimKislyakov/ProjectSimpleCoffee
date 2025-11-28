@@ -6,6 +6,8 @@ export interface DayData {
   isWorkDay?: boolean;
   isEmpty: boolean;
   fullDate: Date;
+  weekday: string; 
+  dayNumber: number;
   status?: string;
   comment?: string;
 }
@@ -16,13 +18,16 @@ const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 export const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
   const days: DayData[] = [];
   const start = new Date(startDate);
-  start.setDate(start.getDate() - start.getDay() + 1); // Пн
+  start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
+
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
 
     days.push({
+      weekday: WEEKDAYS[d.getDay()],
+      dayNumber: d.getDate(),
       date: `${WEEKDAYS[d.getDay()]} ${d.getDate()}`,
       fullDate: d,
       isEmpty: true
@@ -43,9 +48,11 @@ export const generateMonthDays = (date: Date = new Date()): DayData[] => {
 
   while (cur <= last) {
     days.push({
+      weekday: WEEKDAYS[cur.getDay()],
+      dayNumber: cur.getDate(),
       date: `${WEEKDAYS[cur.getDay()]} ${cur.getDate()}`,
       fullDate: new Date(cur),
-      isEmpty: true
+      isEmpty: false
     });
     cur.setDate(cur.getDate() + 1);
   }
