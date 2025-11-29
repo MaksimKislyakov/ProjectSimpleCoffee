@@ -1,7 +1,7 @@
 from sqlalchemy.future import select
 from models.schedule_model import Schedule
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from fastapi import HTTPException
 
@@ -107,13 +107,26 @@ class ScheduleRepository:
         
         return schedule
 
-    async def update_schedule_is_confirmed(self, schedule_id: int, is_confirmed: bool):
-        """Обновляет статус подтверждения смены."""
+    async def update_schedule_is_confirmed(
+            self, 
+            schedule_id: int, 
+            is_confirmed: bool,
+            schedule_start_time: Optional[datetime] = None,
+            schedule_end_time: Optional[datetime] = None
+        ):
+        """Обновляет статус подтверждения смены и время."""
         schedule = await self.session.get(Schedule, schedule_id)
         if not schedule:
             raise HTTPException(status_code=404, detail='Смена не найдена')
-        print(schedule_id, schedule)
+        
         schedule.is_confirmed = is_confirmed
+        
+        if schedule_start_time is not None:
+            schedule.schedule_start_time = schedule_start_time
+            
+        if schedule_end_time is not None:
+            schedule.schedule_end_time = schedule_end_time
+        
         await self.session.commit()
         await self.session.refresh(schedule)
         return schedule
