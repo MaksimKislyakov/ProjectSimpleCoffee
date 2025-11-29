@@ -48,14 +48,17 @@ async def update_schedule_actual_time(
 
 @router.patch("/{schedule_id}/confirm")
 async def update_schedule_confirmation(
-                                        schedule_id: int,
-                                        is_confirmed: bool,
-                                        schedule_service: ScheduleService = Depends(get_schedule_service),
-                                        current_user: User = Depends(get_current_user)
-                                    ):
-    """Обновляет статус подтверждения смены."""
+    schedule_id: int,
+    is_confirmed: bool,
+    schedule_start_time: Optional[datetime] = None,
+    schedule_end_time: Optional[datetime] = None,
+    schedule_service: ScheduleService = Depends(get_schedule_service),
+    current_user: User = Depends(get_current_user)
+):
     return await schedule_service.update_schedule_is_confirmed(
         schedule_id=schedule_id,
         is_confirmed=is_confirmed,
+        schedule_start_time=schedule_start_time,
+        schedule_end_time=schedule_end_time,
         current_user=current_user
     )

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 import logging
 import datetime
-from typing import List
+from typing import List, Optional
 
 from repositories.schedule_repository import ScheduleRepository
 from repositories.coffee_shop_repository import CoffeShopsRepository
@@ -281,15 +281,22 @@ class ScheduleService:
         )
         return updated_schedule
     
-    async def update_schedule_is_confirmed(self, schedule_id: int, is_confirmed: bool, current_user: User):
-        """Обновляет статус подтверждения смены."""
+    async def update_schedule_is_confirmed(
+                                            self, 
+                                            schedule_id: int, 
+                                            is_confirmed: bool, 
+                                            current_user: User,
+                                            schedule_start_time: Optional[datetime.datetime] = None,
+                                            schedule_end_time: Optional[datetime.datetime] = None
+                                        ):
         if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         
-        
         updated_schedule = await self.schedule_repo.update_schedule_is_confirmed(
             schedule_id=schedule_id,
-            is_confirmed=is_confirmed
+            is_confirmed=is_confirmed,
+            schedule_start_time=schedule_start_time,
+            schedule_end_time=schedule_end_time
         )
 
         return updated_schedule
