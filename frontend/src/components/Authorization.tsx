@@ -49,19 +49,35 @@ const Authorization: React.FC = () => {
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("token_type", data.token_type);
 
-            localStorage.setItem("role_id", String(data.user.role_id));
-        
+            // Получаем информацию о пользователе, чтобы узнать role_id
+            try {
+                const meRes = await fetch(`/api/v1/user/me`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${data.access_token}`,
+                    },
+                });
 
-            setSuccess(true);
-            setTimeout(() => {
-            const role = Number(localStorage.getItem("role_id"));
+                if (!meRes.ok) {
+                    throw new Error("Не удалось получить информацию о пользователе");
+                }
 
-                if (role === 1) navigate("/admin");
-                else if (role === 2) navigate("/manager");
-                else navigate("/profile"); // barista
-            }, 1000);
+                const user = await meRes.json();
+                localStorage.setItem("role_id", String(user.role_id));
 
-            setTimeout(() => setSuccess(false), 2000);
+                setSuccess(true);
+                setTimeout(() => {
+                    // Всех сначала перенаправляем на профиль; роль оставляем в localStorage
+                    navigate("/profile");
+                }, 300);
+
+                setTimeout(() => setSuccess(false), 2000);
+            } catch (err2: any) {
+                // Если не удалось получить /me — всё равно сохранить токен и показать ошибку
+                setError(err2.message || "Ошибка при получении данных пользователя");
+                setSuccess(false);
+            }
 
             console.log("Авторизация успешна:", data.access_token);
         } catch (err: any) {

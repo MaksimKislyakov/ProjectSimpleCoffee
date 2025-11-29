@@ -41,11 +41,6 @@
   font-weight: 500;
 }
 
-.link-btn.active {
-  background: #ff7b32;
-  color: #fff;
-  border-color: #ff7b32;
-}
 
 .period-controls {
   display: flex;

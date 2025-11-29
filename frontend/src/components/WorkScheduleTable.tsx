@@ -7,13 +7,16 @@ interface Props {
   users: any[]
   schedule: any[]
   days: DayData[]
+  mode: "week" | "month"
+  currentUserId: number | null
+  currentRoleId: number
 }
 
-const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days }) => {
+const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, currentUserId, currentRoleId }) => {
   const rightRef = useRef<HTMLDivElement | null>(null)
 
   // единый шаблон колонок для заголовка и для строк
-  const gridTemplate = `repeat(${Math.max(1, days.length)}, 36px)`
+  const gridTemplate = `repeat(${Math.max(1, days.length)}, 1fr)`
 
   return (
     <div className="schedule-wrapper">
@@ -46,7 +49,7 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days }) => {
 
         {/* Заголовок дней — grid */}
         <div
-          className="days-header"
+          className={`days-header${mode === "week" ? " week-mode" : ""}`}
           style={{
             display: "grid",
             gridTemplateColumns: gridTemplate,
@@ -73,6 +76,9 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days }) => {
                 user={user}
                 userSchedule={userSchedule}
                 days={days}
+                mode={mode}
+                currentUserId={currentUserId}
+                currentRoleId={currentRoleId}
               />
             );
           })}

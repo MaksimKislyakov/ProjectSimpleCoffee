@@ -6,10 +6,11 @@ import WorkScheduleTable from "../components/WorkScheduleTable.tsx"
 import { DayData, generateWeekDays, generateMonthDays } from "../components/useScheduleUtils.tsx"
 import "../styles/workSchedulePage.css"
 import * as Icons from "../icons/index.ts"
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const WorkSchedulePage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([])
+  const [user, setUser] = useState<any | null>(null);
   const [schedule, setSchedule] = useState<any[]>([])
   const [currentDate, setCurrentDate] = useState(new Date())
   const [mode, setMode] = useState<"week" | "month">("month")
@@ -17,6 +18,7 @@ const WorkSchedulePage: React.FC = () => {
   const [shouldLogout, setShouldLogout] = useState(false)
 
   const token = localStorage.getItem("token")
+  const role_id = Number(localStorage.getItem("role_id"));
 
   const loadUsers = async () => {
   try {
@@ -99,11 +101,23 @@ const WorkSchedulePage: React.FC = () => {
     const handleLogout = () => setShouldLogout(true);
     const handleGoToProfile = () => navigate("/profile"); 
 
+  const { pathname } = useLocation();
+  const scheduleActive = pathname.startsWith("/schedule");
+  const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
+
   return (
     <div className="work-schedule-page">
       {/* Верхняя панель */}
             <header className="profile-header">
               <Icons.LogoIcon className="logo" title="logo" />
+              {(role_id === 1 || role_id === 2) && (
+                <div className="manager-controls">
+                  <div className="nav-buttons">
+                    <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
+                    <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/manager")}>Отчёт</button>
+                  </div>
+                </div>
+              )}
               <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
             </header>
       <div className="container-page">
@@ -119,6 +133,9 @@ const WorkSchedulePage: React.FC = () => {
           users={users}
           schedule={schedule}
           days={days}
+          mode={mode}
+          currentUserId={Number(localStorage.getItem("user_id")) || null}
+          currentRoleId={role_id}
         />
         </div>
     </div>

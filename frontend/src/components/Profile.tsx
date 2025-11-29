@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
 import {
@@ -353,6 +353,20 @@ const handleAddSchedule = async (data: any) => {
   const fullFIO = `${user.last_name} ${user.first_name} ${user.patronymic}`;
   const shortFIO = getShortName(fullFIO);
 
+  // Общие навигационные кнопки для менеджера/админа
+  const NavButtons: React.FC = () => {
+    const { pathname } = useLocation();
+    const scheduleActive = pathname.startsWith("/schedule");
+    const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
+
+    return (
+      <>
+        <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
+        <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/manager")}>Отчёт</button>
+      </>
+    );
+  };
+
 /** === Компонент дня === **/
 const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
   <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}
@@ -381,11 +395,16 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
       {/* Верхняя панель */}
       <header className="profile-header">
         <Icons.LogoIcon className="logo" title="logo" />
-        {user.role_id === 2 && (
-            <button className="link-btn" onClick={() => navigate("/profile/report")}>
-              Отчёт
-            </button>
-          )}
+
+        {/* Для админа (1) и менеджера (2) показываем кнопки навигации */}
+        {(user.role_id === 1 || user.role_id === 2) && (
+          <div className="manager-controls">
+            <div className="nav-buttons">
+              <NavButtons />
+            </div>
+          </div>
+        )}
+
         <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
       </header>
 

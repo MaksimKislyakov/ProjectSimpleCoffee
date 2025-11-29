@@ -7,23 +7,29 @@ interface EmployeeScheduleRowProps {
   user: any
   days: DayData[]
   userSchedule: any[]
+  mode: "week" | "month"
+  currentUserId: number | null
+  currentRoleId: number
 }
 
 export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
   user,
   days,
   userSchedule,
+  mode,
+  currentUserId,
+  currentRoleId,
 }) => {
   // gridTemplateColumns повторяет количество колонок (чтобы выровнять с заголовком)
   const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: `repeat(${days.length}, 36px)`,
+    gridTemplateColumns: `repeat(${days.length}, 1fr)`,
     gap: "8px"
   }
 
   return (
     <div className="employee-row">
-      <div className="days-row" style={gridStyle}>
+      <div className={`days-row${mode === "week" ? " week-mode" : ""}`} style={gridStyle}>
         {days.map((day, index) => {
           // Сравниваем по компонентам даты — это устойчиво к таймзоне
           const match = userSchedule.find((s: any) => {
@@ -36,7 +42,7 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
             )
           })
 
-          return <DayCell key={index} schedule={match || null} />
+          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} />
         })}
       </div>
     </div>

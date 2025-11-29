@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/reportPage.css";
 import * as Icons from "../icons/index.ts";
 import { getMonthLabel } from "./useScheduleUtils.tsx";
@@ -16,6 +16,10 @@ const ReportPage: React.FC = () => {
 
   const token = localStorage.getItem("token") || "";
   const role_id = Number(localStorage.getItem("role_id"));
+
+  const { pathname } = useLocation();
+  const scheduleActive = pathname.startsWith("/schedule");
+  const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
 
   useEffect(() => {
     if (role_id === 3) {
@@ -99,8 +103,8 @@ const ReportPage: React.FC = () => {
 
         <div className="manager-controls">
           <div className="nav-buttons">
-            <button className="link-btn" onClick={() => navigate("/schedule")}>График работы</button>
-            <button className="link-btn active">Отчёт</button>
+            <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
+            <button className={`link-btn ${reportActive ? "active" : ""}`}>Отчёт</button>
           </div>
 
           <div className="period-controls">

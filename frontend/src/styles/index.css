@@ -13,3 +13,50 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Header navigation buttons - unified style for schedule/report */
+.nav-buttons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-buttons .link-btn {
+  font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0;
+  color: #333;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.nav-buttons .link-btn:focus {
+  outline: none;
+}
+
+.nav-buttons .link-btn.active {
+  color: #000;
+  /* visual cue for active button: bolder text, no border */
+  font-weight: 700;
+}
+
+/* Keep header layouts consistent */
+.profile-header,
+.manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: transparent;
+}
+
+.profile-header .logo,
+.manager-header .logo {
+  display: flex;
+  align-items: center;
+}
