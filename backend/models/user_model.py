@@ -6,6 +6,23 @@ from models.roles_model import Roles
 # from models.coffeshops import CoffeeShops
 
 class User(Base):
+    """Модель пользователя системы.
+    
+    Attributes:
+        id: Уникальный идентификатор пользователя (autoincrement)
+        hashed_password: Хэшированный пароль пользователя
+        first_name: Имя пользователя
+        last_name: Фамилия пользователя
+        patronymic: Отчество пользователя (опционально)
+        email: Email пользователя (уникальный)
+        telephone: Телефон пользователя (уникальный)
+        role_id: ID роли пользователя, ForeignKey к roles.id
+        coffee_shop_id: ID кофейни, ForeignKey к coffeeshops.id
+        hourly_rate: Почасовая ставка оплаты
+        assessment_rate: Рейтинг оценки пользователя
+        work_experience: Опыт работы в месяцах
+        data_work_start: Дата начала работы
+    """
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

@@ -35,6 +35,15 @@ class AuthService:
         return {"access_token": token, "token_type": "bearer"}
 
     def number_validate(self, telephone: str) -> str:
+        """
+        Валидация номера, если пользователь введет лишние знаки: + - ( )
+
+        Args:
+            telephone (str): Номер телефона пользователя
+        
+        Returns:
+            valid_tel (str): Валидный номер телефона
+        """
         if isinstance(telephone, int):
             telephone = str(telephone)
         valid_tel = re.sub(r'[\+\(\)\s\-\—]', '', telephone)
