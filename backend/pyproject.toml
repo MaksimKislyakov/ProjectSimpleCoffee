@@ -20,10 +20,15 @@ dependencies = [
     "pydantic[email] (>=2.12.5,<3.0.0)",
     "psycopg2 (>=2.9.11,<3.0.0)",
     "bcrypt (==3.2.2)",
-    "passlib (==1.7.4)"
+    "passlib (==1.7.4)",
+    "ruff (>=0.14.7,<0.15.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/*" = ["F401"]
+"models/*.py" = ["F401"]

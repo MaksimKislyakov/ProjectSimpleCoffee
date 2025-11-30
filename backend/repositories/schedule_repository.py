@@ -9,7 +9,7 @@ from fastapi import HTTPException
 class ScheduleRepository:
     def __init__(self, session: AsyncSession):
         """Инициализация репозитория расписания.
-        
+
         Args:
             session: Асинхронная сессия для работы с БД
         """
@@ -17,7 +17,7 @@ class ScheduleRepository:
 
     async def get_all(self):
         """Получает все смены из базы данных.
-        
+
         Returns:
             List[Schedule]: Список всех смен
         """
@@ -26,10 +26,10 @@ class ScheduleRepository:
 
     async def create_schedule(self, schedule: Schedule):
         """Создает новую смену в базе данных.
-        
+
         Args:
             schedule: Объект смены для создания
-            
+
         Returns:
             Schedule: Созданная смена
         """
@@ -40,10 +40,10 @@ class ScheduleRepository:
 
     async def delete_schedule(self, schedule_id: int):
         """Удаляет смену по идентификатору.
-        
+
         Args:
             schedule_id: ID смены для удаления
-            
+
         Returns:
             Schedule: Удаленная смена или None если не найдена
         """
@@ -51,83 +51,91 @@ class ScheduleRepository:
 
         if not schedule:
             return None
-        
+
         await self.session.delete(schedule)
         await self.session.commit()
 
         return schedule
-    
+
     async def get_all_is_confirmed_false(self):
         """Получает все неподтвержденные смены.
-        
+
         Returns:
             List[Schedule]: Список неподтвержденных смен
         """
-        result = await self.session.execute(select(Schedule).where(Schedule.is_confirmed == False))
+        result = await self.session.execute(
+            select(Schedule).where(Schedule.is_confirmed == False)
+        )
         return result.scalars().all()
-    
+
     async def get_schedules_one_user(self, user_id: int) -> List[Schedule]:
         """Получает все смены конкретного пользователя.
-        
+
         Args:
             user_id: ID пользователя
-            
+
         Returns:
             List[Schedule]: Список смен пользователя
         """
-        schedules_one_user = await self.session.execute(select(Schedule).where(Schedule.user_id == user_id))
+        schedules_one_user = await self.session.execute(
+            select(Schedule).where(Schedule.user_id == user_id)
+        )
         return schedules_one_user.scalars().all()
-    
-    async def update_schedule_actual_time(self, schedule_id: int, actual_start_time: datetime = None, actual_end_time: datetime = None):
+
+    async def update_schedule_actual_time(
+        self,
+        schedule_id: int,
+        actual_start_time: datetime = None,
+        actual_end_time: datetime = None,
+    ):
         """Обновляет фактическое время начала и/или окончания смены.
-        
+
         Args:
             schedule_id: ID смены для обновления
             actual_start_time: Фактическое время начала смены
             actual_end_time: Фактическое время окончания смены
-            
+
         Returns:
             Schedule: Обновленная смена
-            
+
         Raises:
             ValueError: Если смена не найдена
         """
         schedule = await self.session.get(Schedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=403, detail='Нет записи о смене')
-        
+            raise HTTPException(status_code=403, detail="Нет записи о смене")
+
         if actual_start_time is not None:
             schedule.actual_start_time = actual_start_time
-            
+
         if actual_end_time is not None:
             schedule.actual_end_time = actual_end_time
-        
+
         await self.session.commit()
         await self.session.refresh(schedule)
-        
+
         return schedule
 
     async def update_schedule_is_confirmed(
-            self, 
-            schedule_id: int, 
-            is_confirmed: bool,
-            schedule_start_time: Optional[datetime] = None,
-            schedule_end_time: Optional[datetime] = None
-        ):
+        self,
+        schedule_id: int,
+        is_confirmed: bool,
+        schedule_start_time: Optional[datetime] = None,
+        schedule_end_time: Optional[datetime] = None,
+    ):
         """Обновляет статус подтверждения смены и время."""
         schedule = await self.session.get(Schedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=404, detail='Смена не найдена')
-        
+            raise HTTPException(status_code=404, detail="Смена не найдена")
+
         schedule.is_confirmed = is_confirmed
-        
+
         if schedule_start_time is not None:
             schedule.schedule_start_time = schedule_start_time
-            
+
         if schedule_end_time is not None:
             schedule.schedule_end_time = schedule_end_time
-        
+
         await self.session.commit()
         await self.session.refresh(schedule)
         return schedule
-    

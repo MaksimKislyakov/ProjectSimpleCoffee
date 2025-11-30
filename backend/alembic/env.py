@@ -21,24 +21,26 @@ def get_sync_url():
     # Alembic работает через синхронный драйвер
     return settings.DATABASE_URL.replace("asyncpg", "psycopg2")
 
+
 def run_migrations_offline():
-    context.configure(url=get_sync_url(), target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=get_sync_url(), target_metadata=target_metadata, literal_binds=True
+    )
     with context.begin_transaction():
         context.run_migrations()
 
+
 def run_migrations_online() -> None:
     DATABASE_URL = "postgresql://postgres:postgres@postgres:5432/simplecoffee"
-    
-    connectable = create_engine(DATABASE_URL) 
+
+    connectable = create_engine(DATABASE_URL)
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

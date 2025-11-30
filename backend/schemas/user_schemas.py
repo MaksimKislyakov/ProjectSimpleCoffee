@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from decimal import Decimal
 
+
 class UserBase(BaseModel):
     first_name: str
     last_name: str
@@ -16,13 +17,16 @@ class UserBase(BaseModel):
     work_experience: Optional[int] = 0
     data_work_start: datetime = datetime.now()
 
+
 class UserCreate(UserBase):
     hashed_password: str
+
 
 class UserRead(UserBase):
     id: int
 
     model_config = {"from_attributes": True}
+
 
 class UserDelete(BaseModel):
     id: int
