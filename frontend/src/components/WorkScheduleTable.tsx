@@ -1,5 +1,5 @@
 // src/components/WorkScheduleTable.tsx
-import React, { useRef } from "react"
+import React, { useRef, useState, useEffect, useMemo } from "react"
 import { EmployeeScheduleRow } from "./EmployeeScheduleRow.tsx"
 import { DayData } from "./useScheduleUtils"
 
@@ -10,13 +10,100 @@ interface Props {
   mode: "week" | "month"
   currentUserId: number | null
   currentRoleId: number
+  onConfirmSchedule: (scheduleId: number) => Promise<void>
 }
 
-const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, currentUserId, currentRoleId }) => {
+const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, currentUserId, currentRoleId, onConfirmSchedule }) => {
   const rightRef = useRef<HTMLDivElement | null>(null)
+  const searchRef = useRef<HTMLDivElement | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
+  const [showTodayOnly, setShowTodayOnly] = useState(false)
 
   // единый шаблон колонок для заголовка и для строк
   const gridTemplate = `repeat(${Math.max(1, days.length)}, 1fr)`
+
+  // Поиск сотрудников по частичному совпадению
+  const filteredUsersBySearch = useMemo(() => {
+    if (!searchQuery.trim()) return users
+    
+    const query = searchQuery.toLowerCase().trim()
+    return users.filter(user => {
+      const fullName = `${user.last_name} ${user.first_name} ${user.patronymic || ""}`.toLowerCase()
+      const email = (user.email || "").toLowerCase()
+      const telephone = (user.telephone || "").toLowerCase()
+      
+      return fullName.includes(query) || 
+             email.includes(query) || 
+             telephone.includes(query) ||
+             user.last_name?.toLowerCase().includes(query) ||
+             user.first_name?.toLowerCase().includes(query) ||
+             (user.patronymic && user.patronymic.toLowerCase().includes(query))
+    })
+  }, [users, searchQuery])
+
+  // Фильтр по выбранному сотруднику
+  const filteredUsersBySelection = useMemo(() => {
+    if (selectedUserId === null) return filteredUsersBySearch
+    return filteredUsersBySearch.filter(user => user.id === selectedUserId)
+  }, [filteredUsersBySearch, selectedUserId])
+
+  // Фильтр "Сегодня" - показываем только сотрудников с сменами на сегодня
+  const filteredUsers = useMemo(() => {
+    if (!showTodayOnly) return filteredUsersBySelection
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    return filteredUsersBySelection.filter(user => {
+      const userSchedules = schedule.filter(s => s.user_id === user.id)
+      return userSchedules.some(s => {
+        if (!s.schedule_start_time) return false
+        const scheduleDate = new Date(s.schedule_start_time)
+        scheduleDate.setHours(0, 0, 0, 0)
+        return scheduleDate.getTime() === today.getTime()
+      })
+    })
+  }, [filteredUsersBySelection, showTodayOnly, schedule])
+
+  // Закрытие выпадающего списка при клике вне области
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    setSelectedUserId(null) // Сбрасываем выбор при изменении поиска
+    setIsSearchFocused(true)
+  }
+
+  const handleUserSelect = (user: any) => {
+    setSelectedUserId(user.id)
+    setSearchQuery(`${user.last_name} ${user.first_name} ${user.patronymic || ""}`.trim())
+    setIsSearchFocused(false)
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery("")
+    setSelectedUserId(null)
+    setIsSearchFocused(false)
+  }
+
+  const handleTodayToggle = () => {
+    setShowTodayOnly(!showTodayOnly)
+  }
 
   return (
     <div className="schedule-wrapper">
@@ -24,18 +111,51 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
       {/* ЛЕВАЯ ФИКСИРОВАННАЯ КОЛОНКА */}
       <div className="left-column">
         <div className="left-header">
-          <div>
+          <div className="search-container">
             <p>Сотрудники</p>
-            <input type="text" />
+            <div className="search-wrapper" ref={searchRef}>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Поиск..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => setIsSearchFocused(true)}
+              />
+              {searchQuery && (
+                <button className="search-clear" onClick={handleClearSearch} title="Очистить">
+                  ×
+                </button>
+              )}
+              {isSearchFocused && searchQuery && filteredUsersBySearch.length > 0 && (
+                <div className="search-dropdown">
+                  {filteredUsersBySearch.map(user => (
+                    <div
+                      key={user.id}
+                      className="search-dropdown-item"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      {user.last_name} {user.first_name} {user.patronymic || ""}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="table-filter-today">
+          <div className="today-filter-container">
             <p>Сегодня</p>
-            <input type="checkbox" />
+            <button
+              className={`today-toggle ${showTodayOnly ? "active" : ""}`}
+              onClick={handleTodayToggle}
+              title={showTodayOnly ? "Показать все дни" : "Показать только сегодня"}
+            >
+              <span className="today-toggle-slider"></span>
+            </button>
           </div>
         </div>
 
-        {users.map(u => (
+        {filteredUsers.map(u => (
           <div key={u.id} className="left-employee">
             <div className="name">{u.last_name} {u.first_name?.[0] || ""}. {u.patronymic?.[0] || ""}.</div>
             <div className="role">Бариста</div>
@@ -54,8 +174,9 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
             display: "grid",
             gridTemplateColumns: gridTemplate,
             gap: "8px",
-            alignItems: "center",
-            padding: "8px 4px"
+            alignItems: "stretch",
+            padding: "0 0 0 0",
+            marginBottom: "8px"
           }}
         >
           {days.map((d, i) => (
@@ -68,7 +189,7 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
 
         {/* Строки сотрудников */}
         <div className="rows">
-          {users.map(user => {
+          {filteredUsers.map(user => {
             const userSchedule = schedule.filter(s => s.user_id === user.id)
             return (
               <EmployeeScheduleRow
@@ -79,6 +200,7 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
                 mode={mode}
                 currentUserId={currentUserId}
                 currentRoleId={currentRoleId}
+                onConfirmSchedule={onConfirmSchedule}
               />
             );
           })}

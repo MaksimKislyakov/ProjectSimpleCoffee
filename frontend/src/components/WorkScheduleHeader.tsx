@@ -19,13 +19,39 @@ const WorkScheduleHeader: React.FC<Props> = ({
   onNext,
   onModeChange,
 }) => {
-  const monthName = currentDate.toLocaleDateString("ru-RU", {
-    month: "long",
-    year: "numeric"
-  })
-
   const navigate = useNavigate();
   const handleGoToProfile = () => navigate("/profile");
+
+  // Форматируем период в зависимости от режима
+  const getPeriodLabel = () => {
+    if (mode === "week") {
+      const start = new Date(currentDate);
+      start.setDate(currentDate.getDate() - (currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1));
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      
+      const startDay = start.getDate();
+      const endDay = end.getDate();
+      const month = start.toLocaleDateString("ru-RU", { month: "long" });
+      
+      if (start.getMonth() === end.getMonth()) {
+        return `${startDay} - ${endDay} ${month}`;
+      } else {
+        const startMonth = start.toLocaleDateString("ru-RU", { month: "long" });
+        const endMonth = end.toLocaleDateString("ru-RU", { month: "long" });
+        return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+      }
+    } else {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDate();
+      const endDay = lastDay.getDate();
+      const monthName = currentDate.toLocaleDateString("ru-RU", { month: "long" });
+      return `${startDay} - ${endDay} ${monthName}`;
+    }
+  };
 
   return (
     <div className="schedule-header">
@@ -35,7 +61,7 @@ const WorkScheduleHeader: React.FC<Props> = ({
       <div className="currentPeriod">
         <div className="calendar">
           <Icons.CalendarIcon title="календарь"/>
-          <span className="label">{monthName}</span>
+          <span className="label">{getPeriodLabel()}</span>
         </div>
         <div className="arrows">
           <button className="arrowBtn" onClick={onPrev}>‹</button>

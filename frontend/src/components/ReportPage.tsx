@@ -19,7 +19,7 @@ const ReportPage: React.FC = () => {
 
   const { pathname } = useLocation();
   const scheduleActive = pathname.startsWith("/schedule");
-  const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
+  const reportActive = pathname.startsWith("/report") || pathname.startsWith("/profile/report");
 
   useEffect(() => {
     if (role_id === 3) {

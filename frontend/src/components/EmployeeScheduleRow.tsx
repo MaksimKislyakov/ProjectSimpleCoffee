@@ -10,6 +10,7 @@ interface EmployeeScheduleRowProps {
   mode: "week" | "month"
   currentUserId: number | null
   currentRoleId: number
+  onConfirmSchedule: (scheduleId: number) => Promise<void>
 }
 
 export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
@@ -19,12 +20,14 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
   mode,
   currentUserId,
   currentRoleId,
+  onConfirmSchedule,
 }) => {
   // gridTemplateColumns повторяет количество колонок (чтобы выровнять с заголовком)
   const gridStyle: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: `repeat(${days.length}, 1fr)`,
-    gap: "8px"
+    gap: "8px",
+    alignItems: "stretch"
   }
 
   return (
@@ -42,7 +45,7 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
             )
           })
 
-          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} />
+          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} onConfirmSchedule={onConfirmSchedule} />
         })}
       </div>
     </div>

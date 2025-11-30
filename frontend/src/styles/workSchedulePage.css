@@ -115,27 +115,155 @@
 }
 
 .left-header {
-  padding: 12px 16px;
+  padding: 6px;
   font-size: 20px;
   font-weight: 600;
   background: #fff;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  margin-bottom: 9px;
+  box-sizing: border-box;
+  gap: 20px;
 }
 
 .left-header p {
   margin: 0;
+  margin-bottom: 8px;
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-input {
+  width: 150px;
+  height: 29px;
+  border-radius: 5px;
+  border: 1px solid #B7B7B7;
+  background: #F4F4F4;
+  padding: 7px 9px;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #ff7b32;
+  background: #fff;
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.search-clear:hover {
+  color: #333;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #B7B7B7;
+  border-radius: 5px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s ease;
+}
+
+.search-dropdown-item:hover {
+  background: #F4F4F4;
+}
+
+.search-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.today-filter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.today-toggle {
+  width: 52px;
+  height: 26px;
+  border-radius: 20px;
+  background: #EE9F71;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.today-toggle.active {
+  background: #E67634;
+}
+
+.today-toggle-slider {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.3s ease;
+  transform: translateX(0);
+}
+
+.today-toggle.active .today-toggle-slider {
+  transform: translateX(26px);
 }
 
 .left-employee {
   padding: 14px 16px;
   height: 105px;
+  min-height: 105px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   background: #F4F4F4;
   border-radius: 12px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
 .left-employee .name {
@@ -204,7 +332,15 @@
   padding: 10px 6px;
   text-align: center;
   border-radius: 10px;
-  background: #fafafa;
+  background: #F4F4F4;
+  width: 36px;
+  height: 60px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 2px 4px 0px #00000040;
 }
 
 .dow {
@@ -238,7 +374,9 @@
 .employee-row {
   display: grid;
   grid-template-columns: 1fr; /* один столбец — days-row */
-  padding: 8px 0;
+  padding: 0;
+  margin-bottom: 8px;
+  align-items: stretch;
 }
 
 .rows {
@@ -286,16 +424,25 @@
 .days-row {
   display: grid; /* inline grid устанавливается из компонента */
   gap: 8px;
+  align-items: stretch;
 }
 
 .day-cell {
   height: 105px !important;
-  width: 36px !important;
+  min-height: 105px;
+  min-width: 36px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .day-cell.empty {
   background: #f7f7f7;
   border-radius: 10px;
+}
+
+.empty-slot {
+  width: 100%;
+  height: 100%;
 }
 
 .day-cell.filled.active {
@@ -352,11 +499,15 @@
 
 /* Смена подтверждена — оранжевый */
 .shift-confirmed {
-  background: #ff8c3e;
+  background: #EE9F71;
   color: #fff;
   border-radius: 10px;
   box-sizing: border-box;
   padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* Смена не подтверждена — серый */
@@ -366,13 +517,106 @@
   border-radius: 10px;
   box-sizing: border-box;
   padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Контент ячейки дня */
+.day-cell-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: 4px;
+}
+
+/* Время рабочего дня */
+.day-cell-time {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.shift-confirmed .day-cell-time {
+  color: #fff;
+}
+
+.shift-unconfirmed .day-cell-time {
+  color: #666;
+}
+
+/* Нижняя часть ячейки */
+.day-cell-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* Иконка статуса */
+.day-cell-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.day-cell-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Кнопка подтверждения */
+.day-cell-confirm-btn {
+  background: #E67634;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: "Montserrat", sans-serif;
+  white-space: nowrap;
+}
+
+.day-cell-confirm-btn:hover {
+  background: #ff6b1a;
+}
+
+.day-cell-confirm-btn:active {
+  background: #e55a0f;
+}
+
+/* Для режима неделя — увеличиваем размеры */
+.days-row.week-mode .day-cell-time {
+  font-size: 12px;
+}
+
+.days-row.week-mode .day-cell-confirm-btn {
+  font-size: 11px;
+  padding: 5px 10px;
+}
+
+.days-row.week-mode .day-cell-icon {
+  width: 24px;
+  height: 24px;
 }
 
 /* Для режима неделя — шире ячейки */
 .days-row.week-mode .day-cell,
 .days-header.week-mode .day-col {
-  width: 70px !important;
-  min-width: 70px !important;
+  min-width: 130px !important;
+  width: 100%;
 }
 
 @media (max-width: 1200px) {

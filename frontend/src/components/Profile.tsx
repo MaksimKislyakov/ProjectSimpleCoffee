@@ -357,12 +357,12 @@ const handleAddSchedule = async (data: any) => {
   const NavButtons: React.FC = () => {
     const { pathname } = useLocation();
     const scheduleActive = pathname.startsWith("/schedule");
-    const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
+    const reportActive = pathname.startsWith("/report") || pathname.startsWith("/profile/report");
 
     return (
       <>
         <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
-        <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/manager")}>Отчёт</button>
+        <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>Отчёт</button>
       </>
     );
   };

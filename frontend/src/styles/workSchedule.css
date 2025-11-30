@@ -117,9 +117,9 @@
 }
 
 .filterBtn.active {
-    background: #ff7b32;
+    background: #E67634;
     color: white;
-    border-color: #ff7b32;
+    border-color: #E67634;
     font-weight: 500;
 }
 

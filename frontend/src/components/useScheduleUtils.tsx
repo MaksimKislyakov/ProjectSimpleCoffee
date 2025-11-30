@@ -63,21 +63,37 @@ export const generateMonthDays = (date: Date = new Date()): DayData[] => {
 // --- Заголовок недели ---
 export const getWeekLabel = (date: Date): string => {
   const start = new Date(date);
-  start.setDate(date.getDate() - date.getDay() + 1);
+  start.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
 
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
 
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const month = start.toLocaleDateString("ru-RU", { month: "long" });
 
-  return `${fmt(start)} – ${fmt(end)}`;
+  // Если начало и конец в одном месяце
+  if (start.getMonth() === end.getMonth()) {
+    return `${startDay} - ${endDay} ${month}`;
+  } else {
+    // Если неделя переходит через месяц
+    const startMonth = start.toLocaleDateString("ru-RU", { month: "long" });
+    const endMonth = end.toLocaleDateString("ru-RU", { month: "long" });
+    return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+  }
 };
 
 // --- Заголовок месяца ---
 export const getMonthLabel = (date: Date): string => {
-  return date.toLocaleDateString("ru-RU", {
-    month: "long",
-    year: "numeric",
-  });
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  const startDay = firstDay.getDate();
+  const endDay = lastDay.getDate();
+  const monthName = date.toLocaleDateString("ru-RU", { month: "long" });
+  
+  return `${startDay} - ${endDay} ${monthName}`;
 };

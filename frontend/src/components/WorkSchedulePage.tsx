@@ -64,6 +64,30 @@ const WorkSchedulePage: React.FC = () => {
   }
 };
 
+  const confirmSchedule = async (scheduleId: number) => {
+    try {
+      // Параметры передаются как query-параметры, а не в body
+      const res = await fetch(`/api/v1/schedule/${scheduleId}/confirm?is_confirmed=true`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Ошибка подтверждения смены:", res.status, errorData);
+        return;
+      }
+
+      // Обновляем расписание после подтверждения
+      await loadSchedule();
+    } catch (e) {
+      console.error("Ошибка подтверждения смены:", e);
+    }
+  };
+
 
   useEffect(() => {
     loadUsers()
@@ -103,7 +127,7 @@ const WorkSchedulePage: React.FC = () => {
 
   const { pathname } = useLocation();
   const scheduleActive = pathname.startsWith("/schedule");
-  const reportActive = pathname.startsWith("/manager") || pathname.startsWith("/profile/report");
+  const reportActive = pathname.startsWith("/report") || pathname.startsWith("/profile/report");
 
   return (
     <div className="work-schedule-page">
@@ -114,7 +138,7 @@ const WorkSchedulePage: React.FC = () => {
                 <div className="manager-controls">
                   <div className="nav-buttons">
                     <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
-                    <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/manager")}>Отчёт</button>
+                    <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>Отчёт</button>
                   </div>
                 </div>
               )}
@@ -136,6 +160,7 @@ const WorkSchedulePage: React.FC = () => {
           mode={mode}
           currentUserId={Number(localStorage.getItem("user_id")) || null}
           currentRoleId={role_id}
+          onConfirmSchedule={confirmSchedule}
         />
         </div>
     </div>
