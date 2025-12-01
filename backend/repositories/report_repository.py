@@ -20,15 +20,17 @@ class ReportRepository(ScheduleRepository):
         await self.session.refresh(report)
 
         return report
-    
-    async def get_total_adwards_and_fine(self, user_id: int, start_date: datetime, end_date: datetime) -> List[ReportModel]:
+
+    async def get_total_adwards_and_fine(
+        self, user_id: int, start_date: datetime, end_date: datetime
+    ) -> List[ReportModel]:
         period_start = datetime.combine(start_date.date(), datetime.min.time())
         period_end = datetime.combine(end_date.date(), datetime.max.time())
-        
+
         query = select(ReportModel).where(
             ReportModel.user_id == user_id,
             ReportModel.date_of_issue >= period_start,
-            ReportModel.date_of_issue <= period_end
+            ReportModel.date_of_issue <= period_end,
         )
         result = await self.session.execute(query)
         return result.scalars().all()

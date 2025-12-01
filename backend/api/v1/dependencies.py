@@ -21,36 +21,65 @@ from core.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-async def get_async_session() :
+
+async def get_async_session():
     async with async_session() as session:
         yield session
 
-async def get_user_repository(session: AsyncSession = Depends(get_async_session)) -> UserRepository:
+
+async def get_user_repository(
+    session: AsyncSession = Depends(get_async_session),
+) -> UserRepository:
     return UserRepository(session)
 
-async def get_schedule_repository(session: AsyncSession = Depends(get_async_session)) -> ScheduleRepository:
+
+async def get_schedule_repository(
+    session: AsyncSession = Depends(get_async_session),
+) -> ScheduleRepository:
     return ScheduleRepository(session)
 
-async def get_report_repository(session: AsyncSession = Depends(get_async_session)) -> ReportRepository:
+
+async def get_report_repository(
+    session: AsyncSession = Depends(get_async_session),
+) -> ReportRepository:
     return ReportRepository(session)
 
-async def get_coffee_shop_repository(session: AsyncSession = Depends(get_async_session)) -> CoffeShopsRepository:
+
+async def get_coffee_shop_repository(
+    session: AsyncSession = Depends(get_async_session),
+) -> CoffeShopsRepository:
     return CoffeShopsRepository(session)
 
-async def get_auth_service(repo: UserRepository = Depends(get_user_repository)) -> AuthService:
+
+async def get_auth_service(
+    repo: UserRepository = Depends(get_user_repository),
+) -> AuthService:
     return AuthService(repo)
 
-async def get_user_service(repo: UserRepository = Depends(get_user_repository)) -> UserService:
+
+async def get_user_service(
+    repo: UserRepository = Depends(get_user_repository),
+) -> UserService:
     return UserService(repo)
 
-async def get_schedule_service(repo: ScheduleRepository = Depends(get_schedule_repository)) -> ScheduleService:
+
+async def get_schedule_service(
+    repo: ScheduleRepository = Depends(get_schedule_repository),
+) -> ScheduleService:
     return ScheduleService(repo)
-    
-async def get_report_service(repo_report: ReportRepository = Depends(get_report_repository)) -> ScheduleService:
+
+
+async def get_report_service(
+    repo_report: ReportRepository = Depends(get_report_repository),
+) -> ScheduleService:
     return ReportService(repo_report)
 
-async def get_coffee_shop_service(repo: CoffeShopsRepository = Depends(get_coffee_shop_repository)) -> CoffeeShopService:
+
+async def get_coffee_shop_service(
+    repo: CoffeShopsRepository = Depends(get_coffee_shop_repository),
+) -> CoffeeShopService:
     return CoffeeShopService(repo)
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Проверяет Bearer-токен, декодирует JWT и возвращает текущего пользователя."""
@@ -59,7 +88,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"}, 
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:
@@ -67,7 +96,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             token,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
-            options={"verify_sub": False}
+            options={"verify_sub": False},
         )
 
         user_id: str = payload.get("sub")
