@@ -21,7 +21,8 @@ dependencies = [
     "psycopg2 (>=2.9.11,<3.0.0)",
     "bcrypt (==3.2.2)",
     "passlib (==1.7.4)",
-    "ruff (>=0.14.7,<0.15.0)"
+    "ruff (>=0.14.7,<0.15.0)",
+    "prometheus-client (>=0.23.1,<0.24.0)"
 ]
 
 
