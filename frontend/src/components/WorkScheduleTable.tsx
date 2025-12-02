@@ -11,15 +11,42 @@ interface Props {
   currentUserId: number | null
   currentRoleId: number
   onConfirmSchedule: (scheduleId: number) => Promise<void>
+  searchQuery?: string
+  setSearchQuery?: (query: string) => void
+  selectedUserId?: number | null
+  setSelectedUserId?: (id: number | null) => void
+  showTodayOnly?: boolean
+  setShowTodayOnly?: (show: boolean) => void
 }
 
-const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, currentUserId, currentRoleId, onConfirmSchedule }) => {
+const WorkScheduleTable: React.FC<Props> = ({ 
+  users, 
+  schedule, 
+  days, 
+  mode, 
+  currentUserId, 
+  currentRoleId, 
+  onConfirmSchedule,
+  searchQuery: externalSearchQuery,
+  setSearchQuery: externalSetSearchQuery,
+  selectedUserId: externalSelectedUserId,
+  setSelectedUserId: externalSetSelectedUserId,
+  showTodayOnly: externalShowTodayOnly,
+  setShowTodayOnly: externalSetShowTodayOnly
+}) => {
   const rightRef = useRef<HTMLDivElement | null>(null)
-  const searchRef = useRef<HTMLDivElement | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [internalSearchQuery, setInternalSearchQuery] = useState("")
+  const [internalSelectedUserId, setInternalSelectedUserId] = useState<number | null>(null)
+  const [internalShowTodayOnly, setInternalShowTodayOnly] = useState(false)
+  
+  // Используем внешние или внутренние состояния
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery
+  const setSearchQuery = externalSetSearchQuery || setInternalSearchQuery
+  const selectedUserId = externalSelectedUserId !== undefined ? externalSelectedUserId : internalSelectedUserId
+  const setSelectedUserId = externalSetSelectedUserId || setInternalSelectedUserId
+  const showTodayOnly = externalShowTodayOnly !== undefined ? externalShowTodayOnly : internalShowTodayOnly
+  const setShowTodayOnly = externalSetShowTodayOnly || setInternalShowTodayOnly
   const [isSearchFocused, setIsSearchFocused] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
-  const [showTodayOnly, setShowTodayOnly] = useState(false)
 
   // единый шаблон колонок для заголовка и для строк
   const gridTemplate = `repeat(${Math.max(1, days.length)}, 1fr)`
@@ -70,6 +97,7 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
   }, [filteredUsersBySelection, showTodayOnly, schedule])
 
   // Закрытие выпадающего списка при клике вне области
+  const searchRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -83,27 +111,6 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
     }
   }, [])
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setSelectedUserId(null) // Сбрасываем выбор при изменении поиска
-    setIsSearchFocused(true)
-  }
-
-  const handleUserSelect = (user: any) => {
-    setSelectedUserId(user.id)
-    setSearchQuery(`${user.last_name} ${user.first_name} ${user.patronymic || ""}`.trim())
-    setIsSearchFocused(false)
-  }
-
-  const handleClearSearch = () => {
-    setSearchQuery("")
-    setSelectedUserId(null)
-    setIsSearchFocused(false)
-  }
-
-  const handleTodayToggle = () => {
-    setShowTodayOnly(!showTodayOnly)
-  }
 
   return (
     <div className="schedule-wrapper">
@@ -119,11 +126,19 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
                 className="search-input"
                 placeholder="Поиск..."
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setSelectedUserId(null)
+                  setIsSearchFocused(true)
+                }}
                 onFocus={() => setIsSearchFocused(true)}
               />
               {searchQuery && (
-                <button className="search-clear" onClick={handleClearSearch} title="Очистить">
+                <button className="search-clear" onClick={() => {
+                  setSearchQuery("")
+                  setSelectedUserId(null)
+                  setIsSearchFocused(false)
+                }} title="Очистить">
                   ×
                 </button>
               )}
@@ -133,7 +148,11 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
                     <div
                       key={user.id}
                       className="search-dropdown-item"
-                      onClick={() => handleUserSelect(user)}
+                      onClick={() => {
+                        setSelectedUserId(user.id)
+                        setSearchQuery(`${user.last_name} ${user.first_name} ${user.patronymic || ""}`.trim())
+                        setIsSearchFocused(false)
+                      }}
                     >
                       {user.last_name} {user.first_name} {user.patronymic || ""}
                     </div>
@@ -147,7 +166,7 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
             <p>Сегодня</p>
             <button
               className={`today-toggle ${showTodayOnly ? "active" : ""}`}
-              onClick={handleTodayToggle}
+              onClick={() => setShowTodayOnly(!showTodayOnly)}
               title={showTodayOnly ? "Показать все дни" : "Показать только сегодня"}
             >
               <span className="today-toggle-slider"></span>
@@ -179,12 +198,22 @@ const WorkScheduleTable: React.FC<Props> = ({ users, schedule, days, mode, curre
             marginBottom: "8px"
           }}
         >
-          {days.map((d, i) => (
-            <div className="day-col" key={i}>
-              <div className="dow">{d.weekday}</div>
-              <div className="day-num">{d.dayNumber}</div>
-            </div>
-          ))}
+          {days.map((d, i) => {
+            // Проверяем, является ли день сегодняшним
+            const today = new Date();
+            const dayDate = d.fullDate;
+            const isToday = 
+              dayDate.getFullYear() === today.getFullYear() &&
+              dayDate.getMonth() === today.getMonth() &&
+              dayDate.getDate() === today.getDate();
+            
+            return (
+              <div className={`day-col ${isToday ? "day-col-today" : ""}`} key={i}>
+                <div className="dow">{d.weekday}</div>
+                <div className="day-num">{d.dayNumber}</div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Строки сотрудников */}

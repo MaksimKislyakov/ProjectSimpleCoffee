@@ -10,6 +10,8 @@ interface Props {
   onPrev: () => void
   onNext: () => void
   onModeChange: (m: "week" | "month") => void
+  onSettingsClick?: () => void
+  showSettings?: boolean
 }
 
 const WorkScheduleHeader: React.FC<Props> = ({
@@ -18,12 +20,16 @@ const WorkScheduleHeader: React.FC<Props> = ({
   onPrev,
   onNext,
   onModeChange,
+  onSettingsClick,
+  showSettings = true,
 }) => {
   const navigate = useNavigate();
   const handleGoToProfile = () => navigate("/profile");
 
   // Форматируем период в зависимости от режима
   const getPeriodLabel = () => {
+    const year = currentDate.getFullYear();
+    
     if (mode === "week") {
       const start = new Date(currentDate);
       start.setDate(currentDate.getDate() - (currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1));
@@ -35,21 +41,20 @@ const WorkScheduleHeader: React.FC<Props> = ({
       const month = start.toLocaleDateString("ru-RU", { month: "long" });
       
       if (start.getMonth() === end.getMonth()) {
-        return `${startDay} - ${endDay} ${month}`;
+        return `${startDay} - ${endDay} ${month} ${year}`;
       } else {
         const startMonth = start.toLocaleDateString("ru-RU", { month: "long" });
         const endMonth = end.toLocaleDateString("ru-RU", { month: "long" });
-        return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+        return `${startDay} ${startMonth} - ${endDay} ${endMonth} ${year}`;
       }
     } else {
-      const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       const startDay = firstDay.getDate();
       const endDay = lastDay.getDate();
       const monthName = currentDate.toLocaleDateString("ru-RU", { month: "long" });
-      return `${startDay} - ${endDay} ${monthName}`;
+      return `${startDay} - ${endDay} ${monthName} ${year}`;
     }
   };
 
@@ -81,7 +86,13 @@ const WorkScheduleHeader: React.FC<Props> = ({
         >
           Месяц
         </button>
-        <Icons.SettingsIcon className="settingsBtn"/>
+        {showSettings && (
+          <Icons.SettingsIcon 
+            className="settingsBtn" 
+            onClick={onSettingsClick}
+            style={{ cursor: "pointer" }}
+          />
+        )}
       </div>
     </div>
   )
