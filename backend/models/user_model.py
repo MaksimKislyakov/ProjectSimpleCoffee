@@ -3,11 +3,13 @@ from db.base import Base
 from datetime import datetime
 
 from models.roles_model import Roles
+
 # from models.coffeshops import CoffeeShops
+
 
 class User(Base):
     """Модель пользователя системы.
-    
+
     Attributes:
         id: Уникальный идентификатор пользователя (autoincrement)
         hashed_password: Хэшированный пароль пользователя
@@ -23,6 +25,7 @@ class User(Base):
         work_experience: Опыт работы в месяцах
         data_work_start: Дата начала работы
     """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -41,4 +44,3 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"
-

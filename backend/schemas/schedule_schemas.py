@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-import re
 from datetime import datetime
 from typing import Optional
+from pydantic import ConfigDict
 
 class ScheduleBase(BaseModel):
     coffee_shop_id: int
@@ -10,9 +10,11 @@ class ScheduleBase(BaseModel):
     schedule_end_time: datetime
     is_confirmed: bool | None
 
+
 class ScheduleCreate(ScheduleBase):
     user_id: int
     pass
+
 
 class ScheduleRead(ScheduleBase):
     id: int
@@ -20,14 +22,15 @@ class ScheduleRead(ScheduleBase):
     actual_start_time: Optional[datetime] = None
     actual_end_time: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ScheduleUpdate(ScheduleBase):
     id: int
     user_id: int
     actual_start_time: datetime
     actual_end_time: datetime
+
 
 class ScheduleDelete(BaseModel):
     id: int

@@ -7,7 +7,7 @@ python-jose
 pydantic
 pydantic_settings
 pydantic[email]
-pydantic_settings
 psycopg2
 bcrypt==3.2.2 
 passlib==1.7.4
+prometheus-client==0.19.0
