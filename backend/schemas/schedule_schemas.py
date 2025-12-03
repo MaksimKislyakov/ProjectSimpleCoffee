@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-
+from pydantic import ConfigDict
 
 class ScheduleBase(BaseModel):
     coffee_shop_id: int
@@ -22,8 +22,7 @@ class ScheduleRead(ScheduleBase):
     actual_start_time: Optional[datetime] = None
     actual_end_time: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduleUpdate(ScheduleBase):
