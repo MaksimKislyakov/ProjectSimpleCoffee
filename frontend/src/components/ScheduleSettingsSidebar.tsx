@@ -53,8 +53,6 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
-  const [isStartTimeDropdownOpen, setIsStartTimeDropdownOpen] = useState(false);
-  const [isEndTimeDropdownOpen, setIsEndTimeDropdownOpen] = useState(false);
   
   // Определяем, показывать ли поле выбора сотрудника (только для админа и менеджера)
   const showEmployeeSelect = roleId === 1 || roleId === 2;
@@ -95,8 +93,6 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
       setIsStatusDropdownOpen(false);
       setSelectedEmployeeId(null);
       setIsEmployeeDropdownOpen(false);
-      setIsStartTimeDropdownOpen(false);
-      setIsEndTimeDropdownOpen(false);
     }
   }, [isOpen]);
   
@@ -454,11 +450,6 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 className="time-select"
-                style={{ 
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none'
-                }}
               >
                 {timeOptions.map((time) => (
                   <option key={time} value={time}>
@@ -471,11 +462,6 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 className="time-select"
-                style={{ 
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none'
-                }}
               >
                 {timeOptions.map((time) => (
                   <option key={time} value={time}>

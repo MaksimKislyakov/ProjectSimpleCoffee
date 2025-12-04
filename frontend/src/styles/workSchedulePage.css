@@ -103,8 +103,8 @@
 }
 
 .left-column {
-  width: 330px;
-  min-width: 330px;
+  width: 280px;
+  min-width: 280px;
   background: white;
   z-index: 10;
   position: sticky;
@@ -302,7 +302,7 @@
 
 .header-row {
   display: grid;
-  grid-template-columns: 340px 1fr; 
+  grid-template-columns: 290px 1fr; 
   position: sticky;
   top: 0;
   background: #fff;
@@ -556,6 +556,8 @@
   z-index: 0;
 }
 
+
+
 /* Полная смена (если не утренняя и не вечерняя) */
 .shift-work-day.shift-full {
   background: #EE9F71;
@@ -574,25 +576,25 @@
   align-items: center;
 }
 
-/* Смена не подтверждена — серый */
+/* Смена не подтверждена — серый фон, белый текст */
 .shift-unconfirmed {
   background: #e5e5e5;
-  color: #666;
+  color: #fff;
   border-radius: 10px;
   box-sizing: border-box;
   padding: 6px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
+  gap: 2px;
 }
 
 /* Контент ячейки дня */
 .day-cell-content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
   height: 100%;
   width: 100%;
@@ -609,13 +611,77 @@
   z-index: 1;
 }
 
+/* Позиционирование времени сверху (для режима месяца с утренними сменами) */
 .day-cell-time-top {
   margin-top: 0;
+  margin-bottom: 0;
 }
 
+/* Позиционирование времени снизу (для режима месяца с вечерними сменами) */
 .day-cell-time-bottom {
   margin-bottom: 0;
   margin-top: auto;
+}
+
+/* Для утренних смен в режиме месяца: время сверху */
+.shift-work-day.shift-morning .day-cell-content {
+  justify-content: flex-start;
+  gap: 2px;
+}
+
+/* Для полных смен в режиме месяца: время сверху */
+.shift-work-day.shift-full .day-cell-content {
+  justify-content: flex-start;
+  gap: 2px;
+}
+
+/* Для вечерних смен в режиме месяца: время снизу */
+.shift-work-day.shift-evening .day-cell-content {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+/* Для вечерних смен в режиме месяца: оба времени должны быть внизу, близко друг к другу */
+.shift-work-day.shift-evening .day-cell-time-top {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.shift-work-day.shift-evening .day-cell-time-bottom {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+
+/* Для режима недели: время должно быть ближе друг к другу, без больших промежутков */
+.days-row.week-mode .day-cell-content {
+  gap: 2px;
+  justify-content: flex-start;
+}
+
+.days-row.week-mode .day-cell-time-top {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.days-row.week-mode .day-cell-time-bottom {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+/* Для вечерних смен в режиме недели: время снизу */
+.days-row.week-mode .shift-work-day.shift-evening .day-cell-content {
+  justify-content: flex-end;
+}
+
+/* Для утренних смен в режиме недели: время сверху */
+.days-row.week-mode .shift-work-day.shift-morning .day-cell-content {
+  justify-content: flex-start;
+}
+
+/* Для полных смен в режиме недели: время сверху */
+.days-row.week-mode .shift-work-day.shift-full .day-cell-content {
+  justify-content: flex-start;
 }
 
 .shift-confirmed .day-cell-time {
@@ -623,7 +689,7 @@
 }
 
 .shift-unconfirmed .day-cell-time {
-  color: #666;
+  color: #fff;
 }
 
 .shift-work-day .day-cell-time {
@@ -672,7 +738,7 @@
 
 /* Для режима неделя — увеличиваем размеры */
 .days-row.week-mode .day-cell-time {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .days-row.week-mode .day-cell-confirm-btn {

@@ -514,11 +514,54 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             </div>
           ))}
         </WorkSchedule>
-        <AddScheduleModal
-          date={modalDate}
-          onClose={() => setModalDate(null)}
-          onSubmit={handleAddSchedule}
-        />
+        {modalDate && (
+          <AddScheduleModal
+            date={modalDate}
+            position={null}
+            onConfirm={async (startTime: string, endTime: string) => {
+              if (!user) return;
+              const token = localStorage.getItem("token");
+              
+              const formatLocalDateTime = (date: Date, time: string): string => {
+                const [hours, minutes] = time.split(":").map(Number);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+              };
+
+              const body = {
+                user_id: user.id,
+                coffee_shop_id: user.coffee_shop_id,
+                status: "active",
+                schedule_start_time: formatLocalDateTime(modalDate, startTime),
+                schedule_end_time: formatLocalDateTime(modalDate, endTime),
+                is_confirmed: false
+              };
+
+              const res = await fetch("/api/v1/schedule/create_schedule", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+              });
+
+              if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Ошибка ${res.status}`);
+              }
+
+              setModalDate(null);
+              // Перезагружаем расписание для обновления данных
+              if (user) {
+                fetchSchedule();
+              }
+            }}
+            onClose={() => setModalDate(null)}
+          />
+        )}
 
       </main>
     </div>

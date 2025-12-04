@@ -10,7 +10,8 @@ interface Props {
   mode: "week" | "month"
   currentUserId: number | null
   currentRoleId: number
-  onConfirmSchedule: (scheduleId: number) => Promise<void>
+  onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>
+  onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>
   searchQuery?: string
   setSearchQuery?: (query: string) => void
   selectedUserId?: number | null
@@ -27,6 +28,7 @@ const WorkScheduleTable: React.FC<Props> = ({
   currentUserId, 
   currentRoleId, 
   onConfirmSchedule,
+  onCreateSchedule,
   searchQuery: externalSearchQuery,
   setSearchQuery: externalSetSearchQuery,
   selectedUserId: externalSelectedUserId,
@@ -38,6 +40,8 @@ const WorkScheduleTable: React.FC<Props> = ({
   const [internalSearchQuery, setInternalSearchQuery] = useState("")
   const [internalSelectedUserId, setInternalSelectedUserId] = useState<number | null>(null)
   const [internalShowTodayOnly, setInternalShowTodayOnly] = useState(false)
+  const [openModalScheduleId, setOpenModalScheduleId] = useState<number | null>(null)
+  const [openAddModalKey, setOpenAddModalKey] = useState<string | null>(null) // Формат: "userId-dateISO"
   
   // Используем внешние или внутренние состояния
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery
@@ -174,12 +178,21 @@ const WorkScheduleTable: React.FC<Props> = ({
           </div>
         </div>
 
-        {filteredUsers.map(u => (
-          <div key={u.id} className="left-employee">
-            <div className="name">{u.last_name} {u.first_name?.[0] || ""}. {u.patronymic?.[0] || ""}.</div>
-            <div className="role">Бариста</div>
-          </div>
-        ))}
+        {filteredUsers.map(u => {
+          // Определяем название роли на основе role_id
+          const getRoleName = (roleId: number | undefined) => {
+            if (roleId === 1) return "Администратор";
+            if (roleId === 2) return "Менеджер";
+            return "Бариста";
+          };
+          
+          return (
+            <div key={u.id} className="left-employee">
+              <div className="name">{u.last_name} {u.first_name?.[0] || ""}. {u.patronymic?.[0] || ""}.</div>
+              <div className="role">{getRoleName(u.role_id)}</div>
+            </div>
+          );
+        })}
 
       </div>
 
@@ -230,6 +243,11 @@ const WorkScheduleTable: React.FC<Props> = ({
                 currentUserId={currentUserId}
                 currentRoleId={currentRoleId}
                 onConfirmSchedule={onConfirmSchedule}
+                onCreateSchedule={onCreateSchedule}
+                openModalScheduleId={openModalScheduleId}
+                setOpenModalScheduleId={setOpenModalScheduleId}
+                openAddModalKey={openAddModalKey}
+                setOpenAddModalKey={setOpenAddModalKey}
               />
             );
           })}

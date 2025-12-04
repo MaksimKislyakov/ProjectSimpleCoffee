@@ -10,7 +10,12 @@ interface EmployeeScheduleRowProps {
   mode: "week" | "month"
   currentUserId: number | null
   currentRoleId: number
-  onConfirmSchedule: (scheduleId: number) => Promise<void>
+  onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>
+  onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>
+  openModalScheduleId: number | null
+  setOpenModalScheduleId: (id: number | null) => void
+  openAddModalKey: string | null
+  setOpenAddModalKey: (key: string | null) => void
 }
 
 export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
@@ -21,6 +26,11 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
   currentUserId,
   currentRoleId,
   onConfirmSchedule,
+  onCreateSchedule,
+  openModalScheduleId,
+  setOpenModalScheduleId,
+  openAddModalKey,
+  setOpenAddModalKey,
 }) => {
   // gridTemplateColumns повторяет количество колонок (чтобы выровнять с заголовком)
   const gridStyle: React.CSSProperties = {
@@ -45,7 +55,7 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
             )
           })
 
-          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} onConfirmSchedule={onConfirmSchedule} />
+          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} onConfirmSchedule={onConfirmSchedule} onCreateSchedule={onCreateSchedule} openModalScheduleId={openModalScheduleId} setOpenModalScheduleId={setOpenModalScheduleId} openAddModalKey={openAddModalKey} setOpenAddModalKey={setOpenAddModalKey} mode={mode} />
         })}
       </div>
     </div>

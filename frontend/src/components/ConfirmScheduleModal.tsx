@@ -23,6 +23,16 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const startTimeRef = useRef<HTMLInputElement>(null);
 
+  // Функя для округленя времени до ближайших 15 минут
+  const roundTo15Minutes = (time: string): string => {
+    if (!time) return time;
+    const [hours, minutes] = time.split(":").map(Number);
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    const finalHours = hours + Math.floor(roundedMinutes / 60);
+    const finalMinutes = roundedMinutes % 60;
+    return `${String(finalHours).padStart(2, "0")}:${String(finalMinutes).padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     if (schedule && position) {
       const start = new Date(schedule.schedule_start_time);
@@ -34,8 +44,12 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
         return `${hours}:${minutes}`;
       };
       
-      setStartTime(formatTime(start));
-      setEndTime(formatTime(end));
+      // Округляем время до 15 минут при инициализации
+      const startTimeStr = formatTime(start);
+      const endTimeStr = formatTime(end);
+      
+      setStartTime(roundTo15Minutes(startTimeStr));
+      setEndTime(roundTo15Minutes(endTimeStr));
       setError(null);
       
       // Фокус на первое поле при открытии
@@ -78,6 +92,8 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
 
     try {
       await onConfirm(startTime, endTime);
+      // Закрываем модалку после успешного подтверждения
+      onClose();
     } catch (err: any) {
       setError(err.message || "Ошибка при сохранении изменений");
       setIsLoading(false);
@@ -115,6 +131,7 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
           left: `${position.left}px`
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
       >
         <p className="confirm-schedule-header">
           Рабочее время
@@ -129,7 +146,8 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
               className="time-input"
               value={startTime}
               onChange={(e) => {
-                setStartTime(e.target.value);
+                const rounded = roundTo15Minutes(e.target.value);
+                setStartTime(rounded);
                 setError(null);
               }}
               step="900"
@@ -147,7 +165,8 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
               className="time-input"
               value={endTime}
               onChange={(e) => {
-                setEndTime(e.target.value);
+                const rounded = roundTo15Minutes(e.target.value);
+                setEndTime(rounded);
                 setError(null);
               }}
               step="900"

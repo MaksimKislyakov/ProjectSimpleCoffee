@@ -1,88 +1,197 @@
-import React, { useState } from "react";
-import "../styles/addScheduleModal.css";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import "../styles/confirmScheduleModal.css";
 
 interface AddScheduleModalProps {
-  date: Date | null;
+  date: Date;
+  position: { top: number; left: number } | null;
+  onConfirm: (startTime: string, endTime: string) => Promise<void>;
   onClose: () => void;
-  onSubmit: (data: {
-    schedule_start_time: string;
-    schedule_end_time: string;
-    status: string;
-    comment: string;
-  }) => void;
+  modalRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ date, onClose, onSubmit }) => {
+const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ 
+  date, 
+  position, 
+  onConfirm, 
+  onClose,
+  modalRef
+}) => {
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("21:00");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const startTimeRef = useRef<HTMLInputElement>(null);
 
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [status, setStatus] = useState("active");
-  const [comment, setComment] = useState("");
-
-  if (!date) {
-    return null; // теперь return после хуков — это разрешено
-  }
-
-  const formatLocalDateTime = (date: Date, time: string) => {
-  const [h, m] = time.split(":");
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${h}:${m}:00`;
-};
-
-  const handleSubmit = () => {
-    if (!startTime || !endTime) return;
-
-    const schedule_start_time = formatLocalDateTime(date, startTime);
-    const schedule_end_time = formatLocalDateTime(date, endTime);
-
-    onSubmit({
-      status,
-      schedule_start_time,
-      schedule_end_time,
-      comment
-    });
+  // Функция для округления времени до ближайших 15 минут
+  const roundTo15Minutes = (time: string): string => {
+    if (!time) return time;
+    const [hours, minutes] = time.split(":").map(Number);
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    const finalHours = hours + Math.floor(roundedMinutes / 60);
+    const finalMinutes = roundedMinutes % 60;
+    return `${String(finalHours).padStart(2, "0")}:${String(finalMinutes).padStart(2, "0")}`;
   };
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-window">
-            <h2>Добавить расписание</h2>
-            <p>Дата: {date.toLocaleDateString()}</p>
+  useEffect(() => {
+    if (date && position) {
+      setError(null);
+      // Фокус на первое поле при открытии
+      setTimeout(() => {
+        startTimeRef.current?.focus();
+      }, 100);
+    }
+  }, [date, position]);
+
+  const validateTime = (start: string, end: string): boolean => {
+    if (!start || !end) {
+      setError("Заполните оба поля времени");
+      return false;
+    }
+
+    const [startHour, startMin] = start.split(":").map(Number);
+    const [endHour, endMin] = end.split(":").map(Number);
+
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+
+    if (endMinutes <= startMinutes) {
+      setError("Время окончания должно быть позже времени начала");
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
+  const handleConfirm = async (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    
+    if (!validateTime(startTime, endTime)) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await onConfirm(startTime, endTime);
+      // Закрываем модалку после успешного создания
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Ошибка при создании смены");
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose();
+    } else if (e.key === "Enter" && e.ctrlKey) {
+      handleConfirm(e as any);
+    }
+  };
+
+  if (!date) {
+    return null;
+  }
+  
+  // Если position не указан, используем центрирование по умолчанию
+  const defaultPosition = position || { top: window.innerHeight / 2, left: window.innerWidth / 2 };
+
+  const modalContent = (
+    <div 
+      className="confirm-schedule-modal-overlay"
+      onClick={onClose}
+      onKeyDown={handleKeyDown}
+    >
+      <div 
+        ref={modalRef}
+        className="confirm-schedule-modal"
+        style={{
+          top: position ? `${position.top}px` : '50%',
+          left: position ? `${position.left}px` : '50%',
+          transform: position ? 'translateX(-50%)' : 'translate(-50%, -50%)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
+      >
+        <p className="confirm-schedule-header">
+          Рабочее время
+        </p>
+        
+        <div className="confirm-schedule-time-inputs">
+          <div className="time-input-wrapper">
+            <label className="time-label">Начало</label>
+            <input
+              ref={startTimeRef}
+              type="time"
+              className="time-input"
+              value={startTime}
+              onChange={(e) => {
+                const rounded = roundTo15Minutes(e.target.value);
+                setStartTime(rounded);
+                setError(null);
+              }}
+              step="900"
+              min="00:00"
+              max="23:45"
+            />
+          </div>
+          
+          <span className="time-separator">-</span>
+          
+          <div className="time-input-wrapper">
+            <label className="time-label">Окончание</label>
+            <input
+              type="time"
+              className="time-input"
+              value={endTime}
+              onChange={(e) => {
+                const rounded = roundTo15Minutes(e.target.value);
+                setEndTime(rounded);
+                setError(null);
+              }}
+              step="900"
+              min="00:00"
+              max="23:45"
+            />
+          </div>
         </div>
 
-        <div className="time-row">
-            <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
-            -
-            <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+        {error && (
+          <div className="confirm-schedule-error">
+            {error}
+          </div>
+        )}
+
+        <div className="confirm-schedule-actions">
+          <button 
+            className="confirm-schedule-cancel-btn" 
+            onClick={handleCancel}
+            disabled={isLoading}
+          >
+            Отменить
+          </button>
+          <button 
+            className="confirm-schedule-btn" 
+            onClick={handleConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? "Сохранение..." : "Подтвердить"}
+          </button>
         </div>
-
-        {/*<label>
-          Статус:
-          <select value={status} onChange={e => setStatus(e.target.value)}>
-            <option value="active">Рабочий день</option>
-            <option value="vacation">Отпуск</option>
-            <option value="sick">Больничный</option>
-          </select>
-        </label>*/}
-
-        <label>
-          <input 
-          className="comment"
-          type="text"
-          placeholder="Комментарий"
-          value={comment} 
-          onChange={e => setComment(e.target.value)} />
-        </label>
-
-        <button className="save" onClick={handleSubmit}>Сохранить</button>
-        <button className="cancel" onClick={onClose}>Отмена</button>
       </div>
     </div>
   );
+
+  // Рендерим модалку через Portal вне структуры таблицы
+  return createPortal(modalContent, document.body);
 };
 
 export default AddScheduleModal;
