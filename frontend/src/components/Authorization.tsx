@@ -65,6 +65,7 @@ const Authorization: React.FC = () => {
 
                 const user = await meRes.json();
                 localStorage.setItem("role_id", String(user.role_id));
+                localStorage.setItem("user_id", String(user.id));
 
                 setSuccess(true);
                 setTimeout(() => {

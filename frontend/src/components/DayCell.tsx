@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import * as Icons from "../icons/index.ts";
 import ConfirmScheduleModal from "./ConfirmScheduleModal.tsx";
+import AddScheduleModal from "./AddScheduleModal.tsx";
 
 interface DayCellProps {
   schedule: any | null;
@@ -10,6 +11,12 @@ interface DayCellProps {
   currentUserId: number | null;
   currentRoleId: number;
   onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>;
+  onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>;
+  openModalScheduleId: number | null;
+  setOpenModalScheduleId: (id: number | null) => void;
+  openAddModalKey: string | null;
+  setOpenAddModalKey: (key: string | null) => void;
+  mode: "week" | "month";
 }
 
 export const DayCell: React.FC<DayCellProps> = ({ 
@@ -18,38 +25,95 @@ export const DayCell: React.FC<DayCellProps> = ({
   user, 
   currentUserId, 
   currentRoleId,
-  onConfirmSchedule 
+  onConfirmSchedule,
+  onCreateSchedule,
+  openModalScheduleId,
+  setOpenModalScheduleId,
+  openAddModalKey,
+  setOpenAddModalKey,
+  mode
 }) => {
-  const [showModal, setShowModal] = useState(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
+  const [addModalPosition, setAddModalPosition] = useState<{ top: number; left: number } | null>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const addModalRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        showModal &&
-        cellRef.current &&
-        modalRef.current &&
-        !cellRef.current.contains(event.target as Node) &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
-        setShowModal(false);
-        setModalPosition(null);
-      }
-    };
+  // Создаем уникальный ключ для этой ячейки: userId-dateISO
+  const addModalKey = `${user.id}-${day.fullDate.toISOString()}`;
+  const showAddModal = openAddModalKey === addModalKey;
+  const showModal = schedule && !schedule.is_confirmed && openModalScheduleId === schedule.id;
+  
+  // Проверяем, может ли текущий пользователь создавать смены для этого пользователя
+  // Роль 3 может создавать смены только для себя, роли 1 и 2 - для любого пользователя
+  const canCreateSchedule = onCreateSchedule && (
+    currentRoleId === 1 || 
+    currentRoleId === 2 ||
+    (currentRoleId === 3 && currentUserId === user.id)
+  );
 
-    if (showModal) {
-      document.addEventListener("mousedown", handleClickOutside);
+  const handleEmptyCellClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (canCreateSchedule && cellRef.current) {
+      // Закрываем другие модалки при открытии новой
+      setOpenModalScheduleId(null);
+      
+      const rect = cellRef.current.getBoundingClientRect();
+      setAddModalPosition({
+        top: rect.bottom + 10,
+        left: rect.left + rect.width / 2
+      });
+      setOpenAddModalKey(addModalKey);
     }
+  };
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showModal]);
+  const handleCreateSchedule = async (startTime: string, endTime: string) => {
+    if (onCreateSchedule) {
+      try {
+        await onCreateSchedule(day.fullDate, startTime, endTime, user.id);
+        setOpenAddModalKey(null);
+        setAddModalPosition(null);
+      } catch (error) {
+        throw error;
+      }
+    }
+  };
+
+  const handleCloseAddModal = () => {
+    setOpenAddModalKey(null);
+    setAddModalPosition(null);
+  };
+
+  // Закрываем модалку добавления при клике на другую ячейку (для подтверждения смены)
+  useEffect(() => {
+    if (openModalScheduleId !== null && showAddModal) {
+      setOpenAddModalKey(null);
+      setAddModalPosition(null);
+    }
+  }, [openModalScheduleId, showAddModal, setOpenAddModalKey]);
 
   if (!schedule) {
-    return <div className="day-cell empty"><div className="empty-slot" /></div>
+    return (
+      <>
+        <div 
+          className="day-cell empty"
+          onClick={canCreateSchedule ? handleEmptyCellClick : undefined}
+          style={{ cursor: canCreateSchedule ? 'pointer' : 'default' }}
+          ref={cellRef}
+        >
+          <div className="empty-slot" />
+        </div>
+        {showAddModal && addModalPosition && (
+          <AddScheduleModal
+            date={day.fullDate}
+            position={addModalPosition}
+            onConfirm={handleCreateSchedule}
+            onClose={handleCloseAddModal}
+            modalRef={addModalRef}
+          />
+        )}
+      </>
+    );
   }
 
   const start = new Date(schedule.schedule_start_time)
@@ -58,26 +122,47 @@ export const DayCell: React.FC<DayCellProps> = ({
   const fmt = (d: Date) =>
     d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", hour12: false })
 
-  const time = `${fmt(start)}-${fmt(end)}`
-
-  // Определяем тип смены: утренняя или вечерняя
-  // Утренняя: заканчивается до 17:00 включительно
-  // Вечерняя: начинается с 17:00 включительно
-  const endHour = end.getHours();
-  const startHour = start.getHours();
-  const isMorningShift = endHour < 17 || (endHour === 17 && end.getMinutes() === 0);
-  const isEveningShift = startHour >= 17;
-  const shiftType = isEveningShift ? "evening" : (isMorningShift ? "morning" : "full");
-
-  // Цвет смены: оранжевый только для рабочих дней (status === "active")
-  // Остальные типы смен сохраняют стандартный цвет
+  // Для рабочих дней: время без дефиса (например, "09:00 17:00")
+  // Для не-рабочих дней: время не показываем
   const confirmed = schedule.is_confirmed === true;
-  const isWorkDay = schedule.status?.toLowerCase() === "active" || schedule.status?.toLowerCase() === "рабочий день";
+  const statusLower = schedule.status?.toLowerCase() || "";
+  const isWorkDay = statusLower === "active" || statusLower === "рабочий день";
+  
+  // Если смена подтверждена и не является явным выходным/отпуском/больничным, 
+  // то считаем её рабочей сменой (для отображения оранжевым цветом)
+  const isNonWorkStatus = statusLower === "выходной" || statusLower === "vacation" || 
+                          statusLower === "отпуск" || statusLower === "sick" || 
+                          statusLower === "больничный";
+  const isConfirmedWorkShift = confirmed && !isNonWorkStatus && schedule.schedule_start_time && schedule.schedule_end_time;
+  
+  // Определяем финальный статус: рабочая смена или нет
+  const finalIsWorkDay = isWorkDay || isConfirmedWorkShift;
+  
+  // Формируем время только для рабочих дней
+  // В режиме месяца: одна строка "09:00 17:00"
+  // В режиме недели: время начала и окончания раздельно
+  const startTimeStr = fmt(start);
+  const endTimeStr = fmt(end);
+  const time = finalIsWorkDay ? (mode === "week" ? null : `${startTimeStr} ${endTimeStr}`) : "";
+
+  // Определяем тип смены: утренняя или вечерняя (только для рабочих дней)
+  let shiftType = "full";
+  if (finalIsWorkDay) {
+    const endHour = end.getHours();
+    const startHour = start.getHours();
+    const isMorningShift = endHour < 17 || (endHour === 17 && end.getMinutes() === 0);
+    const isEveningShift = startHour >= 17;
+    shiftType = isEveningShift ? "evening" : (isMorningShift ? "morning" : "full");
+  }
   
   let cellClass = "day-cell filled ";
-  if (isWorkDay) {
-    // Рабочие дни всегда оранжевые (подтвержденные и неподтвержденные)
-    cellClass += `shift-work-day shift-${shiftType}`;
+  if (finalIsWorkDay) {
+    // Рабочие дни: оранжевые если подтверждены, серые если не подтверждены
+    if (confirmed) {
+      cellClass += `shift-work-day shift-${shiftType}`;
+    } else {
+      cellClass += "shift-unconfirmed";
+    }
   } else {
     // Остальные типы смен: серые если не подтверждены, стандартный цвет если подтверждены
     cellClass += confirmed ? "shift-confirmed" : "shift-unconfirmed";
@@ -100,31 +185,34 @@ export const DayCell: React.FC<DayCellProps> = ({
     // Для "active", "рабочий день" и других статусов иконка остается null
   }
 
-  const handleMouseEnter = () => {
-    if (!confirmed && cellRef.current) {
+  const handleCellClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Только роли 1 и 2 могут подтверждать смены
+    const canConfirm = currentRoleId === 1 || currentRoleId === 2;
+    
+    if (!confirmed && schedule && cellRef.current && canConfirm) {
+      // Если кликнули на уже открытую модалку, закрываем её
+      if (openModalScheduleId === schedule.id) {
+        setOpenModalScheduleId(null);
+        setModalPosition(null);
+        return;
+      }
+      
+      // Открываем модалку для этой смены
       const rect = cellRef.current.getBoundingClientRect();
-      // Позиционируем модалку под ячейкой (внизу) относительно viewport (getBoundingClientRect уже дает координаты относительно viewport)
       setModalPosition({
         top: rect.bottom + 10, // 10px отступ снизу
         left: rect.left + rect.width / 2
       });
-      setShowModal(true);
-    }
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent) => {
-    // Не закрываем модалку при уходе курсора, если он переходит на модалку
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (relatedTarget && modalRef.current?.contains(relatedTarget)) {
-      return;
+      setOpenModalScheduleId(schedule.id);
     }
   };
 
   const handleConfirm = async (startTime: string, endTime: string) => {
-    if (schedule.id) {
+    if (schedule && schedule.id) {
       try {
         await onConfirmSchedule(schedule.id, startTime, endTime);
-        setShowModal(false);
+        setOpenModalScheduleId(null);
         setModalPosition(null);
       } catch (error) {
         // Ошибка обрабатывается в модалке
@@ -134,7 +222,7 @@ export const DayCell: React.FC<DayCellProps> = ({
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
+    setOpenModalScheduleId(null);
     setModalPosition(null);
   };
 
@@ -143,25 +231,63 @@ export const DayCell: React.FC<DayCellProps> = ({
       <div 
         ref={cellRef}
         className={cellClass}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onClick={handleCellClick}
+        style={{ 
+          cursor: (!confirmed && (currentRoleId === 1 || currentRoleId === 2)) 
+            ? 'pointer' 
+            : 'default' 
+        }}
       >
         <div className="day-cell-content">
-          {/* Время: сверху для утренней смены, снизу для вечерней */}
-          {isWorkDay && shiftType === "evening" ? (
+          {/* Для неподтвержденных смен: время всегда вверху */}
+          {!confirmed && schedule.schedule_start_time && schedule.schedule_end_time ? (
             <>
-              {/* Для вечерней смены: иконка сверху (если есть), время снизу */}
-              <div className="day-cell-top">
-                {confirmed && icon && (
-                  <div className="day-cell-icon">{icon}</div>
-                )}
-              </div>
-              <div className="day-cell-time day-cell-time-bottom">{time}</div>
+              <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+              <div className="day-cell-time day-cell-time-top">{endTimeStr}</div>
             </>
+          ) : finalIsWorkDay ? (
+            mode === "week" ? (
+              shiftType === "evening" ? (
+                <>
+                  {/* Режим недели, вечерняя смена: начало сверху, конец снизу */}
+                  <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                  <div className="day-cell-time day-cell-time-bottom">{endTimeStr}</div>
+                </>
+              ) : shiftType === "morning" ? (
+                <>
+                  {/* Режим недели, утренняя смена: начало и конец вверху */}
+                  <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                  <div className="day-cell-time day-cell-time-top">{endTimeStr}</div>
+                </>
+              ) : (
+                <>
+                  {/* Режим недели, полная смена: начало и конец вверху */}
+                  <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                  <div className="day-cell-time day-cell-time-top">{endTimeStr}</div>
+                </>
+              )
+            ) : shiftType === "evening" ? (
+              <>
+                {/* Режим месяца, вечерняя смена: начало сверху, конец снизу */}
+                <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                <div className="day-cell-time day-cell-time-bottom">{endTimeStr}</div>
+              </>
+            ) : shiftType === "morning" ? (
+              <>
+                {/* Режим месяца, утренняя смена: начало и конец вверху */}
+                <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                <div className="day-cell-time day-cell-time-top">{endTimeStr}</div>
+              </>
+            ) : (
+              <>
+                {/* Режим месяца, полная смена: начало и конец вверху */}
+                <div className="day-cell-time day-cell-time-top">{startTimeStr}</div>
+                <div className="day-cell-time day-cell-time-top">{endTimeStr}</div>
+              </>
+            )
           ) : (
             <>
-              {/* Для утренней смены: время сверху, иконка снизу (если есть) */}
-              <div className="day-cell-time day-cell-time-top">{time}</div>
+              {/* Для не-рабочих дней: только иконка снизу (если есть) */}
               <div className="day-cell-bottom">
                 {confirmed && icon && (
                   <div className="day-cell-icon">{icon}</div>
