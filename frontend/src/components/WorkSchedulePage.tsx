@@ -138,6 +138,30 @@ const WorkSchedulePage: React.FC = () => {
     }
   };
 
+  const deleteSchedule = async (scheduleId: number) => {
+    try {
+      const res = await fetch(`/api/v1/schedule/delete_schedule/${scheduleId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.detail || `Ошибка ${res.status}`;
+        throw new Error(errorMessage);
+      }
+
+      // Обновляем расписание после удаления
+      await loadSchedule();
+    } catch (e: any) {
+      console.error("Ошибка удаления смены:", e);
+      throw e;
+    }
+  };
+
   const saveSchedules = async (schedules: any[]) => {
     try {
       // Отправляем каждую смену отдельным запросом
@@ -488,6 +512,7 @@ const WorkSchedulePage: React.FC = () => {
           currentUserId={Number(localStorage.getItem("user_id")) || null}
           currentRoleId={role_id}
           onConfirmSchedule={confirmSchedule}
+          onDeleteSchedule={deleteSchedule}
           onCreateSchedule={(date, startTime, endTime, targetUserId) => createSchedule(date, startTime, endTime, targetUserId)}
         />
         </div>
