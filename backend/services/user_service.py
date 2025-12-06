@@ -83,10 +83,8 @@ class UserService:
             List[User]: Список всех пользователей
 
         Raises:
-            HTTPException: 403 если недостаточно прав
+            HTTPException: 404 если пользователи не найдены
         """
-        if current_user.role_id >= RolesEnum.barista:
-            raise HTTPException(status_code=403, detail="Не достаточно прав")
         all_users = await self.user_repo.get_all_users()
 
         if all_users is None:
