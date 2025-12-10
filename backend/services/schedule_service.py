@@ -254,7 +254,7 @@ class ScheduleService:
             HTTPException: 403 если недостаточно прав
             HTTPException: 404 если смена не найдена
         """
-        if current_user.role_id != RolesEnum.admin:
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
 
         del_schedule = await self.schedule_repo.delete_schedule(id_schedule)
