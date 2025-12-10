@@ -21,10 +21,23 @@ from fastapi.testclient import TestClient
 from models.roleEnum import RolesEnum
 
 
-def test_get_current_user_with_mocked_dependencies(mock_user, mock_user_service, client):
-    """Простой тест: авторизация мокнутого пользователя"""
-    
-    user_dict = {
+def test_get_current_user_with_mocked_dependencies(
+    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+) -> None:
+    """Тестирует GET /api/v1/user/me эндпоинт для получения информации о текущем пользователе.
+
+    Проверяет:
+    1. Эндпоинт возвращает HTTP статус код 200
+    2. Ответ содержит корректные данные пользователя
+    3. UserService.get_user_info() вызывается с правильным ID пользователя
+    4. Возвращенные данные соответствуют мокированной информации пользователя
+
+    Аргументы:
+        mock_user: Мок объект User из фикстуры
+        mock_user_service: Мок сервиса пользователей из фикстуры
+        client: Тестовый клиент из фикстуры
+    """
+    user_dict: Dict[str, Any] = {
         "id": 1,
         "first_name": "Test",
         "last_name": "User",
@@ -44,18 +57,31 @@ def test_get_current_user_with_mocked_dependencies(mock_user, mock_user_service,
     response = client.get("/api/v1/user/me")
 
     assert response.status_code == 200
-    
-    data = response.json()
+
+    data: Dict[str, Any] = response.json()
     assert data["id"] == 1
     assert data["email"] == "test@example.com"
 
     mock_user_service.get_user_info.assert_called_once_with(1)
 
 
-def test_create_user(mock_user, mock_user_service, client):
-    """Тест создания пользователя"""
-    
-    new_user_data = {
+def test_create_user(
+    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+) -> None:
+    """Тестирует POST /api/v1/user/create эндпоинт для создания нового пользователя.
+
+    Проверяет:
+    1. Эндпоинт возвращает HTTP статус код 200 при успешном создании
+    2. UserService.create_new_user() вызывается с корректными данными
+    3. Пользователь должен иметь права администратора для создания
+    4. Возвращается созданный пользователь с присвоенным ID
+
+    Аргументы:
+        mock_user: Мок объект User из фикстуры
+        mock_user_service: Мок сервиса пользователей из фикстуры
+        client: Тестовый клиент из фикстуры
+    """
+    new_user_data: Dict[str, Any] = {
         "first_name": "New",
         "last_name": "User",
         "email": "new@example.com",
@@ -69,8 +95,8 @@ def test_create_user(mock_user, mock_user_service, client):
         "work_experience": 0,
         "data_work_start": datetime.now().isoformat(),
     }
-    
-    created_user_dict = {
+
+    created_user_dict: Dict[str, Any] = {
         "id": 2,
         "first_name": "New",
         "last_name": "User",
@@ -95,10 +121,23 @@ def test_create_user(mock_user, mock_user_service, client):
     mock_user_service.create_new_user.assert_called_once()
 
 
-def test_get_all_users(mock_user, mock_user_service, client):
-    """Тест получения всех пользователей"""
-    
-    users_list = [
+def test_get_all_users(
+    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+) -> None:
+    """Тестирует GET /api/v1/user/all_users эндпоинт для получения списка всех пользователей.
+
+    Проверяет:
+    1. Эндпоинт возвращает HTTP статус код 200
+    2. UserService.get_all_users() вызывается с текущим пользователем
+    3. Возвращается список пользователей в формате JSON
+    4. Пользователь должен иметь права администратора для доступа
+
+    Аргументы:
+        mock_user: Мок объект User из фикстуры
+        mock_user_service: Мок сервиса пользователей из фикстуры
+        client: Тестовый клиент из фикстуры
+    """
+    users_list: List[Dict[str, Any]] = [
         {
             "id": 1,
             "first_name": "User1",
@@ -130,10 +169,24 @@ def test_get_all_users(mock_user, mock_user_service, client):
     mock_user_service.get_all_users.assert_called_once_with(mock_user)
 
 
-def test_delete_user(mock_user, mock_user_service, client):
-    """Тест удаления пользователя"""
-    
-    deleted_user_dict = {
+def test_delete_user(
+    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+) -> None:
+    """Тестирует DELETE /api/v1/user/delete_user/{user_id} эндпоинт для удаления пользователя.
+
+    Проверяет:
+    1. Эндпоинт возвращает HTTP статус код 200 при успешном удалении
+    2. UserService.delete_user() вызывается с правильными аргументами
+    3. Передается ID удаляемого пользователя и текущий пользователь
+    4. Пользователь должен иметь права администратора для удаления
+
+    Аргументы:
+        mock_user: Мок объект User из фикстуры
+        mock_user_service: Мок сервиса пользователей из фикстуры
+        client: Тестовый клиент из фикстуры
+    """
+
+    deleted_user_dict: Dict[str, Any] = {
         "id": 2,
         "first_name": "Deleted",
         "last_name": "User",
@@ -156,10 +209,23 @@ def test_delete_user(mock_user, mock_user_service, client):
     )
 
 
-def test_get_users_for_coffeeshop(mock_user, mock_user_service, client):
-    """Тест получения пользователей для кофейни"""
-    
-    users_list = [
+def test_get_users_for_coffeeshop(
+    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+) -> None:
+    """Тестирует GET /api/v1/user/get_users_for_coffeshop/{coffee_shop_id} эндпоинт.
+
+    Проверяет:
+    1. Эндпоинт возвращает HTTP статус код 200
+    2. UserService.get_all_users_for_coffeshop() вызывается с правильными аргументами
+    3. Передается ID кофейни и текущий пользователь
+    4. Пользователь должен иметь права администратора или менеджера для доступа
+
+    Аргументы:
+        mock_user: Мок объект User из фикстуры
+        mock_user_service: Мок сервиса пользователей из фикстуры
+        client: Тестовый клиент из фикстуры
+    """
+    users_list: List[Dict[str, Any]] = [
         {
             "id": 1,
             "first_name": "User1",
