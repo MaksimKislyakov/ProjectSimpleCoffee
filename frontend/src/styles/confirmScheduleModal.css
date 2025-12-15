@@ -146,3 +146,41 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ========== МОБИЛЬНАЯ ВЕРСИЯ ========== */
+@media (max-width: 768px) {
+  .confirm-schedule-modal {
+    width: calc(100vw - 32px);
+    max-width: 320px;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .confirm-schedule-time-inputs {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 20px;
+  }
+
+  .time-separator {
+    margin: 0;
+    transform: rotate(90deg);
+  }
+
+  .time-input-wrapper {
+    width: 100%;
+  }
+
+  .confirm-schedule-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .confirm-schedule-btn,
+  .confirm-schedule-cancel-btn {
+    width: 100%;
+    height: 36px;
+    font-size: 14px;
+  }
+}

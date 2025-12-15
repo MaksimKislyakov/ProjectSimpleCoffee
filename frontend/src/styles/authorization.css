@@ -3,6 +3,7 @@
   justify-content: center;
   align-items: first baseline;
   height: 100vh;
+  height: 100dvh;
   background-color: #f4f4f4;
   font-family: "Montserrat", sans-serif;
 }
@@ -24,6 +25,46 @@
   font-weight: 600;
   margin-bottom: 40px;
   color: #333;
+}
+
+/* ========== МОБИЛЬНАЯ ВЕРСИЯ (393px x 852px) ========== */
+@media (max-width: 394px) {
+  .auth-page {
+    align-items: center;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .auth-container {
+    padding: 2rem 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .auth-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .auth-form {
+    gap: 1rem;
+  }
+
+  .login-input {
+    height: 3.5rem;
+    font-size: 1.125rem;
+    padding: 0 1rem;
+  }
+
+  .login-button {
+    height: 3.5rem;
+    font-size: 1.25rem;
+  }
+
+  .auth-img {
+    display: none; /* Скрываем изображение на мобильной версии */
+  }
 }
 
 .auth-form {

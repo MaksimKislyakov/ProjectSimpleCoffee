@@ -21,6 +21,7 @@ const WorkSchedulePage: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false)
   const [coffeeShops, setCoffeeShops] = useState<any[]>([])
+  const [coffeeShopAddress, setCoffeeShopAddress] = useState<string>("")
 
   const token = localStorage.getItem("token")
   const role_id = Number(localStorage.getItem("role_id"));
@@ -406,6 +407,27 @@ const WorkSchedulePage: React.FC = () => {
           if (userData.id) {
             localStorage.setItem("user_id", String(userData.id));
           }
+          
+          // Загружаем адрес кофейни
+          if (userData.coffee_shop_id) {
+            try {
+              const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+                headers: { "Authorization": `Bearer ${token}` }
+              });
+              
+              if (coffeeShopRes.ok) {
+                const coffeeShopsData = await coffeeShopRes.json();
+                const shop = Array.isArray(coffeeShopsData) 
+                  ? coffeeShopsData.find((s: any) => s.id === userData.coffee_shop_id)
+                  : null;
+                if (shop && shop.adress) {
+                  setCoffeeShopAddress(shop.adress);
+                }
+              }
+            } catch (err) {
+              console.error("Ошибка загрузки адреса кофейни:", err);
+            }
+          }
         }
       } catch (e) {
         console.error("Ошибка загрузки пользователя:", e);
@@ -458,11 +480,50 @@ const WorkSchedulePage: React.FC = () => {
   const scheduleActive = pathname.startsWith("/schedule");
   const reportActive = pathname.startsWith("/report") || pathname.startsWith("/profile/report");
 
+  // Преобразование role_id в текст
+  const getRoleText = (roleId: number): string => {
+    switch (roleId) {
+      case 1:
+        return "Администратор";
+      case 2:
+        return "Менеджер";
+      case 3:
+        return "Бариста";
+      default:
+        return "Неизвестно";
+    }
+  };
+
+  // Форматирование имени в формате "Имя Фамилия И." (сокращенная фамилия) для мобильной версии
+  const getShortNameMobile = (firstName: string, lastName: string, patronymic: string): string => {
+    if (!firstName) return "";
+    
+    const patronymicInitial = patronymic ? patronymic.charAt(0).toUpperCase() + "." : "";
+    
+    // Если фамилия отсутствует или совпадает с именем, не добавляем её
+    if (!lastName || lastName.trim() === "" || lastName.toLowerCase() === firstName.toLowerCase()) {
+      return patronymicInitial ? `${firstName} ${patronymicInitial}`.trim() : firstName;
+    }
+    
+    // Сокращаем фамилию до первой буквы, если она длинная
+    const shortLastName = lastName.length > 8 
+      ? lastName.charAt(0).toUpperCase() + "." 
+      : lastName;
+    
+    return `${firstName} ${shortLastName} ${patronymicInitial}`.trim();
+  };
+
   return (
     <div className="work-schedule-page">
-      {/* Верхняя панель */}
-            <header className="profile-header">
-              <Icons.LogoIcon className="logo" title="logo" />
+      {/* Верхняя панель - Десктоп */}
+            <header className="profile-header desktop-header">
+              <div className="desktop-header-left">
+                <Icons.LogoIcon className="logo" title="logo" />
+                {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
+                {coffeeShopAddress && (
+                  <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+                )}
+              </div>
               {(role_id === 1 || role_id === 2) && (
                 <div className="manager-controls">
                   <div className="nav-buttons">
@@ -473,6 +534,42 @@ const WorkSchedulePage: React.FC = () => {
               )}
               <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
             </header>
+
+      {/* Мобильный хедер */}
+      <header className="mobile-header">
+        <div className="mobile-header-left">
+          <Icons.LogoIcon className="mobile-logo" title="logo" />
+          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
+          {coffeeShopAddress && (
+            <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+          )}
+        </div>
+        <div className="mobile-header-right">
+          {/* Иконка уведомлений (assets/icon-bell.svg) - будет добавлена позже */}
+          <div className="mobile-notifications-icon">
+            {/* <!-- Иконка уведомлений (assets/icon-bell.svg) --> */}
+          </div>
+          <Icons.ExitIcon className="mobile-logout-icon" onClick={handleLogout} title="Выйти" />
+        </div>
+      </header>
+
+      {/* Блок информации о сотруднике - Мобильная версия */}
+      {user && (
+        <div className="mobile-employee-info">
+          <div className="mobile-employee-avatar">
+            {/* Аватарка пользователя в виде круга */}
+            <div className="avatar-circle">
+              {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+            </div>
+          </div>
+          <div className="mobile-employee-details">
+            <span className="mobile-employee-role">{getRoleText(user.role_id)}</span>
+            <span className="mobile-employee-name">
+              {getShortNameMobile(user.first_name, user.last_name || "", user.patronymic || "")}
+            </span>
+          </div>
+        </div>
+      )}
       <div className="container-page">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <WorkScheduleHeader
