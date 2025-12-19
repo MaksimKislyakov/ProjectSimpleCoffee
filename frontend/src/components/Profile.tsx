@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
 import { useNavigate, useLocation } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
+import ConfirmScheduleModal from "./ConfirmScheduleModal.tsx";
 import {
   DayData,
   generateWeekDays,
@@ -11,7 +12,6 @@ import {
   getWeekLabel,
   getMonthLabel
 } from "../components/useScheduleUtils.tsx";
-
 
 interface UserData {
   first_name: string;
@@ -34,6 +34,15 @@ interface ReportData {
   total_earnings: string;
 }
 
+interface ScheduleItem {
+  id: number;
+  user_id: number;
+  coffee_shop_id: number;
+  status: string;
+  schedule_start_time: string;
+  schedule_end_time: string;
+  is_confirmed: boolean;
+}
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,13 +55,16 @@ const ProfilePage: React.FC = () => {
   const [mode, setMode] = useState<"week" | "month">("week");
   const [coffeeShopAddress, setCoffeeShopAddress] = useState<string>("");
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [allSchedules, setAllSchedules] = useState<any[]>([]);
+  const [allSchedules, setAllSchedules] = useState<ScheduleItem[]>([]);
 
   const [days, setDays] = useState<DayData[]>([]);
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Модальные состояния для DayCell
+  const [openModalScheduleId, setOpenModalScheduleId] = useState<number | null>(null);
+  const [openAddModalKey, setOpenAddModalKey] = useState<string | null>(null);
 
   const fetchSchedule = async () => {
     if (!user) return;
@@ -62,7 +74,7 @@ const ProfilePage: React.FC = () => {
     setScheduleLoading(true);
 
     try {
-      // Сначала генерируем пустые дни для текущего режима
+      // Генерируем пустые дни
       let emptyDays: DayData[] = [];
       if (mode === "week") {
         emptyDays = generateWeekDays(currentDate);
@@ -78,127 +90,87 @@ const ProfilePage: React.FC = () => {
         },
       });
 
-      if (res.status === 404 || !res.ok) {
-        // Если расписания нет, используем пустые дни
-        console.log("Расписание не найдено, используем пустые ячейки");
+      if (!res.ok) {
+        // Даже при ошибке — показываем пустые дни
         setDays(emptyDays.map(day => ({ ...day, isEmpty: true })));
         return;
       }
 
       const schedule = await res.json();
+      const scheduleArray = Array.isArray(schedule) ? schedule : [];
 
-      const scheduleArray = Array.isArray(schedule) ? schedule : [schedule];
-      const userSchedule = scheduleArray.filter(
-        (item: any) => item.user_id === user.id
-      );
-
-      if (userSchedule.length === 0) {
-        // Нет смен для пользователя - используем пустые дни
-        setDays(emptyDays.map(day => ({ ...day, isEmpty: true })));
-        return;
-      }
-
-      // Обновляем дни данными из расписания
+      // Обновляем дни: привязываем смены
       const updatedDays = emptyDays.map(emptyDay => {
-        // Находим смену для этого дня (простое сравнение по числу)
-        const scheduleItem = userSchedule.find((item: any) => {
-          if (!item.schedule_start_time || !item.schedule_end_time) {
-            return false; // Пропускаем элементы без времени
-          }
-          
-          const scheduleDate = new Date(item.schedule_start_time);
-
+        const scheduleItem = scheduleArray.find((item: ScheduleItem) => {
+          if (!item.schedule_start_time) return false;
+          const itemDate = new Date(item.schedule_start_time);
           return (
-            scheduleDate.getFullYear() === emptyDay.fullDate.getFullYear() &&
-            scheduleDate.getMonth() === emptyDay.fullDate.getMonth() &&
-            scheduleDate.getDate() === emptyDay.fullDate.getDate()
+            itemDate.getFullYear() === emptyDay.fullDate.getFullYear() &&
+            itemDate.getMonth() === emptyDay.fullDate.getMonth() &&
+            itemDate.getDate() === emptyDay.fullDate.getDate() &&
+            item.user_id === user.id
           );
         });
 
-        // Проверяем, есть ли данные о начале и конце рабочего дня
-        if (scheduleItem && 
-            scheduleItem.schedule_start_time && 
-            scheduleItem.schedule_end_time) {
-          
-          const start = new Date(scheduleItem.schedule_start_time);
-          const end = new Date(scheduleItem.schedule_end_time);
-
-          const formatTime = (d: Date) =>
-            d.toLocaleTimeString("ru-RU", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false
-            });
-
-          return {
-            ...emptyDay,
-            date: emptyDay.date, // Сохраняем исходную дату
-            time: `${formatTime(start)} ${formatTime(end)}`,
-            isWorkDay: scheduleItem.status === "active",
-            isEmpty: false // Есть данные - не пустой
-          };
-        }
-
-        // Если нет данных о времени - день без расписания
         return {
           ...emptyDay,
-          isEmpty: true
+          schedule: scheduleItem || null,
+          isEmpty: !scheduleItem
         };
       });
 
       setDays(updatedDays);
-
     } catch (err) {
       console.error("Ошибка получения расписания", err);
-      // При ошибке показываем пустые дни
-      const errorDays = mode === "week" ? generateWeekDays() : generateMonthDays();
+      const errorDays = mode === "week" ? generateWeekDays(currentDate) : generateMonthDays(currentDate);
       setDays(errorDays.map(day => ({ ...day, isEmpty: true })));
     } finally {
       setScheduleLoading(false);
     }
   };
 
-useEffect(() => {
-  if (user) fetchSchedule();
-}, [user, mode, currentDate]);
-
-const fetchReport = async () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    setShouldLogout(true);
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/v1/report/get_my_report", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      console.error("Ошибка загрузки отчета:", res.status);
+  const fetchReport = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setShouldLogout(true);
       return;
     }
 
-    const reportData: ReportData = await res.json();
-    setReport(reportData);
-    
-  } catch (err) {
-    console.error("Ошибка получения отчета", err);
-  } finally {
-    setReportLoading(false);
-  }
-};
+    try {
+      // Вычисляем период: текущий месяц
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      const res = await fetch(
+        `/api/v1/report/get_my_report?start_date=${startOfMonth.toISOString()}&end_date=${endOfMonth.toISOString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Ошибка загрузки отчета:", res.status);
+        return;
+      }
+
+      const reportData: ReportData = await res.json();
+      setReport(reportData);
+    } catch (err) {
+      console.error("Ошибка получения отчета", err);
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   const fetchAllUsersAndSchedules = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
-      // Загружаем всех пользователей
       const usersRes = await fetch("/api/v1/user/all_users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -207,7 +179,6 @@ const fetchReport = async () => {
         setAllUsers(Array.isArray(usersData) ? usersData : []);
       }
 
-      // Загружаем все расписания
       const schedulesRes = await fetch("/api/v1/schedule/get_all_schedule", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -220,73 +191,54 @@ const fetchReport = async () => {
     }
   };
 
-  // Находим ближайшую смену текущего пользователя
   const getNextShift = () => {
     if (!user || !allSchedules.length) return null;
-    
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    
     const userSchedules = allSchedules
-      .filter((s: any) => s.user_id === user.id && s.schedule_start_time)
-      .map((s: any) => ({
-        ...s,
-        date: new Date(s.schedule_start_time)
-      }))
-      .filter((s: any) => s.date >= now)
-      .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
-    
+      .filter((s) => s.user_id === user.id && s.schedule_start_time && s.is_confirmed)
+      .map((s) => ({ ...s, date: new Date(s.schedule_start_time) }))
+      .filter((s) => s.date >= now)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
     return userSchedules.length > 0 ? userSchedules[0] : null;
   };
 
-  // Получаем сотрудников, работающих в день ближайшей смены
   const getEmployeesForNextShift = () => {
     const nextShift = getNextShift();
     if (!nextShift) return [];
-    
+
     const shiftDate = new Date(nextShift.schedule_start_time);
     shiftDate.setHours(0, 0, 0, 0);
-    
+
     const employees = allSchedules
-      .filter((s: any) => {
-        if (!s.schedule_start_time || s.user_id === user?.id) return false;
-        const scheduleDate = new Date(s.schedule_start_time);
-        scheduleDate.setHours(0, 0, 0, 0);
-        return scheduleDate.getTime() === shiftDate.getTime();
+      .filter((s) => {
+        if (!s.schedule_start_time || s.user_id === user?.id || !s.is_confirmed) return false;
+        const d = new Date(s.schedule_start_time);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === shiftDate.getTime();
       })
-      .map((s: any) => {
-        const employee = allUsers.find((u: any) => u.id === s.user_id);
-        if (!employee) return null;
-        
+      .map((s) => {
+        const emp = allUsers.find(u => u.id === s.user_id);
+        if (!emp) return null;
         const start = new Date(s.schedule_start_time);
         const end = new Date(s.schedule_end_time);
         const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
         const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-        
         return {
-          ...employee,
-          roleText: getRoleText(employee.role_id),
+          ...emp,
+          roleText: getRoleText(emp.role_id),
           time: `${startTime} - ${endTime}`
         };
       })
-      .filter((e: any) => e !== null)
-      .sort((a: any, b: any) => {
-        // Сначала управляющий (роль 2), потом остальные
-        if (a.role_id === 2 && b.role_id !== 2) return -1;
-        if (a.role_id !== 2 && b.role_id === 2) return 1;
-        return 0;
-      });
-    
-    return employees;
+      .filter(Boolean) as any[];
+
+    return employees.sort((a, b) => (a.role_id === 2 ? -1 : b.role_id === 2 ? 1 : 0));
   };
 
-  // Форматирование имени в формате "Имя Ф." для отчета
   const getShortNameReport = (firstName: string, lastName: string): string => {
-    const lastNameInitial = lastName ? lastName.charAt(0).toUpperCase() + "." : "";
-    return `${firstName} ${lastNameInitial}`.trim();
+    const initial = lastName ? lastName.charAt(0).toUpperCase() + "." : "";
+    return `${firstName} ${initial}`.trim();
   };
 
-  // Получаем текущий период для календаря
   const getCurrentPeriod = () => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -297,179 +249,140 @@ const fetchReport = async () => {
     return `${firstDay.getDate()}-${lastDay.getDate()} ${month} ${now.getFullYear()}`;
   };
 
-// загрузка пользователя 
-useEffect(() => {
-  const fetchUser = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setShouldLogout(true);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/v1/user/me", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
         setShouldLogout(true);
         return;
       }
 
-      const data: UserData = await res.json();
-      setUser(data);
-      
-      // Загружаем адрес кофейни
-      if (data.coffee_shop_id) {
-        try {
-          const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
-            method: "GET",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
-          });
-          
-          if (coffeeShopRes.ok) {
-            const coffeeShops = await coffeeShopRes.json();
-            const shop = Array.isArray(coffeeShops) 
-              ? coffeeShops.find((s: any) => s.id === data.coffee_shop_id)
-              : null;
-            if (shop && shop.adress) {
-              setCoffeeShopAddress(shop.adress);
-            }
-          }
-        } catch (err) {
-          console.error("Ошибка загрузки адреса кофейни:", err);
+      try {
+        const res = await fetch("/api/v1/user/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          setShouldLogout(true);
+          return;
         }
+
+        const data: UserData = await res.json();
+        setUser(data);
+
+        if (data.coffee_shop_id) {
+          const shopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (shopRes.ok) {
+            const shops = await shopRes.json();
+            const shop = Array.isArray(shops) ? shops.find((s: any) => s.id === data.coffee_shop_id) : null;
+            if (shop?.adress) setCoffeeShopAddress(shop.adress);
+          }
+        }
+
+        await fetchReport();
+        await fetchAllUsersAndSchedules();
+      } catch (err) {
+        console.error(err);
+        setShouldLogout(true);
+      } finally {
+        setLoading(false);
       }
-      
-      // После успешной загрузки пользователя загружаем отчет
+    };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchSchedule();
+  }, [user, mode, currentDate]);
+
+  const handleAddSchedule = async (data: any) => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    const body = {
+      user_id: user.id,
+      coffee_shop_id: user.coffee_shop_id,
+      status: data.status,
+      schedule_start_time: data.schedule_start_time,
+      schedule_end_time: data.schedule_end_time,
+      is_confirmed: false
+    };
+
+    try {
+      const response = await fetch("/api/v1/schedule/create_schedule", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error('Ошибка создания смены');
+
+      setModalDate(null);
+      await fetchSchedule();
       await fetchReport();
-      // Загружаем всех пользователей и расписание для ближайшей смены
-      await fetchAllUsersAndSchedules();
-      
     } catch (err) {
-      console.error(err);
-      setShouldLogout(true);
-    } finally {
-      setLoading(false);
+      console.error("Ошибка добавления расписания", err);
     }
   };
 
-  fetchUser();
-}, []);
-
-
-const formatEarnings = (earnings: string): string => {
-  try {
-    // Преобразуем строку в число и округляем до 2 знаков
-    const amount = parseFloat(earnings);
-    if (isNaN(amount)) return "0.00 ₽";
-    
-    return `${amount.toFixed(2)} ₽`;
-  } catch (error) {
-    console.error("Ошибка форматирования заработка:", error);
-    return "0.00 ₽";
-  }
-};
-
-const handleAddSchedule = async (data: any) => {
-  if (!user) return;
-  const token = localStorage.getItem("token");
-
-  const body = {
-    user_id: user?.id,
-    coffee_shop_id: user?.coffee_shop_id,
-    status: data.status,
-    schedule_start_time: data.schedule_start_time,
-    schedule_end_time: data.schedule_end_time,
-    is_confirmed: false
+  const handleConfirmSchedule = async (scheduleId: number, startTime?: string, endTime?: string) => {
+    // В ProfilePage подтверждение не требуется — только просмотр
+    // Но если нужно — можно вызвать API
   };
 
-  try {
-    const response = await fetch("/api/v1/schedule/create_schedule", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
+  const handleDeleteSchedule = async (scheduleId: number) => {
+    // В ProfilePage удаление не поддерживается — только просмотр
+  };
 
-    if (!response.ok) {
-      throw new Error('Ошибка создания смены');
-    }
-
-    // Закрываем модалку
-    setModalDate(null);
-    
-    // Обновляем расписание
-    await fetchSchedule();
-    
-    // Обновляем отчет
-    await fetchReport();
-
-    console.log("Смена создана, данные обновлены");
-
-  } catch (err) {
-    console.error("Ошибка добавления расписания", err);
-  }
-};
-
-
-  /** === Форматирование имени и стажа === **/
+  const handleCreateScheduleForUser = async (date: Date, startTime: string, endTime: string, targetUserId?: number) => {
+    // В ProfilePage создание смен возможно только через модалку по клику на день
+    // Но это уже обрабатывается в DayCell
+  };
 
   const getShortName = (fullName: string) => {
-    if (fullName.length <= 23) return fullName;
-    return fullName.slice(0, 23) + "...";
+    return fullName.length <= 23 ? fullName : fullName.slice(0, 23) + "...";
   };
 
   const formatYears = (years: number) => {
     const lastDigit = years % 10;
     const lastTwo = years % 100;
-
     if (lastTwo >= 11 && lastTwo <= 14) return `${years} лет`;
     if (lastDigit === 1) return `${years} год`;
     if (lastDigit >= 2 && lastDigit <= 4) return `${years} года`;
-
     return `${years} лет`;
   };
 
-  // Преобразование role_id в текст
   const getRoleText = (roleId: number): string => {
     switch (roleId) {
-      case 1:
-        return "Администратор";
-      case 2:
-        return "Менеджер";
-      case 3:
-        return "Бариста";
-      default:
-        return "Неизвестно";
+      case 1: return "Администратор";
+      case 2: return "Менеджер";
+      case 3: return "Бариста";
+      default: return "Неизвестно";
     }
   };
 
-  // Форматирование имени в формате "Имя Фамилия И." (сокращенная фамилия) для мобильной версии
   const getShortNameMobile = (firstName: string, lastName: string, patronymic: string): string => {
     if (!firstName) return "";
-    
     const patronymicInitial = patronymic ? patronymic.charAt(0).toUpperCase() + "." : "";
-    
-    // Если фамилия отсутствует или совпадает с именем, не добавляем её
     if (!lastName || lastName.trim() === "" || lastName.toLowerCase() === firstName.toLowerCase()) {
       return patronymicInitial ? `${firstName} ${patronymicInitial}`.trim() : firstName;
     }
-    
-    // Сокращаем фамилию до первой буквы, если она длинная
-    const shortLastName = lastName.length > 8 
-      ? lastName.charAt(0).toUpperCase() + "." 
-      : lastName;
-    
+    const shortLastName = lastName.length > 8 ? lastName.charAt(0).toUpperCase() + "." : lastName;
     return `${firstName} ${shortLastName} ${patronymicInitial}`.trim();
+  };
+
+  const formatEarnings = (earnings: string): string => {
+    try {
+      const amount = parseFloat(earnings);
+      return isNaN(amount) ? "0.00 ₽" : `${amount.toFixed(2)} ₽`;
+    } catch {
+      return "0.00 ₽";
+    }
   };
 
   useEffect(() => {
@@ -482,44 +395,35 @@ const handleAddSchedule = async (data: any) => {
 
   const handleLogout = () => setShouldLogout(true);
 
- const goPrev = () => {
-  const newDate = new Date(currentDate);
-  if (mode === "week") newDate.setDate(newDate.getDate() - 7);
-  else newDate.setMonth(newDate.getMonth() - 1);
-  setCurrentDate(newDate);
-};
+  const goPrev = () => {
+    const newDate = new Date(currentDate);
+    if (mode === "week") newDate.setDate(newDate.getDate() - 7);
+    else newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
+  };
 
   const goNext = () => {
-  const newDate = new Date(currentDate);
-  if (mode === "week") {
-    newDate.setDate(newDate.getDate() + 7);
-  } else {
-    newDate.setMonth(newDate.getMonth() + 1);
-  }
-  setCurrentDate(newDate);
+    const newDate = new Date(currentDate);
+    if (mode === "week") newDate.setDate(newDate.getDate() + 7);
+    else newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
   };
 
   const onChangeMode = (newMode: "week" | "month") => {
-  setMode(newMode);
-  // При смене режима генерируем соответствующие дни
-  setMode(newMode);
+    setMode(newMode);
   };
 
-  // Пока загружаются данные
   if (loading) {
     return <div className="profile-page">Загрузка...</div>;
   }
 
-  // Если пользователь не загрузился
   if (!user) {
     return <div className="profile-page">Ошибка загрузки данных</div>;
   }
 
-  // Формирование ФИО
   const fullFIO = `${user.last_name} ${user.first_name} ${user.patronymic}`;
   const shortFIO = getShortName(fullFIO);
 
-  // Общие навигационные кнопки для менеджера/админа
   const NavButtons: React.FC = () => {
     const { pathname } = useLocation();
     const scheduleActive = pathname.startsWith("/schedule");
@@ -527,56 +431,29 @@ const handleAddSchedule = async (data: any) => {
 
     return (
       <>
-        <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
-        <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>Отчёт</button>
+        <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>
+          График работы
+        </button>
+        <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>
+          Отчёт
+        </button>
       </>
     );
   };
 
-/** === Компонент дня === **/
-const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
-  <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}
-    onClick={() => setModalDate(day.fullDate)}
-  >
-    <div className="day-header">
-      <div className="dow">{day.weekday}</div>
-      <div className="day-num">{day.dayNumber}</div>
-    </div>
-    <div className={`time-slots ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
-      {!day.isEmpty && day.time ? (
-        <div className="time">{day.time}</div>
-      ) : ("")}
-    </div>
-    <div className="day-icon">
-      {day.status === "active" && <Icons.BriefcaseIcon />}
-      {day.status === "vacation" && <Icons.VacationIcon />}
-      {day.status === "sick" && <Icons.MedicalIcon />}
-    </div>
-    <div className="comment-popup">{day.comment}</div>
-  </div>
-);
-
   return (
     <div className="profile-page">
-      {/* Верхняя панель - Десктоп */}
+      {/* Десктопный хедер */}
       <header className="profile-header desktop-header">
         <div className="desktop-header-left">
           <Icons.LogoIcon className="logo" title="logo" />
-          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-          {coffeeShopAddress && (
-            <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
-          )}
+          {coffeeShopAddress && <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>}
         </div>
-
-        {/* Для админа (1) и менеджера (2) показываем кнопки навигации */}
         {(user.role_id === 1 || user.role_id === 2) && (
           <div className="manager-controls">
-            <div className="nav-buttons">
-              <NavButtons />
-            </div>
+            <div className="nav-buttons"><NavButtons /></div>
           </div>
         )}
-
         <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
       </header>
 
@@ -584,43 +461,29 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
       <header className="mobile-header">
         <div className="mobile-header-left">
           <Icons.LogoIcon className="mobile-logo" title="logo" />
-          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-          {coffeeShopAddress && (
-            <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
-          )}
+          {coffeeShopAddress && <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>}
         </div>
         <div className="mobile-header-right">
-          {/* Иконка уведомлений (assets/icon-bell.svg) - будет добавлена позже */}
-          <div className="mobile-notifications-icon">
-            {/* <!-- Иконка уведомлений (assets/icon-bell.svg) --> */}
-          </div>
+          <div className="mobile-notifications-icon" />
           <Icons.ExitIcon className="mobile-logout-icon" onClick={handleLogout} title="Выйти" />
         </div>
       </header>
 
       <main className="profile-content">
-        {/* Информация о сотруднике */}
+        {/* Карточка сотрудника */}
         <section className="profile-card employee-main">
           <div className="photo-placeholder"></div>
 
-          {/* Десктопная версия */}
           <div className="info-left desktop-info">
             <h2>Информация о сотруднике</h2>
-
             <div className="fio-wrapper">
               <p className="fio-label">ФИО:</p>
-
               <div className="fio-container">
                 <span className="fio-text">{shortFIO}</span>
-
-                <div className="fio-popup">
-                  {fullFIO}
-                  <div className="fio-popup-arrow"></div>
-                </div>
+                <div className="fio-popup">{fullFIO}<div className="fio-popup-arrow"></div></div>
               </div>
             </div>
-
-            <p><span>Должность:</span> {user.role_id}</p>
+            <p><span>Должность:</span> {getRoleText(user.role_id)}</p>
             <p><span>Почта:</span> {user.email}</p>
             <p><span>Телефон:</span> {user.telephone}</p>
           </div>
@@ -628,13 +491,10 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
           <div className="info-right desktop-info">
             <p><span>Опыт работы:</span> {formatYears(user.work_experience)}</p>
             <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
-            <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
             <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
           </div>
 
-          {/* Мобильная версия - объединенный блок */}
           <div className="mobile-info">
-            {/* Аватар, имя и роль */}
             <div className="mobile-employee-info">
               <div className="mobile-employee-avatar">
                 <div className="avatar-circle">
@@ -646,21 +506,16 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                   <span className="mobile-employee-role">{getRoleText(user.role_id)}</span>
                   <span className="mobile-employee-separator"> - </span>
                   <span className="mobile-employee-name">
-                    {getShortNameMobile(user.first_name || "", user.last_name || "", user.patronymic || "") || user.first_name || "Пользователь"}
+                    {getShortNameMobile(user.first_name, user.last_name, user.patronymic) || user.first_name || "Пользователь"}
                   </span>
                 </span>
               </div>
             </div>
-            
-            {/* Остальная информация */}
             <div className="mobile-info-details">
               <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
               <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
               <p><span>Почта:</span> {user.email}</p>
-              <p><span>Телефон:</span> {user.telephone}</p>
-              {(user.role_id === 1 || user.role_id === 2) && (
-                <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
-              )}
+              <p><span>Телефон:</span> {user.telephone}</p>      
             </div>
           </div>
         </section>
@@ -696,7 +551,6 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                 {reportLoading ? "..." : Math.round(report?.work_hours || 0)}
               </span>
             </div>
-
             <div className="report-stat-card">
               <span className="report-stat-label">Смены</span>
               <span className="report-stat-value">
@@ -704,11 +558,11 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
               </span>
             </div>
 
-            {/* Ближайшая смена - список сотрудников (десктопная версия) */}
+            {/* Ближайшая смена — десктоп */}
             {getNextShift() && getEmployeesForNextShift().length > 0 && (
               <div className="report-next-shift-block desktop-next-shift">
                 <div className="next-shift-employees">
-                  {getEmployeesForNextShift().map((emp: any) => (
+                  {getEmployeesForNextShift().map((emp) => (
                     <div key={emp.id} className="next-shift-employee">
                       <span className="employee-name-short">{getShortNameReport(emp.first_name, emp.last_name)}</span>
                       <span className={`employee-role ${emp.role_id === 2 ? 'role-manager' : ''}`}>
@@ -722,7 +576,7 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             )}
           </div>
 
-          {/* Ближайшая смена - мобильная версия */}
+          {/* Ближайшая смена — мобильная версия */}
           {getNextShift() && (
             <div className="mobile-next-shift-section">
               <div className="mobile-next-shift-header">
@@ -735,11 +589,9 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                   })}
                 </div>
               </div>
-              
-              {/* Список сотрудников, работающих в этот день */}
               {getEmployeesForNextShift().length > 0 && (
                 <div className="next-shift-employees">
-                  {getEmployeesForNextShift().map((emp: any) => (
+                  {getEmployeesForNextShift().map((emp) => (
                     <div key={emp.id} className="next-shift-employee">
                       <span className="employee-name-short">{getShortNameReport(emp.first_name, emp.last_name)}</span>
                       <span className={`employee-role ${emp.role_id === 2 ? 'role-manager' : ''}`}>
@@ -754,20 +606,26 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
           )}
         </section>
 
+        {/* === График работы с DayCell === */}
         <WorkSchedule
           currentLabel={mode === "week" ? getWeekLabel(currentDate) : getMonthLabel(currentDate)}
           mode={mode}
           onPrev={goPrev}
           onNext={goNext}
           onChangeMode={onChangeMode}
-        >
-          {days.map((d, i) => (
-            <div className="day-col" key={i}>
-              <div className="dow">{d.weekday}</div>
-              <div className="day-num">{d.dayNumber}</div>
-            </div>
-          ))}
-        </WorkSchedule>
+          days={days}
+          user={user}
+          currentUserId={user.id}
+          currentRoleId={user.role_id}
+          onConfirmSchedule={handleConfirmSchedule}
+          onDeleteSchedule={handleDeleteSchedule}
+          onCreateSchedule={handleCreateScheduleForUser}
+          openModalScheduleId={openModalScheduleId}
+          setOpenModalScheduleId={setOpenModalScheduleId}
+          openAddModalKey={openAddModalKey}
+          setOpenAddModalKey={setOpenAddModalKey}
+        />
+
         {modalDate && (
           <AddScheduleModal
             date={modalDate}
@@ -775,7 +633,6 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             onConfirm={async (startTime: string, endTime: string) => {
               if (!user) return;
               const token = localStorage.getItem("token");
-              
               const formatLocalDateTime = (date: Date, time: string): string => {
                 const [hours, minutes] = time.split(":").map(Number);
                 const year = date.getFullYear();
@@ -808,15 +665,14 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
               }
 
               setModalDate(null);
-              // Перезагружаем расписание для обновления данных
               if (user) {
                 fetchSchedule();
+                fetchReport();
               }
             }}
             onClose={() => setModalDate(null)}
           />
         )}
-
       </main>
     </div>
   );

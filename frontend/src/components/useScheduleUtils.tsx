@@ -1,5 +1,15 @@
 // src/components/useScheduleUtils.ts
 
+export interface ScheduleItem {
+  id: number;
+  user_id: number;
+  coffee_shop_id: number;
+  status: string;
+  schedule_start_time: string;
+  schedule_end_time: string;
+  is_confirmed: boolean;
+}
+
 export interface DayData {
   date: string;
   time?: string;
@@ -10,6 +20,8 @@ export interface DayData {
   dayNumber: number;
   status?: string;
   comment?: string;
+  // 🔴 ДОБАВЛЕНО:
+  schedule?: ScheduleItem | null;
 }
 
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -20,7 +32,6 @@ export const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
   const start = new Date(startDate);
   start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
 
-
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
@@ -30,7 +41,8 @@ export const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
       dayNumber: d.getDate(),
       date: `${WEEKDAYS[d.getDay()]} ${d.getDate()}`,
       fullDate: d,
-      isEmpty: true
+      isEmpty: true,
+      schedule: null // 🔴 явно указываем
     });
   }
 
@@ -52,7 +64,8 @@ export const generateMonthDays = (date: Date = new Date()): DayData[] => {
       dayNumber: cur.getDate(),
       date: `${WEEKDAYS[cur.getDay()]} ${cur.getDate()}`,
       fullDate: new Date(cur),
-      isEmpty: false
+      isEmpty: false,
+      schedule: null // 🔴 явно указываем
     });
     cur.setDate(cur.getDate() + 1);
   }
@@ -72,11 +85,9 @@ export const getWeekLabel = (date: Date): string => {
   const endDay = end.getDate();
   const month = start.toLocaleDateString("ru-RU", { month: "long" });
 
-  // Если начало и конец в одном месяце
   if (start.getMonth() === end.getMonth()) {
     return `${startDay} - ${endDay} ${month}`;
   } else {
-    // Если неделя переходит через месяц
     const startMonth = start.toLocaleDateString("ru-RU", { month: "long" });
     const endMonth = end.toLocaleDateString("ru-RU", { month: "long" });
     return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
