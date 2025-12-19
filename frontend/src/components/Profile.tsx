@@ -191,47 +191,72 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const getNextShift = () => {
-    if (!user || !allSchedules.length) return null;
-    const now = new Date();
-    const userSchedules = allSchedules
-      .filter((s) => s.user_id === user.id && s.schedule_start_time && s.is_confirmed)
-      .map((s) => ({ ...s, date: new Date(s.schedule_start_time) }))
-      .filter((s) => s.date >= now)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-    return userSchedules.length > 0 ? userSchedules[0] : null;
-  };
+  // === БЛИЖАЙШАЯ СМЕНА ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ ===
+const getNextShift = () => {
+  if (!user || !allSchedules.length) return null;
+  
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Начало дня
 
+  const userSchedules = allSchedules
+    .filter((s: any) => 
+      s.user_id === user.id && 
+      s.schedule_start_time && 
+      s.is_confirmed // Только подтверждённые смены
+    )
+    .map((s: any) => ({
+      ...s,
+      date: new Date(s.schedule_start_time)
+    }))
+    .filter((s: any) => s.date >= now) // Будущие или сегодняшние
+    .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+  
+  return userSchedules.length > 0 ? userSchedules[0] : null;
+};
+
+// === СОТРУДНИКИ, КОТОРЫЕ РАБОТАЮТ В ДЕНЬ БЛИЖАЙШЕЙ СМЕНЫ ===
   const getEmployeesForNextShift = () => {
     const nextShift = getNextShift();
     if (!nextShift) return [];
-
+    
     const shiftDate = new Date(nextShift.schedule_start_time);
-    shiftDate.setHours(0, 0, 0, 0);
-
-    const employees = allSchedules
-      .filter((s) => {
-        if (!s.schedule_start_time || s.user_id === user?.id || !s.is_confirmed) return false;
-        const d = new Date(s.schedule_start_time);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === shiftDate.getTime();
+    shiftDate.setHours(0, 0, 0, 0); // Начало дня
+    
+    // Находим все подтверждённые смены на эту дату
+    const employeesOnShiftDay = allSchedules
+      .filter((s: any) => {
+        if (!s.schedule_start_time || !s.is_confirmed) return false; // Только подтверждённые
+        const scheduleDate = new Date(s.schedule_start_time);
+        scheduleDate.setHours(0, 0, 0, 0);
+        return scheduleDate.getTime() === shiftDate.getTime(); // Тот же день
       })
-      .map((s) => {
-        const emp = allUsers.find(u => u.id === s.user_id);
-        if (!emp) return null;
+      .map((s: any) => {
+        const employee = allUsers.find((u: any) => u.id === s.user_id);
+        if (!employee) return null;
+        
         const start = new Date(s.schedule_start_time);
         const end = new Date(s.schedule_end_time);
         const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
         const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+        
         return {
-          ...emp,
-          roleText: getRoleText(emp.role_id),
-          time: `${startTime} - ${endTime}`
+          ...employee,
+          roleText: getRoleText(employee.role_id),
+          time: `${startTime} - ${endTime}`,
+          isCurrentUser: employee.id === user.id // Для выделения текущего пользователя
         };
       })
-      .filter(Boolean) as any[];
-
-    return employees.sort((a, b) => (a.role_id === 2 ? -1 : b.role_id === 2 ? 1 : 0));
+      .filter((e: any) => e !== null)
+      .sort((a: any, b: any) => {
+        // Сначала Управляющий (роль 2), потом Админ (1), потом Бариста (3)
+        if (a.role_id === 2 && b.role_id !== 2) return -1;
+        if (a.role_id !== 2 && b.role_id === 2) return 1;
+        if (a.role_id === 1 && b.role_id !== 1) return -1;
+        if (a.role_id !== 1 && b.role_id === 1) return 1;
+        return 0;
+      });
+    
+    return employeesOnShiftDay;
   };
 
   const getShortNameReport = (firstName: string, lastName: string): string => {
@@ -365,6 +390,8 @@ const ProfilePage: React.FC = () => {
       default: return "Неизвестно";
     }
   };
+
+  
 
   const getShortNameMobile = (firstName: string, lastName: string, patronymic: string): string => {
     if (!firstName) return "";
