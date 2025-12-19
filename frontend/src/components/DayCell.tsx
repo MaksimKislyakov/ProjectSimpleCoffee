@@ -11,6 +11,7 @@ interface DayCellProps {
   currentUserId: number | null;
   currentRoleId: number;
   onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>;
+  onDeleteSchedule?: (scheduleId: number) => Promise<void>;
   onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>;
   openModalScheduleId: number | null;
   setOpenModalScheduleId: (id: number | null) => void;
@@ -26,6 +27,7 @@ export const DayCell: React.FC<DayCellProps> = ({
   currentUserId, 
   currentRoleId,
   onConfirmSchedule,
+  onDeleteSchedule,
   onCreateSchedule,
   openModalScheduleId,
   setOpenModalScheduleId,
@@ -35,6 +37,8 @@ export const DayCell: React.FC<DayCellProps> = ({
 }) => {
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
   const [addModalPosition, setAddModalPosition] = useState<{ top: number; left: number } | null>(null);
+  const [addModalStartTime, setAddModalStartTime] = useState<string>("09:00");
+  const [addModalEndTime, setAddModalEndTime] = useState<string>("21:00");
   const cellRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const addModalRef = useRef<HTMLDivElement>(null);
@@ -63,6 +67,11 @@ export const DayCell: React.FC<DayCellProps> = ({
         top: rect.bottom + 10,
         left: rect.left + rect.width / 2
       });
+      // Сбрасываем время только при первом открытии этой ячейки
+      if (openAddModalKey !== addModalKey) {
+        setAddModalStartTime("09:00");
+        setAddModalEndTime("21:00");
+      }
       setOpenAddModalKey(addModalKey);
     }
   };
@@ -82,6 +91,12 @@ export const DayCell: React.FC<DayCellProps> = ({
   const handleCloseAddModal = () => {
     setOpenAddModalKey(null);
     setAddModalPosition(null);
+    // Не сбрасываем время при закрытии, чтобы сохранить его для следующего открытия
+  };
+
+  const handleTimeChange = (startTime: string, endTime: string) => {
+    setAddModalStartTime(startTime);
+    setAddModalEndTime(endTime);
   };
 
   // Закрываем модалку добавления при клике на другую ячейку (для подтверждения смены)
@@ -105,11 +120,15 @@ export const DayCell: React.FC<DayCellProps> = ({
         </div>
         {showAddModal && addModalPosition && (
           <AddScheduleModal
+            key={addModalKey}
             date={day.fullDate}
             position={addModalPosition}
             onConfirm={handleCreateSchedule}
             onClose={handleCloseAddModal}
             modalRef={addModalRef}
+            initialStartTime={addModalStartTime}
+            initialEndTime={addModalEndTime}
+            onTimeChange={handleTimeChange}
           />
         )}
       </>
@@ -221,6 +240,23 @@ export const DayCell: React.FC<DayCellProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (schedule && schedule.id && onDeleteSchedule) {
+      try {
+        await onDeleteSchedule(schedule.id);
+        // Закрываем модалку после успешного удаления
+        setOpenModalScheduleId(null);
+        setModalPosition(null);
+      } catch (error) {
+        // Пробрасываем ошибку в модалку для отображения
+        console.error("Ошибка удаления смены в DayCell:", error);
+        throw error;
+      }
+    } else {
+      throw new Error("Не удалось удалить смену: отсутствуют необходимые данные");
+    }
+  };
+
   const handleCloseModal = () => {
     setOpenModalScheduleId(null);
     setModalPosition(null);
@@ -303,6 +339,7 @@ export const DayCell: React.FC<DayCellProps> = ({
           schedule={schedule}
           position={modalPosition}
           onConfirm={handleConfirm}
+          onDelete={handleDelete}
           onClose={handleCloseModal}
           modalRef={modalRef}
         />

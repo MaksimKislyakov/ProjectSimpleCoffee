@@ -44,6 +44,9 @@ const ProfilePage: React.FC = () => {
   const [reportLoading, setReportLoading] = useState(true);
   const [shouldLogout, setShouldLogout] = useState(false);
   const [mode, setMode] = useState<"week" | "month">("week");
+  const [coffeeShopAddress, setCoffeeShopAddress] = useState<string>("");
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allSchedules, setAllSchedules] = useState<any[]>([]);
 
   const [days, setDays] = useState<DayData[]>([]);
   const [modalDate, setModalDate] = useState<Date | null>(null);
@@ -190,6 +193,110 @@ const fetchReport = async () => {
   }
 };
 
+  const fetchAllUsersAndSchedules = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // Загружаем всех пользователей
+      const usersRes = await fetch("/api/v1/user/all_users", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setAllUsers(Array.isArray(usersData) ? usersData : []);
+      }
+
+      // Загружаем все расписания
+      const schedulesRes = await fetch("/api/v1/schedule/get_all_schedule", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (schedulesRes.ok) {
+        const schedulesData = await schedulesRes.json();
+        setAllSchedules(Array.isArray(schedulesData) ? schedulesData : []);
+      }
+    } catch (err) {
+      console.error("Ошибка загрузки пользователей и расписания:", err);
+    }
+  };
+
+  // Находим ближайшую смену текущего пользователя
+  const getNextShift = () => {
+    if (!user || !allSchedules.length) return null;
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const userSchedules = allSchedules
+      .filter((s: any) => s.user_id === user.id && s.schedule_start_time)
+      .map((s: any) => ({
+        ...s,
+        date: new Date(s.schedule_start_time)
+      }))
+      .filter((s: any) => s.date >= now)
+      .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+    
+    return userSchedules.length > 0 ? userSchedules[0] : null;
+  };
+
+  // Получаем сотрудников, работающих в день ближайшей смены
+  const getEmployeesForNextShift = () => {
+    const nextShift = getNextShift();
+    if (!nextShift) return [];
+    
+    const shiftDate = new Date(nextShift.schedule_start_time);
+    shiftDate.setHours(0, 0, 0, 0);
+    
+    const employees = allSchedules
+      .filter((s: any) => {
+        if (!s.schedule_start_time || s.user_id === user?.id) return false;
+        const scheduleDate = new Date(s.schedule_start_time);
+        scheduleDate.setHours(0, 0, 0, 0);
+        return scheduleDate.getTime() === shiftDate.getTime();
+      })
+      .map((s: any) => {
+        const employee = allUsers.find((u: any) => u.id === s.user_id);
+        if (!employee) return null;
+        
+        const start = new Date(s.schedule_start_time);
+        const end = new Date(s.schedule_end_time);
+        const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+        const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+        
+        return {
+          ...employee,
+          roleText: getRoleText(employee.role_id),
+          time: `${startTime} - ${endTime}`
+        };
+      })
+      .filter((e: any) => e !== null)
+      .sort((a: any, b: any) => {
+        // Сначала управляющий (роль 2), потом остальные
+        if (a.role_id === 2 && b.role_id !== 2) return -1;
+        if (a.role_id !== 2 && b.role_id === 2) return 1;
+        return 0;
+      });
+    
+    return employees;
+  };
+
+  // Форматирование имени в формате "Имя Ф." для отчета
+  const getShortNameReport = (firstName: string, lastName: string): string => {
+    const lastNameInitial = lastName ? lastName.charAt(0).toUpperCase() + "." : "";
+    return `${firstName} ${lastNameInitial}`.trim();
+  };
+
+  // Получаем текущий период для календаря
+  const getCurrentPeriod = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+                    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    const month = months[now.getMonth()];
+    return `${firstDay.getDate()}-${lastDay.getDate()} ${month} ${now.getFullYear()}`;
+  };
+
 // загрузка пользователя 
 useEffect(() => {
   const fetchUser = async () => {
@@ -216,8 +323,34 @@ useEffect(() => {
       const data: UserData = await res.json();
       setUser(data);
       
+      // Загружаем адрес кофейни
+      if (data.coffee_shop_id) {
+        try {
+          const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          });
+          
+          if (coffeeShopRes.ok) {
+            const coffeeShops = await coffeeShopRes.json();
+            const shop = Array.isArray(coffeeShops) 
+              ? coffeeShops.find((s: any) => s.id === data.coffee_shop_id)
+              : null;
+            if (shop && shop.adress) {
+              setCoffeeShopAddress(shop.adress);
+            }
+          }
+        } catch (err) {
+          console.error("Ошибка загрузки адреса кофейни:", err);
+        }
+      }
+      
       // После успешной загрузки пользователя загружаем отчет
       await fetchReport();
+      // Загружаем всех пользователей и расписание для ближайшей смены
+      await fetchAllUsersAndSchedules();
       
     } catch (err) {
       console.error(err);
@@ -306,6 +439,39 @@ const handleAddSchedule = async (data: any) => {
     return `${years} лет`;
   };
 
+  // Преобразование role_id в текст
+  const getRoleText = (roleId: number): string => {
+    switch (roleId) {
+      case 1:
+        return "Администратор";
+      case 2:
+        return "Менеджер";
+      case 3:
+        return "Бариста";
+      default:
+        return "Неизвестно";
+    }
+  };
+
+  // Форматирование имени в формате "Имя Фамилия И." (сокращенная фамилия) для мобильной версии
+  const getShortNameMobile = (firstName: string, lastName: string, patronymic: string): string => {
+    if (!firstName) return "";
+    
+    const patronymicInitial = patronymic ? patronymic.charAt(0).toUpperCase() + "." : "";
+    
+    // Если фамилия отсутствует или совпадает с именем, не добавляем её
+    if (!lastName || lastName.trim() === "" || lastName.toLowerCase() === firstName.toLowerCase()) {
+      return patronymicInitial ? `${firstName} ${patronymicInitial}`.trim() : firstName;
+    }
+    
+    // Сокращаем фамилию до первой буквы, если она длинная
+    const shortLastName = lastName.length > 8 
+      ? lastName.charAt(0).toUpperCase() + "." 
+      : lastName;
+    
+    return `${firstName} ${shortLastName} ${patronymicInitial}`.trim();
+  };
+
   useEffect(() => {
     if (shouldLogout) {
       localStorage.removeItem("token");
@@ -392,9 +558,15 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
 
   return (
     <div className="profile-page">
-      {/* Верхняя панель */}
-      <header className="profile-header">
-        <Icons.LogoIcon className="logo" title="logo" />
+      {/* Верхняя панель - Десктоп */}
+      <header className="profile-header desktop-header">
+        <div className="desktop-header-left">
+          <Icons.LogoIcon className="logo" title="logo" />
+          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
+          {coffeeShopAddress && (
+            <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+          )}
+        </div>
 
         {/* Для админа (1) и менеджера (2) показываем кнопки навигации */}
         {(user.role_id === 1 || user.role_id === 2) && (
@@ -408,12 +580,31 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
         <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
       </header>
 
+      {/* Мобильный хедер */}
+      <header className="mobile-header">
+        <div className="mobile-header-left">
+          <Icons.LogoIcon className="mobile-logo" title="logo" />
+          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
+          {coffeeShopAddress && (
+            <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+          )}
+        </div>
+        <div className="mobile-header-right">
+          {/* Иконка уведомлений (assets/icon-bell.svg) - будет добавлена позже */}
+          <div className="mobile-notifications-icon">
+            {/* <!-- Иконка уведомлений (assets/icon-bell.svg) --> */}
+          </div>
+          <Icons.ExitIcon className="mobile-logout-icon" onClick={handleLogout} title="Выйти" />
+        </div>
+      </header>
+
       <main className="profile-content">
         {/* Информация о сотруднике */}
         <section className="profile-card employee-main">
           <div className="photo-placeholder"></div>
 
-          <div className="info-left">
+          {/* Десктопная версия */}
+          <div className="info-left desktop-info">
             <h2>Информация о сотруднике</h2>
 
             <div className="fio-wrapper">
@@ -429,75 +620,138 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
               </div>
             </div>
 
-            <p><p>Должность:</p> {user.role_id}</p>
-            <p><p>Почта:</p> {user.email}</p>
-            <p><p>Телефон:</p> {user.telephone}</p>
+            <p><span>Должность:</span> {user.role_id}</p>
+            <p><span>Почта:</span> {user.email}</p>
+            <p><span>Телефон:</span> {user.telephone}</p>
           </div>
 
-          <div className="info-right">
-            <p><p>Опыт работы:</p> {formatYears(user.work_experience)}</p>
-            <p><p>Уровень аттестации:</p> {user.assessment_rate}</p>
-            <p><p>Часовая ставка:</p> {Number(user.hourly_rate)} ₽</p>
-            <p><p>Начало работы:</p> {new Date(user.data_work_start).toLocaleDateString()}</p>
+          <div className="info-right desktop-info">
+            <p><span>Опыт работы:</span> {formatYears(user.work_experience)}</p>
+            <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
+            <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
+            <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
+          </div>
+
+          {/* Мобильная версия - объединенный блок */}
+          <div className="mobile-info">
+            {/* Аватар, имя и роль */}
+            <div className="mobile-employee-info">
+              <div className="mobile-employee-avatar">
+                <div className="avatar-circle">
+                  {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+                </div>
+              </div>
+              <div className="mobile-employee-details">
+                <span className="mobile-employee-role-name">
+                  <span className="mobile-employee-role">{getRoleText(user.role_id)}</span>
+                  <span className="mobile-employee-separator"> - </span>
+                  <span className="mobile-employee-name">
+                    {getShortNameMobile(user.first_name || "", user.last_name || "", user.patronymic || "") || user.first_name || "Пользователь"}
+                  </span>
+                </span>
+              </div>
+            </div>
+            
+            {/* Остальная информация */}
+            <div className="mobile-info-details">
+              <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
+              <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
+              <p><span>Почта:</span> {user.email}</p>
+              <p><span>Телефон:</span> {user.telephone}</p>
+              {(user.role_id === 1 || user.role_id === 2) && (
+                <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
+              )}
+            </div>
           </div>
         </section>
 
         {/* Отчёт */}
         <section className="profile-card report">
           <div className="report-header">
-            <h2>Отчёт</h2>
-            <div className="report-container">
-              <div className="date-pill">
+            <h2 className="report-title">Отчёт</h2>
+            <div className="report-calendar-controls">
+              <div className="report-calendar-button">
                 <Icons.CalendarWhiteIcon title="calendar" />
-                <span>Текущий период</span>
+                <span>{getCurrentPeriod()}</span>
               </div>
-              <Icons.ArrowsIcon title="arrows" />
             </div>
+            {getNextShift() && (
+              <div className="report-next-shift-header">
+                <span className="next-shift-label">Ближайшая смена</span>
+                <div className="next-shift-date">
+                  {new Date(getNextShift()!.schedule_start_time).toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="report-stats">
-            <div className="stat-card">
-              <div className="stat-container">
-                <Icons.TimeIcon width={20} height={20} title="time" />
-                <p>Рабочие часы</p>
-              </div>
-              <h3>
-                {reportLoading ? "..." : (report?.work_hours || 0)}
-              </h3>
+            <div className="report-stat-card">
+              <span className="report-stat-label">Рабочие часы</span>
+              <span className="report-stat-value">
+                {reportLoading ? "..." : Math.round(report?.work_hours || 0)}
+              </span>
             </div>
 
-            <div className="stat-card">
-              <div className="stat-container">
-                <Icons.BriefcaseIcon width={20} height={20} title="briefcase" />
-                <p>Смены</p>
-              </div>
-              <h3>
+            <div className="report-stat-card">
+              <span className="report-stat-label">Смены</span>
+              <span className="report-stat-value">
                 {reportLoading ? "..." : (report?.work_days || 0)}
-              </h3>
+              </span>
             </div>
 
-            <div className="stat-card">
-              <div className="stat-container">
-                <Icons.RubleIcon width={20} height={20} title="ruble" />
-                <p>Заработок</p>
+            {/* Ближайшая смена - список сотрудников (десктопная версия) */}
+            {getNextShift() && getEmployeesForNextShift().length > 0 && (
+              <div className="report-next-shift-block desktop-next-shift">
+                <div className="next-shift-employees">
+                  {getEmployeesForNextShift().map((emp: any) => (
+                    <div key={emp.id} className="next-shift-employee">
+                      <span className="employee-name-short">{getShortNameReport(emp.first_name, emp.last_name)}</span>
+                      <span className={`employee-role ${emp.role_id === 2 ? 'role-manager' : ''}`}>
+                        {emp.roleText}
+                      </span>
+                      {emp.role_id !== 2 && <span className="employee-time">{emp.time}</span>}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3>
-                {reportLoading ? "..." : formatEarnings(report?.total_earnings || "0")}
-              </h3>
-            </div>
+            )}
           </div>
-        </section>
 
-        {/* Отчёт текущего месяца */}
-        <section className="profile-card month-summary">
-          <h2>Отчёт на текущий месяц</h2>
-          <p><strong>Заработок:</strong> 0.00 ₽</p>
-          <p><strong>Премии:</strong> 0.00 ₽</p>
-          <p><strong>Штрафы:</strong> 0.00 ₽</p>
-          <div className="next-shift">
-            <p>Ближайшая смена:</p>
-            <p className="date-pill orange">02.01.2025</p>
-          </div>
+          {/* Ближайшая смена - мобильная версия */}
+          {getNextShift() && (
+            <div className="mobile-next-shift-section">
+              <div className="mobile-next-shift-header">
+                <span className="next-shift-label">Ближайшая смена</span>
+                <div className="next-shift-date">
+                  {new Date(getNextShift()!.schedule_start_time).toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+              
+              {/* Список сотрудников, работающих в этот день */}
+              {getEmployeesForNextShift().length > 0 && (
+                <div className="next-shift-employees">
+                  {getEmployeesForNextShift().map((emp: any) => (
+                    <div key={emp.id} className="next-shift-employee">
+                      <span className="employee-name-short">{getShortNameReport(emp.first_name, emp.last_name)}</span>
+                      <span className={`employee-role ${emp.role_id === 2 ? 'role-manager' : ''}`}>
+                        {emp.roleText}
+                      </span>
+                      {emp.role_id !== 2 && <span className="employee-time">{emp.time}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <WorkSchedule

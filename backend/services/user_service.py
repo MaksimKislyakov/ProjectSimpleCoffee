@@ -83,7 +83,7 @@ class UserService:
             List[User]: Список всех пользователей
 
         Raises:
-            HTTPException: 403 если недостаточно прав
+            HTTPException: 404 если пользователи не найдены
         """
         if current_user.role_id not in (RolesEnum.barista, RolesEnum.manager, RolesEnum.admin):
             raise HTTPException(status_code=403, detail="Не достаточно прав")

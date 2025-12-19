@@ -2,8 +2,14 @@
   font-family: "Montserrat", sans-serif;
   background-color: #f5f5f5;
   min-height: 100vh;
-  color: #333;
+  color: #3F3932;
   font-weight: 400;
+}
+
+/* Цвет текста для всей страницы профиля */
+.profile-page,
+.profile-page * {
+  color: #3F3932;
 }
 
 /* ——— Верхняя панель ——— */
@@ -13,9 +19,24 @@
   align-items: center;
   background: #fff;
   padding: 15px;
-  border-bottom: 1px solid #ddd;
   box-shadow: #dcdcdc 0px 4px 12px -2px;
   max-height: 67px;
+}
+
+.desktop-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.desktop-coffee-shop-address {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 100%;
+  letter-spacing: 0;
+  color: #3F3932;
+  white-space: nowrap;
 }
 
 .navigation-bar {
@@ -160,50 +181,297 @@ h2 {
     font-size: 24px;
 }
 
-/* Отчёт */
+.info-left p span,
+.info-right p span {
+    font-weight: 600;
+}
+
+/* Скрываем мобильную версию на десктопе */
+.mobile-info {
+  display: none;
+}
+
+/* Отчёт - Десктопная версия */
 .report {
   padding: 16px 43px;
-  grid-column: 1 / 2;
-  background: #fff; /* Добавьте серый фон ко всей карточке */
+  grid-column: 1 / 3; /* Растягиваем на всю ширину */
+  background: #fff;
   border-radius: 12px;
+  box-sizing: border-box;
 }
 
 .report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  margin-bottom: 20px;
+  gap: 20px;
 }
 
-.report-header h2 {
+.report-title {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
   margin: 0;
+  color: #3F3932;
 }
 
-.date-pill {
-  background: #ff7b32;
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
+.report-calendar-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+}
+
+.report-calendar-button {
+  background: #E67634;
+  height: 45px;
+  border-radius: 10px;
+  gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 26px;
+  box-sizing: border-box;
+}
+
+.report-calendar-button span {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
   font-size: 20px;
-  margin-right: 33px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
+  vertical-align: middle;
+  color: #fff;
+}
+
+.report-next-shift-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Скрываем мобильную версию ближайшей смены на десктопе */
+.mobile-next-shift-section {
+  display: none;
+}
+
+.report-next-shift-header .next-shift-label {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
+  color: #3F3932;
+}
+
+.report-next-shift-header .next-shift-date {
+  background: #F4F4F4;
+  border-radius: 5px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
+  color: #3F3932;
 }
 
 .report-stats {
   display: flex;
+  flex-direction: row;
+  gap: 100px;
+  box-sizing: border-box;
   justify-content: space-between;
-  gap: 8px; /* Добавьте равномерные отступы между карточками */
 }
 
+.report-stat-card {
+  width: 265px;
+  height: 144px;
+  border-radius: 20px;
+  gap: 10px;
+  padding-top: 31px;
+  padding-right: 9px;
+  padding-bottom: 31px;
+  padding-left: 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F4F4F4;
+  box-shadow: 0px 2px 4px 0px #00000040;
+  box-sizing: border-box;
+}
+
+.report-stat-label {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+  color: #3F3932;
+  width: 100%;
+}
+
+.report-stat-value {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+  vertical-align: middle;
+  color: #3F3932;
+  margin-top: auto;
+}
+
+.report-next-shift-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.report-next-shift-block .next-shift-employees {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-next-shift-block .next-shift-employee {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.report-next-shift-block .employee-role-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.report .next-shift-section {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.report .next-shift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report .next-shift-label {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+.report .next-shift-date {
+  background: #F4F4F4;
+  border-radius: 5px;
+  gap: 10px;
+  padding-top: 5px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
+  vertical-align: middle;
+  color: #333;
+}
+
+.report .next-shift-employees {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-left: auto;
+}
+
+.report .next-shift-employee {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
+  column-gap: clamp(12px, 2vw, 28px);
+  align-items: center;
+  padding: 5px 0;
+  font-size: 24px;
+}
+
+.report .employee-role {
+  margin-left: 0;
+}
+
+.report .employee-time {
+  text-align: right;
+}
+
+/* Стили для отчета в профиле - специфичные для .report */
+.report .employee-name-short {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  border-radius: 3px;
+  color: #3F3932;
+}
+
+/* Удаляем обертку employee-role-time, так как теперь элементы прямые дети */
+
+.report .employee-role {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+.report .employee-role.role-manager {
+  color: #746D66;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.report .employee-time {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: #746D66;
+}
+
+/* Старые стили для отчета - больше не используются, оставлены для совместимости */
 .stat-card {
-  background: #f9f9f9; /* Белый фон для контраста */
+  background: #f9f9f9;
   border-radius: 20px;
   text-align: center;
   padding: 30px 9px;
-  flex: 1; /* Равномерное распределение ширины */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.25); /* Легкая тень для разделения */
+  flex: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 
 .stat-card h3 {
@@ -244,13 +512,7 @@ h2 {
     margin: 2px 0;
 }
 
-.next-shift {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: space-between;
-}
+/* Старый стиль .next-shift - больше не используется, удален */
 
 .date-pill.orange {
   background-color: #ff7b32;
@@ -273,4 +535,413 @@ h2 {
 
 .day-card:hover .comment-popup {
   display: block;
+}
+
+/* Скрываем мобильный хедер на десктопе */
+.mobile-header {
+  display: none;
+}
+
+.mobile-employee-info {
+  display: none;
+}
+
+/* ========== МОБИЛЬНАЯ ВЕРСИЯ (393px x 852px) ========== */
+@media (max-width: 394px) {
+  /* Скрываем десктопный хедер на мобильной версии */
+  .desktop-header {
+    display: none;
+  }
+
+  /* Показываем мобильный хедер на мобильной версии */
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .mobile-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-logo {
+    width: 100px;
+    min-width: 100px;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .mobile-coffee-shop-address {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 500;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 12rem;
+  }
+
+  .mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .mobile-notifications-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* Временная заглушка для иконки уведомлений */
+    background: #f0f0f0;
+    border-radius: 50%;
+  }
+
+  .mobile-logout-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Общие стили для mobile-employee-info находятся в index.css */
+  /* Здесь только специфичные стили для .mobile-info .mobile-employee-info */
+
+  /* Адаптация контента для мобильной версии */
+  .profile-content {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    padding-bottom: 10px;
+    gap: 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+    min-height: auto;
+    align-items: flex-start; /* Выравнивание блоков по левому краю */
+  }
+
+  /* Блок информации о сотруднике */
+  .employee-main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 373px;
+    min-height: 188px;
+    padding: 15px;
+    box-sizing: border-box;
+    border-radius: 20px;
+  }
+
+  /* Скрываем плейсхолдер фото на мобильной версии */
+  .photo-placeholder {
+    display: none;
+  }
+
+  /* Скрываем десктопную информацию на мобильной версии */
+  .desktop-info {
+    display: none;
+  }
+
+  /* Мобильная версия информации - объединенный блок */
+  .mobile-info {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    box-sizing: border-box;
+  }
+
+  /* Блок с аватаром, именем и ролью внутри mobile-info */
+  .mobile-info .mobile-employee-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: none;
+  }
+
+  .mobile-info .mobile-employee-avatar {
+    flex-shrink: 0;
+  }
+
+  .mobile-info .mobile-employee-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 4rem);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Стили для роли и имени в формате "Роль - Имя" */
+  .mobile-info .mobile-employee-role-name {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: right;
+    width: 100%;
+  }
+
+  .mobile-info .mobile-employee-role-name .mobile-employee-role,
+  .mobile-info .mobile-employee-role-name .mobile-employee-name {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: right;
+    color: #333;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .mobile-info .mobile-employee-role-name .mobile-employee-name {
+    font-weight: 400;
+  }
+
+
+
+  /* Детали информации */
+  .mobile-info-details {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .mobile-info-details p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: right;
+    margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+  }
+
+  .mobile-info-details p span {
+    font-weight: 400;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Блок отчета - мобильная версия */
+  .report {
+    grid-column: 1;
+    width: 100%;
+    max-width: 373px;
+    min-height: 289px;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-radius: 20px;
+  }
+
+  .report-header {
+    gap: 0.5rem;
+  }
+
+  .report-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .report-calendar-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .report-calendar-button {
+    height: 24px;
+    border-radius: 5px;
+    gap: 5px;
+    padding: 5px 10px;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    box-sizing: border-box;
+    align-items: center;
+  }
+
+  .report-calendar-button span {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #fff;
+  }
+
+  .report-calendar-button svg {
+    width: 12px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Скрываем ближайшую смену в header на мобильной версии */
+  .report-next-shift-header {
+    display: none;
+  }
+
+  /* Скрываем десктопную версию блока ближайшей смены */
+  .desktop-next-shift {
+    display: none;
+  }
+
+  /* Показываем мобильную версию ближайшей смены */
+  .mobile-next-shift-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .mobile-next-shift-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-next-shift-header .next-shift-label {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #3F3932;
+  }
+
+  .mobile-next-shift-header .next-shift-date {
+    background: #F4F4F4;
+    width: 91px;
+    height: 24px;
+    border-radius: 5px;
+    gap: 10px;
+    padding-top: 5px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: right;
+    vertical-align: middle;
+    color: #3F3932;
+  }
+
+  .report-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .report-stat-card {
+    width: 100%;
+    max-width: 343px;
+    min-height: 30px;
+    height: auto;
+    border-radius: 5px;
+    padding: 10px;
+    flex-direction: row;
+    align-items: center;
+    box-shadow: 0px 2px 4px 0px #00000040;
+  }
+
+  .report-stat-label {
+    font-size: 14px;
+    text-align: left;
+    flex: 1;
+  }
+
+  .report-stat-value {
+    font-size: 20px;
+    margin-top: 0;
+  }
+
+  .report-next-shift-block {
+    width: 100%;
+  }
+
+  /* Мобильная версия - имя слева, роль посередине, время справа, роли выровнены */
+  .report .next-shift-employee {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 14px;
+  }
+
+  .report .employee-name-short {
+    grid-column: 1;
+    text-align: left;
+    justify-self: start;
+  }
+
+  .report .employee-role {
+    grid-column: 2;
+    margin-left: 0;
+    text-align: left;
+    justify-self: start;
+  }
+
+  .report .employee-time {
+    grid-column: 3;
+    text-align: right;
+    justify-self: end;
+  }
+
+  /* Блок расписания */
+  .profile-content .wrapper {
+    width: 100%;
+    max-width: 373px;
+    min-height: 309px;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-radius: 20px;
+    background: #fff;
+  }
+
+  /* Адаптация остальных элементов для мобильной версии */
+
 }

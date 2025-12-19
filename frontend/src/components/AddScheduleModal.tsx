@@ -8,6 +8,9 @@ interface AddScheduleModalProps {
   onConfirm: (startTime: string, endTime: string) => Promise<void>;
   onClose: () => void;
   modalRef?: React.RefObject<HTMLDivElement | null>;
+  initialStartTime?: string;
+  initialEndTime?: string;
+  onTimeChange?: (startTime: string, endTime: string) => void;
 }
 
 const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ 
@@ -15,13 +18,30 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({
   position, 
   onConfirm, 
   onClose,
-  modalRef
+  modalRef,
+  initialStartTime = "09:00",
+  initialEndTime = "21:00",
+  onTimeChange
 }) => {
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("21:00");
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const startTimeRef = useRef<HTMLInputElement>(null);
+  const startTimeRef = useRef<HTMLSelectElement>(null);
+
+  // Генерация времени с шагом 15 минут (с 6:00 до 23:45)
+  const generateTimeOptions = () => {
+    const options: string[] = [];
+    for (let hour = 6; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        options.push(timeStr);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   // Функция для округления времени до ближайших 15 минут
   const roundTo15Minutes = (time: string): string => {
@@ -33,15 +53,37 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({
     return `${String(finalHours).padStart(2, "0")}:${String(finalMinutes).padStart(2, "0")}`;
   };
 
+  // Используем useRef для отслеживания предыдущих значений date и position
+  const prevDateRef = useRef<Date | null>(null);
+  const prevPositionRef = useRef<{ top: number; left: number } | null>(null);
+
+  // Обновляем состояние времени только при первом открытии модалки (когда date или position меняются)
   useEffect(() => {
     if (date && position) {
-      setError(null);
-      // Фокус на первое поле при открытии
-      setTimeout(() => {
-        startTimeRef.current?.focus();
-      }, 100);
+      const dateChanged = prevDateRef.current?.getTime() !== date.getTime();
+      const positionChanged = 
+        prevPositionRef.current?.top !== position.top || 
+        prevPositionRef.current?.left !== position.left;
+      
+      // Обновляем время только если модалка только что открылась (date или position изменились)
+      if (dateChanged || positionChanged) {
+        setStartTime(initialStartTime);
+        setEndTime(initialEndTime);
+        setError(null);
+        // Фокус на первое поле при открытии
+        setTimeout(() => {
+          startTimeRef.current?.focus();
+        }, 100);
+      }
+      
+      prevDateRef.current = date;
+      prevPositionRef.current = position;
+    } else {
+      // Когда модалка закрывается, сбрасываем предыдущие значения
+      prevDateRef.current = null;
+      prevPositionRef.current = null;
     }
-  }, [date, position]);
+  }, [date, position, initialStartTime, initialEndTime]);
 
   const validateTime = (start: string, end: string): boolean => {
     if (!start || !end) {
@@ -128,39 +170,47 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({
         <div className="confirm-schedule-time-inputs">
           <div className="time-input-wrapper">
             <label className="time-label">Начало</label>
-            <input
+            <select
               ref={startTimeRef}
-              type="time"
               className="time-input"
               value={startTime}
               onChange={(e) => {
-                const rounded = roundTo15Minutes(e.target.value);
-                setStartTime(rounded);
+                setStartTime(e.target.value);
                 setError(null);
+                if (onTimeChange) {
+                  onTimeChange(e.target.value, endTime);
+                }
               }}
-              step="900"
-              min="00:00"
-              max="23:45"
-            />
+            >
+              {timeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
           
           <span className="time-separator">-</span>
           
           <div className="time-input-wrapper">
             <label className="time-label">Окончание</label>
-            <input
-              type="time"
+            <select
               className="time-input"
               value={endTime}
               onChange={(e) => {
-                const rounded = roundTo15Minutes(e.target.value);
-                setEndTime(rounded);
+                setEndTime(e.target.value);
                 setError(null);
+                if (onTimeChange) {
+                  onTimeChange(startTime, e.target.value);
+                }
               }}
-              step="900"
-              min="00:00"
-              max="23:45"
-            />
+            >
+              {timeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -183,7 +233,7 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Сохранение..." : "Подтвердить"}
+            {isLoading ? "Сохранение..." : "Сохранить"}
           </button>
         </div>
       </div>

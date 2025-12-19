@@ -11,6 +11,7 @@ interface EmployeeScheduleRowProps {
   currentUserId: number | null
   currentRoleId: number
   onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>
+  onDeleteSchedule?: (scheduleId: number) => Promise<void>
   onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>
   openModalScheduleId: number | null
   setOpenModalScheduleId: (id: number | null) => void
@@ -26,6 +27,7 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
   currentUserId,
   currentRoleId,
   onConfirmSchedule,
+  onDeleteSchedule,
   onCreateSchedule,
   openModalScheduleId,
   setOpenModalScheduleId,
@@ -55,7 +57,7 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
             )
           })
 
-          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} onConfirmSchedule={onConfirmSchedule} onCreateSchedule={onCreateSchedule} openModalScheduleId={openModalScheduleId} setOpenModalScheduleId={setOpenModalScheduleId} openAddModalKey={openAddModalKey} setOpenAddModalKey={setOpenAddModalKey} mode={mode} />
+          return <DayCell key={index} schedule={match || null} day={day} user={user} currentUserId={currentUserId} currentRoleId={currentRoleId} onConfirmSchedule={onConfirmSchedule} onDeleteSchedule={onDeleteSchedule} onCreateSchedule={onCreateSchedule} openModalScheduleId={openModalScheduleId} setOpenModalScheduleId={setOpenModalScheduleId} openAddModalKey={openAddModalKey} setOpenAddModalKey={setOpenAddModalKey} mode={mode} />
         })}
       </div>
     </div>

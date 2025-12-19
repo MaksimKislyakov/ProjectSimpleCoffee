@@ -11,6 +11,7 @@ interface Props {
   currentUserId: number | null
   currentRoleId: number
   onConfirmSchedule: (scheduleId: number, startTime?: string, endTime?: string) => Promise<void>
+  onDeleteSchedule?: (scheduleId: number) => Promise<void>
   onCreateSchedule?: (date: Date, startTime: string, endTime: string, targetUserId?: number) => Promise<void>
   searchQuery?: string
   setSearchQuery?: (query: string) => void
@@ -28,6 +29,7 @@ const WorkScheduleTable: React.FC<Props> = ({
   currentUserId, 
   currentRoleId, 
   onConfirmSchedule,
+  onDeleteSchedule,
   onCreateSchedule,
   searchQuery: externalSearchQuery,
   setSearchQuery: externalSetSearchQuery,
@@ -243,6 +245,7 @@ const WorkScheduleTable: React.FC<Props> = ({
                 currentUserId={currentUserId}
                 currentRoleId={currentRoleId}
                 onConfirmSchedule={onConfirmSchedule}
+                onDeleteSchedule={onDeleteSchedule}
                 onCreateSchedule={onCreateSchedule}
                 openModalScheduleId={openModalScheduleId}
                 setOpenModalScheduleId={setOpenModalScheduleId}
