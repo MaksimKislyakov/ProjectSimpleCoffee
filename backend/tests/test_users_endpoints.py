@@ -53,17 +53,17 @@ def test_get_current_user_with_mocked_dependencies(
         "work_experience": 12,
         "data_work_start": datetime(2023, 1, 1).isoformat(),
     }
-    
+
     mock_user_service.get_user_info.return_value = user_dict
-    
+
     response = client.get("/api/v1/user/me")
-    
+
     assert response.status_code == 200
     
     data: Dict[str, Any] = response.json()
     assert data["id"] == 1
     assert data["email"] == "test@example.com"
-    
+
     mock_user_service.get_user_info.assert_called_once_with(1)
 
 
@@ -115,12 +115,12 @@ def test_create_user(
         "data_work_start": datetime.now().isoformat(),
         "hashed_password": "hashed_password123",
     }
-    
+
     mock_user_service.create_new_user.return_value = created_user_dict
     mock_user.role_id = RolesEnum.admin
-    
+
     response = client.post("/api/v1/user/create", json=new_user_data)
-    
+
     assert response.status_code == 200
     mock_user_service.create_new_user.assert_called_once()
 
@@ -165,12 +165,12 @@ def test_get_all_users(
             "hourly_rate": Decimal("150.00"),
         },
     ]
-    
+
     mock_user_service.get_all_users.return_value = users_list
     mock_user.role_id = RolesEnum.admin
-    
+
     response = client.get("/api/v1/user/all_users")
-    
+
     assert response.status_code == 200
     mock_user_service.get_all_users.assert_called_once_with(mock_user)
 
@@ -205,12 +205,12 @@ def test_delete_user(
         "hourly_rate": Decimal("150.00"),
         "hashed_password": "hashed_password",
     }
-    
+
     mock_user_service.delete_user.return_value = deleted_user_dict
     mock_user.role_id = RolesEnum.admin
-    
+
     response = client.delete("/api/v1/user/delete_user/2")
-    
+
     assert response.status_code == 200
     mock_user_service.delete_user.assert_called_once_with(
         id_user_del=2, current_user=mock_user
@@ -249,15 +249,15 @@ def test_get_users_for_coffeeshop(
             "email": "user2@test.com",
         },
     ]
-    
+
     mock_user_service.get_all_users_for_coffeshop.return_value = users_list
     mock_user.role_id = RolesEnum.admin
-    
+
     response = client.get("/api/v1/user/get_users_for_coffeshop/1")
-    
+
     assert response.status_code == 200
     mock_user_service.get_all_users_for_coffeshop.assert_called_once()
-    
+
     call_args = mock_user_service.get_all_users_for_coffeshop.call_args
-    assert call_args[0][0] == 1 
+    assert call_args[0][0] == 1
     assert call_args[0][1] == mock_user
