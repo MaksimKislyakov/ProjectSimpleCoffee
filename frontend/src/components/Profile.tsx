@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "../styles/profile.css";
 import * as Icons from "../icons/index.ts";
 import { useNavigate, useLocation } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
+import ReportDateRangePicker from "./ReportDateRangePicker.tsx";
 import {
   DayData,
   generateWeekDays,
   generateMonthDays,
+  generateTwoWeeks,
   getWeekLabel,
-  getMonthLabel
+  getMonthLabel,
+  getTwoWeeksLabel
 } from "../components/useScheduleUtils.tsx";
 
 
@@ -52,6 +55,21 @@ const ProfilePage: React.FC = () => {
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Состояние для периода отчета
+  const [reportStartDate, setReportStartDate] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [reportEndDate, setReportEndDate] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarButtonRef = useRef<HTMLDivElement | null>(null);
+  const [isScheduleCalendarOpen, setIsScheduleCalendarOpen] = useState(false);
+  const scheduleCalendarButtonRef = useRef<HTMLDivElement | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 394);
 
 
   const fetchSchedule = async () => {
@@ -63,11 +81,14 @@ const ProfilePage: React.FC = () => {
 
     try {
       // Сначала генерируем пустые дни для текущего режима
+      // Для мобильной версии используем 2 недели, для веб - неделя/месяц
       let emptyDays: DayData[] = [];
-      if (mode === "week") {
-        emptyDays = generateWeekDays(currentDate);
+      
+      if (isMobile) {
+        emptyDays = generateTwoWeeks(currentDate);
       } else {
-        emptyDays = generateMonthDays(currentDate);
+        // В веб-версии всегда отображаем только неделю (7 дней)
+        emptyDays = generateWeekDays(currentDate);
       }
 
       const res = await fetch("/api/v1/schedule/get_all_schedule", {
@@ -130,12 +151,16 @@ const ProfilePage: React.FC = () => {
               hour12: false
             });
 
+          const isConfirmed = scheduleItem.is_confirmed === true;
+          const isActive = scheduleItem.status === "active";
+
           return {
             ...emptyDay,
             date: emptyDay.date, // Сохраняем исходную дату
             time: `${formatTime(start)} ${formatTime(end)}`,
-            isWorkDay: scheduleItem.status === "active",
-            isEmpty: false // Есть данные - не пустой
+            isWorkDay: isActive && isConfirmed, // Подтвержденный рабочий день
+            isEmpty: false, // Есть данные - не пустой
+            isConfirmed: isConfirmed
           };
         }
 
@@ -151,7 +176,14 @@ const ProfilePage: React.FC = () => {
     } catch (err) {
       console.error("Ошибка получения расписания", err);
       // При ошибке показываем пустые дни
-      const errorDays = mode === "week" ? generateWeekDays() : generateMonthDays();
+      let errorDays: DayData[] = [];
+      if (isMobile) {
+        errorDays = generateTwoWeeks(currentDate);
+      } else if (mode === "week") {
+        errorDays = generateWeekDays(currentDate);
+      } else {
+        errorDays = generateMonthDays(currentDate);
+      }
       setDays(errorDays.map(day => ({ ...day, isEmpty: true })));
     } finally {
       setScheduleLoading(false);
@@ -160,7 +192,18 @@ const ProfilePage: React.FC = () => {
 
 useEffect(() => {
   if (user) fetchSchedule();
-}, [user, mode, currentDate]);
+}, [user, mode, currentDate, isMobile]);
+
+// Обработчик изменения размера окна для пересчета графика
+useEffect(() => {
+  const handleResize = () => {
+    const mobile = window.innerWidth <= 394;
+    setIsMobile(mobile);
+  };
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
 const fetchReport = async () => {
   const token = localStorage.getItem("token");
@@ -171,15 +214,24 @@ const fetchReport = async () => {
   }
 
   try {
-    const res = await fetch("/api/v1/report/get_my_report", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+    // Форматируем даты для API (ISO формат)
+    const startDateStr = reportStartDate.toISOString();
+    const endDateStr = reportEndDate.toISOString();
+    
+    const res = await fetch(
+      `/api/v1/report/get_my_report?start_date=${encodeURIComponent(startDateStr)}&end_date=${encodeURIComponent(endDateStr)}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!res.ok) {
       console.error("Ошибка загрузки отчета:", res.status);
+      const errorData = await res.json().catch(() => ({}));
+      console.error("Детали ошибки:", errorData);
       return;
     }
 
@@ -286,15 +338,48 @@ const fetchReport = async () => {
     return `${firstName} ${lastNameInitial}`.trim();
   };
 
-  // Получаем текущий период для календаря
+  // Получаем текущий период для календаря на основе выбранных дат
   const getCurrentPeriod = () => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     const months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
                     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-    const month = months[now.getMonth()];
-    return `${firstDay.getDate()}-${lastDay.getDate()} ${month} ${now.getFullYear()}`;
+    
+    // Если период в пределах одного месяца
+    if (reportStartDate.getMonth() === reportEndDate.getMonth() && 
+        reportStartDate.getFullYear() === reportEndDate.getFullYear()) {
+      const month = months[reportStartDate.getMonth()];
+      return `${reportStartDate.getDate()}-${reportEndDate.getDate()} ${month} ${reportStartDate.getFullYear()}`;
+    }
+    
+    // Если период охватывает несколько месяцев
+    const startMonth = months[reportStartDate.getMonth()];
+    const endMonth = months[reportEndDate.getMonth()];
+    return `${reportStartDate.getDate()} ${startMonth} - ${reportEndDate.getDate()} ${endMonth} ${reportEndDate.getFullYear()}`;
+  };
+
+  // Обработчик изменения периода отчета
+  const handleReportDateChange = (startDate: Date, endDate: Date) => {
+    setReportStartDate(startDate);
+    setReportEndDate(endDate);
+    setIsCalendarOpen(false);
+    // Перезагружаем отчет с новыми датами
+    setReportLoading(true);
+    setTimeout(() => {
+      fetchReport();
+    }, 100);
+  };
+
+  // Обработчик изменения даты для графика работы (выбираем начало двух недель)
+  const handleScheduleDateChange = (startDate: Date, endDate: Date) => {
+    // Используем начальную дату для установки currentDate
+    // Выравниваем на понедельник начала двухнедельного периода
+    const selectedDate = new Date(startDate);
+    const dayOfWeek = selectedDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    selectedDate.setDate(selectedDate.getDate() + mondayOffset);
+    
+    setCurrentDate(selectedDate);
+    setIsScheduleCalendarOpen(false);
+    // Расписание перезагрузится автоматически через useEffect при изменении currentDate
   };
 
 // загрузка пользователя 
@@ -362,6 +447,13 @@ useEffect(() => {
 
   fetchUser();
 }, []);
+
+// Перезагружаем отчет при изменении периода
+useEffect(() => {
+  if (user) {
+    fetchReport();
+  }
+}, [reportStartDate, reportEndDate]);
 
 
 const formatEarnings = (earnings: string): string => {
@@ -484,14 +576,23 @@ const handleAddSchedule = async (data: any) => {
 
  const goPrev = () => {
   const newDate = new Date(currentDate);
-  if (mode === "week") newDate.setDate(newDate.getDate() - 7);
-  else newDate.setMonth(newDate.getMonth() - 1);
+  if (isMobile) {
+    // Для мобильной версии листаем по 2 недели
+    newDate.setDate(newDate.getDate() - 14);
+  } else if (mode === "week") {
+    newDate.setDate(newDate.getDate() - 7);
+  } else {
+    newDate.setMonth(newDate.getMonth() - 1);
+  }
   setCurrentDate(newDate);
 };
 
   const goNext = () => {
   const newDate = new Date(currentDate);
-  if (mode === "week") {
+  if (isMobile) {
+    // Для мобильной версии листаем по 2 недели
+    newDate.setDate(newDate.getDate() + 14);
+  } else if (mode === "week") {
     newDate.setDate(newDate.getDate() + 7);
   } else {
     newDate.setMonth(newDate.getMonth() + 1);
@@ -638,7 +739,6 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             <div className="mobile-employee-info">
               <div className="mobile-employee-avatar">
                 <div className="avatar-circle">
-                  {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
                 </div>
               </div>
               <div className="mobile-employee-details">
@@ -670,7 +770,12 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
           <div className="report-header">
             <h2 className="report-title">Отчёт</h2>
             <div className="report-calendar-controls">
-              <div className="report-calendar-button">
+              <div 
+                ref={calendarButtonRef}
+                className="report-calendar-button"
+                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                style={{ cursor: 'pointer' }}
+              >
                 <Icons.CalendarWhiteIcon title="calendar" />
                 <span>{getCurrentPeriod()}</span>
               </div>
@@ -755,16 +860,52 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
         </section>
 
         <WorkSchedule
-          currentLabel={mode === "week" ? getWeekLabel(currentDate) : getMonthLabel(currentDate)}
+          currentLabel={
+            isMobile
+              ? getTwoWeeksLabel(currentDate)
+              : mode === "week" 
+                ? getWeekLabel(currentDate) 
+                : getMonthLabel(currentDate)
+          }
           mode={mode}
           onPrev={goPrev}
           onNext={goNext}
           onChangeMode={onChangeMode}
+          isMobile={isMobile}
+          onCalendarClick={isMobile ? () => setIsScheduleCalendarOpen(!isScheduleCalendarOpen) : undefined}
+          calendarButtonRef={scheduleCalendarButtonRef}
         >
-          {days.map((d, i) => (
-            <div className="day-col" key={i}>
-              <div className="dow">{d.weekday}</div>
-              <div className="day-num">{d.dayNumber}</div>
+          {/* Заголовок с названиями дней недели */}
+          <div className="schedule-weekdays-header">
+            {days.slice(0, 7).map((d, i) => {
+              const today = new Date();
+              const isToday = d.fullDate.getDate() === today.getDate() &&
+                             d.fullDate.getMonth() === today.getMonth() &&
+                             d.fullDate.getFullYear() === today.getFullYear();
+              return (
+                <div key={i} className={`weekday-header-item ${isToday ? 'today' : ''}`}>
+                  <div className="weekday-name">{isMobile ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][i] : d.weekday}</div>
+                </div>
+              );
+            })}
+          </div>
+          {(isMobile ? days : days.slice(0, 7)).map((d, i) => (
+            <div key={i} className="day-cell-wrapper">
+              <div className="day-date-label">{d.dayNumber}</div>
+              <div 
+                className={`day-col ${d.isEmpty ? 'empty-day' : d.isWorkDay ? 'work-day' : d.isConfirmed === false ? 'unconfirmed-day' : ''}`}
+                onClick={() => {
+                  // При клике на пустой день открываем модалку для добавления смены
+                  if (d.isEmpty) {
+                    setModalDate(d.fullDate);
+                  }
+                }}
+                style={{ cursor: d.isEmpty ? 'pointer' : 'default' }}
+              >
+                {d.time && (
+                  <div className="day-time">{d.time}</div>
+                )}
+              </div>
             </div>
           ))}
         </WorkSchedule>
@@ -814,6 +955,30 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
               }
             }}
             onClose={() => setModalDate(null)}
+          />
+        )}
+
+        {isCalendarOpen && (
+          <ReportDateRangePicker
+            startDate={reportStartDate}
+            endDate={reportEndDate}
+            onDateChange={handleReportDateChange}
+            onClose={() => setIsCalendarOpen(false)}
+            buttonRef={calendarButtonRef}
+          />
+        )}
+
+        {isScheduleCalendarOpen && isMobile && (
+          <ReportDateRangePicker
+            startDate={currentDate}
+            endDate={(() => {
+              const end = new Date(currentDate);
+              end.setDate(end.getDate() + 13);
+              return end;
+            })()}
+            onDateChange={handleScheduleDateChange}
+            onClose={() => setIsScheduleCalendarOpen(false)}
+            buttonRef={scheduleCalendarButtonRef}
           />
         )}
 

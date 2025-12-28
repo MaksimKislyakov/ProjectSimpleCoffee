@@ -10,6 +10,9 @@ interface WorkScheduleProps {
   mode: "week" | "month";
   onChangeMode: (mode: "week" | "month") => void;
   children: React.ReactNode;
+  isMobile?: boolean;
+  onCalendarClick?: () => void;
+  calendarButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 
@@ -20,6 +23,9 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
   mode,
   onChangeMode,
   children,
+  isMobile,
+  onCalendarClick,
+  calendarButtonRef,
 }) => {
   const navigate = useNavigate();
   return (
@@ -30,7 +36,12 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
               <p>График работы</p> <Icons.ArrowIcon />
             </div>
             <div className="currentPeriod">
-                <div className="calendar">
+                <div 
+                  ref={calendarButtonRef}
+                  className="calendar"
+                  onClick={isMobile && onCalendarClick ? onCalendarClick : undefined}
+                  style={isMobile && onCalendarClick ? { cursor: 'pointer' } : undefined}
+                >
                     <Icons.CalendarIcon title="календарь"/>
                     <span>{currentLabel}</span>
                 </div>
@@ -60,9 +71,17 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
             </div>
         </div>
 
+      {/* Заголовок дней недели (если есть в children) */}
+      {React.Children.toArray(children).find((child) => 
+        React.isValidElement(child) && 
+        (child.props as { className?: string })?.className === 'schedule-weekdays-header'
+      )}
+
       {/* Сетка расписания */}
       <div className={`scheduleGrid ${mode === "month" ? "month-view" : ""}`}>
-        {children}
+        {React.Children.toArray(children).filter((child) => 
+          !(React.isValidElement(child) && (child.props as { className?: string })?.className === 'schedule-weekdays-header')
+        )}
       </div>
     </section>
   );

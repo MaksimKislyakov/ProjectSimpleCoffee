@@ -10,6 +10,7 @@ export interface DayData {
   dayNumber: number;
   status?: string;
   comment?: string;
+  isConfirmed?: boolean;
 }
 
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -58,6 +59,59 @@ export const generateMonthDays = (date: Date = new Date()): DayData[] => {
   }
 
   return days;
+};
+
+// --- Генерация 2 недель (для мобильной версии) ---
+export const generateTwoWeeks = (startDate: Date = new Date()): DayData[] => {
+  const days: DayData[] = [];
+  const start = new Date(startDate);
+  start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
+
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+
+    days.push({
+      weekday: WEEKDAYS[d.getDay()],
+      dayNumber: d.getDate(),
+      date: `${WEEKDAYS[d.getDay()]} ${d.getDate()}`,
+      fullDate: d,
+      isEmpty: true
+    });
+  }
+
+  return days;
+};
+
+// --- Заголовок для 2 недель (только название месяца для мобильной версии) ---
+export const getTwoWeeksLabel = (date: Date): string => {
+  const start = new Date(date);
+  start.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 13);
+
+  const startMonth = start.getMonth();
+  const endMonth = end.getMonth();
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+
+  let monthName: string;
+
+  // Если начало и конец в одном месяце
+  if (startMonth === endMonth && startYear === endYear) {
+    monthName = start.toLocaleDateString("ru-RU", { month: "long" });
+  } else {
+    // Если есть прошлый и будущий месяц, выбираем будущий
+    // Иначе выбираем месяц, который идет следующим (будущий)
+    const futureMonth = endMonth;
+    const futureYear = endYear;
+    const futureDate = new Date(futureYear, futureMonth, 1);
+    monthName = futureDate.toLocaleDateString("ru-RU", { month: "long" });
+  }
+
+  // Делаем первую букву заглавной
+  return monthName.charAt(0).toUpperCase() + monthName.slice(1);
 };
 
 // --- Заголовок недели ---

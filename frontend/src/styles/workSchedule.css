@@ -99,9 +99,7 @@
 }
 
 .filters {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: none; /* Скрываем фильтры в веб-версии */
 }
 
 .filterBtn {
@@ -142,13 +140,115 @@
     background: #f5f5f5;
 }
 
+/* Заголовок дней недели */
+.schedule-weekdays-header {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(clamp(150px, 12vw, 183px), 1fr));
+    gap: clamp(5px, 1vw, 7px);
+    width: 100%;
+    margin-bottom: clamp(5px, 1vw, 10px);
+    justify-content: start;
+}
+
+.weekday-header-item {
+    width: clamp(150px, 12vw, 183px);
+    min-width: clamp(150px, 12vw, 183px);
+    max-width: clamp(150px, 12vw, 183px);
+    text-align: center;
+    font-weight: 500;
+    color: #3F3932;
+    padding: clamp(8px, 1.5vw, 12px);
+    box-sizing: border-box;
+    background: #F4F4F4;
+    box-shadow: 0px 2px 4px 0px #00000040;
+    border-radius: clamp(8px, 1.2vw, 10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.5vw, 6px);
+}
+
+.weekday-name {
+    font-size: clamp(12px, 1.5vw, 16px);
+    font-weight: 500;
+}
+
+.weekday-date {
+    font-size: clamp(14px, 1.8vw, 18px);
+    font-weight: 500;
+}
+
 /* Сетка дней */
 .scheduleGrid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 7px;
+    grid-template-columns: repeat(7, minmax(clamp(150px, 12vw, 183px), 1fr));
+    gap: clamp(5px, 1vw, 7px);
     margin-top: 0;
     width: 100%;
+    justify-content: start;
+}
+
+/* Стили для дней в графике */
+.day-col {
+    width: clamp(150px, 12vw, 183px);
+    min-width: clamp(150px, 12vw, 183px);
+    max-width: clamp(150px, 12vw, 183px);
+    height: clamp(120px, 10vw, 145px);
+    min-height: clamp(120px, 10vw, 145px);
+    padding: clamp(8px, 1vw, 12px);
+    border-radius: clamp(8px, 1.2vw, 10px);
+    background: #F4F4F4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.5vw, 6px);
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Пустые дни - кликабельные */
+.day-col.empty-day {
+    cursor: pointer;
+    border: none;
+    background: #fff;
+}
+
+.day-col.empty-day:hover {
+    background: #F4F4F4;
+}
+
+/* Дни с работой */
+.day-col.work-day {
+    background: #E67634;
+    color: #fff;
+    border: none;
+}
+
+.day-col .dow {
+    font-size: 12px;
+    color: inherit;
+    font-weight: 400;
+}
+
+.day-col .day-num {
+    font-size: 16px;
+    font-weight: 500;
+    color: inherit;
+}
+
+.day-col .day-time {
+    font-size: 10px;
+    color: inherit;
+    text-align: center;
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.day-col.work-day .day-time {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .day-card {

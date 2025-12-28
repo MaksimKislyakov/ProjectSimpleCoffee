@@ -1,0 +1,188 @@
+.report-date-range-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.report-date-range-picker {
+  position: absolute;
+  background: #fff;
+  border-radius: 0.25rem;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
+  padding: clamp(0.1875rem, 0.75vw, 0.25rem);
+  z-index: 1001;
+  pointer-events: all;
+  font-family: "Montserrat", sans-serif;
+  box-sizing: border-box;
+}
+
+.report-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(0.1875rem, 0.75vw, 0.25rem);
+}
+
+.report-calendar-nav-btn {
+  background: none;
+  border: none;
+  font-size: clamp(0.4375rem, 1.25vw, 0.625rem);
+  cursor: pointer;
+  color: #3F3932;
+  padding: clamp(0.0625rem, 0.25vw, 0.125rem) clamp(0.125rem, 0.5vw, 0.25rem);
+  border-radius: 0.125rem;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(9px, 2.25vw, 12px);
+  height: clamp(9px, 2.25vw, 12px);
+  min-width: 9px;
+  min-height: 9px;
+}
+
+.report-calendar-nav-btn:hover {
+  background: #F4F4F4;
+}
+
+.report-calendar-month {
+  font-weight: 400;
+  font-size: clamp(0.5rem, 1.2vw, 0.625rem);
+  color: #3F3932;
+  white-space: nowrap;
+}
+
+.report-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  margin-bottom: clamp(0.125rem, 0.5vw, 0.25rem);
+}
+
+.report-calendar-weekday {
+  text-align: center;
+  font-size: clamp(0.4375rem, 1vw, 0.5625rem);
+  font-weight: 400;
+  color: #3F3932;
+  padding: clamp(0.09375rem, 0.375vw, 0.1875rem) 0;
+}
+
+.report-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  margin-bottom: clamp(0.1875rem, 0.75vw, 0.375rem);
+}
+
+.report-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.125rem;
+  cursor: pointer;
+  font-size: clamp(0.5rem, 1vw, 0.625rem);
+  color: #3F3932;
+  transition: all 0.2s;
+  position: relative;
+  min-width: clamp(10px, 2.5vw, 18px);
+  min-height: clamp(10px, 2.5vw, 18px);
+  width: 100%;
+  height: auto;
+}
+
+.report-calendar-day.empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.report-calendar-day.other-month {
+  color: #B7B7B7;
+  opacity: 0.6;
+}
+
+.report-calendar-day:hover:not(.empty) {
+  background: #F4F4F4;
+}
+
+.report-calendar-day.today {
+  font-weight: 400;
+  color: #3F3932;
+}
+
+.report-calendar-day.in-range {
+  background: #F4F4F4;
+}
+
+.report-calendar-day.selected {
+  background: #E67634;
+  color: #fff;
+  font-weight: 400;
+}
+
+.report-calendar-day.selected.today {
+  color: #fff;
+}
+
+.report-calendar-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: clamp(0.125rem, 0.5vw, 0.25rem);
+  padding-top: clamp(0.15625rem, 0.625vw, 0.3125rem);
+  border-top: 1px solid #E5E5E5;
+}
+
+.report-calendar-reset-btn,
+.report-calendar-apply-btn {
+  flex: 1;
+  padding: clamp(0.125rem, 0.5vw, 0.25rem) clamp(0.1875rem, 0.75vw, 0.375rem);
+  border-radius: 0.125rem;
+  border: none;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(0.5rem, 1vw, 0.625rem);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-height: clamp(16px, 4vw, 20px);
+}
+
+.report-calendar-reset-btn {
+  background: #F4F4F4;
+  color: #3F3932;
+}
+
+.report-calendar-reset-btn:hover {
+  background: #E5E5E5;
+}
+
+.report-calendar-apply-btn {
+  background: #E67634;
+  color: #fff;
+}
+
+.report-calendar-apply-btn:hover:not(:disabled) {
+  background: #D66523;
+}
+
+.report-calendar-apply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Мобильная версия */
+@media (max-width: 394px) {
+  .report-date-range-picker {
+    width: calc(100vw - 10rem);
+    padding: 0.25rem;
+  }
+  
+  .report-calendar-day {
+    min-width: auto;
+    min-height: auto;
+  }
+}
+
