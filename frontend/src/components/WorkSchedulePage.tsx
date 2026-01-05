@@ -1,11 +1,13 @@
 // src/pages/WorkSchedulePage.tsx
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import WorkScheduleHeader from "../components/WorkScheduleHeader.tsx"
 import WorkScheduleTable from "../components/WorkScheduleTable.tsx"
 import ScheduleSettingsSidebar from "../components/ScheduleSettingsSidebar.tsx"
 import CreateUserModal from "../components/CreateUserModal.tsx"
-import { DayData, generateWeekDays, generateMonthDays } from "../components/useScheduleUtils.tsx"
+import CoffeeShopSelector from "../components/CoffeeShopSelector.tsx"
+import ReportDateRangePicker from "../components/ReportDateRangePicker.tsx"
+import { DayData, generateWeekDays, generateMonthDays, generateTwoWeeks } from "../components/useScheduleUtils.tsx"
 import "../styles/workSchedulePage.css"
 import * as Icons from "../icons/index.ts"
 import { useNavigate, useLocation } from "react-router-dom";
@@ -20,14 +22,38 @@ const WorkSchedulePage: React.FC = () => {
   const [shouldLogout, setShouldLogout] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 394)
+  const calendarButtonRef = useRef<HTMLDivElement>(null)
   const [coffeeShops, setCoffeeShops] = useState<any[]>([])
   const [coffeeShopAddress, setCoffeeShopAddress] = useState<string>("")
+  const [selectedCoffeeShopId, setSelectedCoffeeShopId] = useState<number | null>(() => {
+    const saved = localStorage.getItem("selectedCoffeeShopId");
+    return saved ? parseInt(saved, 10) : null;
+  });
 
   const token = localStorage.getItem("token")
   const role_id = Number(localStorage.getItem("role_id"));
   const user_id = Number(localStorage.getItem("user_id"));
 
+  // Обработчик изменения филиала
+  const handleCoffeeShopChange = (shopId: number) => {
+    setSelectedCoffeeShopId(shopId);
+    localStorage.setItem("selectedCoffeeShopId", shopId.toString());
+    
+    // Обновляем адрес кофейни
+    const shop = coffeeShops.find((s: any) => s.id === shopId);
+    if (shop && shop.adress) {
+      setCoffeeShopAddress(shop.adress);
+    }
+    
+    // Перезагружаем данные
+    loadUsers();
+    loadSchedule();
+  };
+
   const loadUsers = async () => {
+    const shopId = selectedCoffeeShopId;
   try {
     const res = await fetch("/api/v1/user/all_users", {
       headers: { "Authorization": `Bearer ${token}` }
@@ -42,7 +68,12 @@ const WorkSchedulePage: React.FC = () => {
       return;
     }
 
-    setUsers(data);
+    // Фильтруем пользователей по выбранному филиалу, если он выбран
+    const filteredUsers = shopId 
+      ? data.filter((u: any) => u.coffee_shop_id === shopId)
+      : data;
+
+    setUsers(filteredUsers);
   } catch (e) {
     console.error("Ошибка /all_users:", e);
     setUsers([]);
@@ -410,22 +441,46 @@ const WorkSchedulePage: React.FC = () => {
           
           // Загружаем адрес кофейни
           if (userData.coffee_shop_id) {
-            try {
-              const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
-                headers: { "Authorization": `Bearer ${token}` }
-              });
-              
-              if (coffeeShopRes.ok) {
-                const coffeeShopsData = await coffeeShopRes.json();
-                const shop = Array.isArray(coffeeShopsData) 
-                  ? coffeeShopsData.find((s: any) => s.id === userData.coffee_shop_id)
-                  : null;
-                if (shop && shop.adress) {
-                  setCoffeeShopAddress(shop.adress);
-                }
+            // Для роли 3 (сотрудник) не вызываем API, который требует прав админа/менеджера
+            if (role_id === 3) {
+              // Устанавливаем филиал пользователя
+              if (userData.coffee_shop_id && userData.coffee_shop_id !== selectedCoffeeShopId) {
+                setSelectedCoffeeShopId(userData.coffee_shop_id);
+                localStorage.setItem("selectedCoffeeShopId", userData.coffee_shop_id.toString());
               }
-            } catch (err) {
-              console.error("Ошибка загрузки адреса кофейни:", err);
+              // Для роли 3 показываем просто "Филиал" без адреса, так как нет доступа к API
+              setCoffeeShopAddress("Филиал");
+            } else {
+              // Для ролей 1 и 2 загружаем список кофеен
+              try {
+                const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+                  headers: { "Authorization": `Bearer ${token}` }
+                });
+                
+                if (coffeeShopRes.ok) {
+                  const coffeeShopsData = await coffeeShopRes.json();
+                  // Устанавливаем выбранный филиал из localStorage или используем филиал пользователя
+                  const currentSelectedId = selectedCoffeeShopId || (() => {
+                    const saved = localStorage.getItem("selectedCoffeeShopId");
+                    return saved ? parseInt(saved, 10) : null;
+                  })();
+                  const shopIdToUse = currentSelectedId || userData.coffee_shop_id;
+                  if (shopIdToUse && shopIdToUse !== selectedCoffeeShopId) {
+                    setSelectedCoffeeShopId(shopIdToUse);
+                    localStorage.setItem("selectedCoffeeShopId", shopIdToUse.toString());
+                  }
+                  
+                  const shopId = shopIdToUse || userData.coffee_shop_id;
+                  const shop = Array.isArray(coffeeShopsData) 
+                    ? coffeeShopsData.find((s: any) => s.id === shopId)
+                    : null;
+                  if (shop && shop.adress) {
+                    setCoffeeShopAddress(shop.adress);
+                  }
+                }
+              } catch (err) {
+                console.error("Ошибка загрузки адреса кофейни:", err);
+              }
             }
           }
         }
@@ -443,12 +498,83 @@ const WorkSchedulePage: React.FC = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCoffeeShopId])
 
   useEffect(() => {
-    const d = mode === "week" ? generateWeekDays(currentDate) : generateMonthDays(currentDate)
-    setDays(d)
-  }, [mode, currentDate])
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 394);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    let d: DayData[];
+    if (isMobile) {
+      // В мобильной версии всегда используем 2 недели, начинающиеся со среды
+      d = generateTwoWeeks(currentDate);
+    } else {
+      // В веб-версии используем неделю или месяц в зависимости от режима
+      d = mode === "week" ? generateWeekDays(currentDate) : generateMonthDays(currentDate);
+    }
+    setDays(d);
+  }, [mode, currentDate, isMobile])
+
+  // Функция для вычисления месяца, который отображается на кнопке календаря
+  const getDisplayMonthDate = (date: Date): Date => {
+    // Вычисляем начало двух недель (среда)
+    const start = new Date(date);
+    const dayOfWeek = date.getDay();
+    let offsetToWednesday: number;
+    
+    if (dayOfWeek === 0) offsetToWednesday = -4;
+    else if (dayOfWeek === 1) offsetToWednesday = -5;
+    else if (dayOfWeek === 2) offsetToWednesday = -6;
+    else if (dayOfWeek === 3) offsetToWednesday = 0;
+    else if (dayOfWeek === 4) offsetToWednesday = -1;
+    else if (dayOfWeek === 5) offsetToWednesday = -2;
+    else offsetToWednesday = -3;
+    
+    start.setDate(date.getDate() + offsetToWednesday);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 13);
+    
+    // Если период охватывает два месяца, показываем следующий месяц (endMonth)
+    // Иначе показываем startMonth
+    if (start.getMonth() !== end.getMonth() || start.getFullYear() !== end.getFullYear()) {
+      return new Date(end.getFullYear(), end.getMonth(), 1);
+    }
+    return new Date(start.getFullYear(), start.getMonth(), 1);
+  };
+
+  // Обработчик изменения даты через календарь (для мобильной версии)
+  const handleScheduleDateChange = (startDate: Date, endDate: Date) => {
+    // Выравниваем выбранную дату на среду начала двухнедельного периода
+    // Неделя: Ср, Чт, Пт, Сб, Вс, Пн, Вт
+    const selectedDate = new Date(startDate);
+    const dayOfWeek = selectedDate.getDay();
+    let wednesdayOffset: number;
+    
+    if (dayOfWeek === 0) { // Воскресенье - идем к среде 4 дня назад
+      wednesdayOffset = -4;
+    } else if (dayOfWeek === 1) { // Понедельник - идем к среде 5 дней назад (прошлая неделя)
+      wednesdayOffset = -5;
+    } else if (dayOfWeek === 2) { // Вторник - идем к среде 6 дней назад (прошлая неделя)
+      wednesdayOffset = -6;
+    } else if (dayOfWeek === 3) { // Среда - начало недели
+      wednesdayOffset = 0;
+    } else if (dayOfWeek === 4) { // Четверг - идем к среде 1 день назад
+      wednesdayOffset = -1;
+    } else if (dayOfWeek === 5) { // Пятница - идем к среде 2 дня назад
+      wednesdayOffset = -2;
+    } else { // Суббота (6) - идем к среде 3 дня назад
+      wednesdayOffset = -3;
+    }
+    
+    selectedDate.setDate(selectedDate.getDate() + wednesdayOffset);
+    setCurrentDate(selectedDate);
+  };
 
   const prev = () => {
     const d = new Date(currentDate)
@@ -473,8 +599,7 @@ const WorkSchedulePage: React.FC = () => {
       }
     }, [shouldLogout, navigate]);
   
-    const handleLogout = () => setShouldLogout(true);
-    const handleGoToProfile = () => navigate("/profile"); 
+    const handleLogout = () => setShouldLogout(true); 
 
   const { pathname } = useLocation();
   const scheduleActive = pathname.startsWith("/schedule");
@@ -519,36 +644,52 @@ const WorkSchedulePage: React.FC = () => {
             <header className="profile-header desktop-header">
               <div className="desktop-header-left">
                 <Icons.LogoIcon className="logo" title="logo" />
-                {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-                {coffeeShopAddress && (
-                  <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+                {/* Выпадающий список филиалов для ролей 1 и 2 */}
+                {(role_id === 1 || role_id === 2) ? (
+                  <CoffeeShopSelector
+                    selectedShopId={selectedCoffeeShopId}
+                    onShopChange={handleCoffeeShopChange}
+                    roleId={role_id}
+                  />
+                ) : (
+                  coffeeShopAddress && (
+                    <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+                  )
                 )}
               </div>
-              {(role_id === 1 || role_id === 2) && (
-                <div className="manager-controls">
-                  <div className="nav-buttons">
-                    <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
-                    <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>Отчёт</button>
+              <div className="desktop-header-right">
+                {(role_id === 1 || role_id === 2) && (
+                  <div className="manager-controls">
+                    <div className="nav-buttons">
+                      <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
+                      <button className={`link-btn ${reportActive ? "active" : ""}`} onClick={() => navigate("/report")}>Отчёт</button>
+                    </div>
                   </div>
-                </div>
-              )}
-              <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
+                )}
+                <Icons.NotificationIcon className="notifications-icon" title="Уведомления" style={{ cursor: "pointer" }} />
+                <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
+              </div>
             </header>
 
       {/* Мобильный хедер */}
       <header className="mobile-header">
         <div className="mobile-header-left">
           <Icons.LogoIcon className="mobile-logo" title="logo" />
-          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-          {coffeeShopAddress && (
-            <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+          {/* Выпадающий список филиалов для ролей 1 и 2 */}
+          {(role_id === 1 || role_id === 2) ? (
+            <CoffeeShopSelector
+              selectedShopId={selectedCoffeeShopId}
+              onShopChange={handleCoffeeShopChange}
+              roleId={role_id}
+            />
+          ) : (
+            coffeeShopAddress && (
+              <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+            )
           )}
         </div>
         <div className="mobile-header-right">
-          {/* Иконка уведомлений (assets/icon-bell.svg) - будет добавлена позже */}
-          <div className="mobile-notifications-icon">
-            {/* <!-- Иконка уведомлений (assets/icon-bell.svg) --> */}
-          </div>
+          <Icons.NotificationIcon className="mobile-notifications-icon" title="Уведомления" style={{ cursor: "pointer" }} />
           <Icons.ExitIcon className="mobile-logout-icon" onClick={handleLogout} title="Выйти" />
         </div>
       </header>
@@ -571,7 +712,7 @@ const WorkSchedulePage: React.FC = () => {
         </div>
       )}
       <div className="container-page">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center"}}>
           <WorkScheduleHeader
             currentDate={currentDate}
             mode={mode}
@@ -579,6 +720,8 @@ const WorkSchedulePage: React.FC = () => {
             onNext={next}
             onModeChange={setMode}
             onSettingsClick={() => setIsSidebarOpen(true)}
+            onCalendarClick={isMobile ? () => setIsCalendarOpen(true) : undefined}
+            calendarButtonRef={calendarButtonRef}
             showSettings={true}
           />
           {role_id === 1 && (
@@ -630,6 +773,51 @@ const WorkSchedulePage: React.FC = () => {
             onClose={() => setIsCreateUserModalOpen(false)}
             onCreate={createUser}
             coffeeShops={coffeeShops}
+          />
+        )}
+
+        {isCalendarOpen && isMobile && (
+          <ReportDateRangePicker
+            startDate={(() => {
+              // Вычисляем дату начала двух недель (среда)
+              const start = new Date(currentDate);
+              const dayOfWeek = currentDate.getDay();
+              let offsetToWednesday: number;
+              
+              if (dayOfWeek === 0) offsetToWednesday = -4;
+              else if (dayOfWeek === 1) offsetToWednesday = -5;
+              else if (dayOfWeek === 2) offsetToWednesday = -6;
+              else if (dayOfWeek === 3) offsetToWednesday = 0;
+              else if (dayOfWeek === 4) offsetToWednesday = -1;
+              else if (dayOfWeek === 5) offsetToWednesday = -2;
+              else offsetToWednesday = -3;
+              
+              start.setDate(currentDate.getDate() + offsetToWednesday);
+              return start;
+            })()}
+            endDate={(() => {
+              // Вычисляем дату конца двух недель (13 дней после среды)
+              const start = new Date(currentDate);
+              const dayOfWeek = currentDate.getDay();
+              let offsetToWednesday: number;
+              
+              if (dayOfWeek === 0) offsetToWednesday = -4;
+              else if (dayOfWeek === 1) offsetToWednesday = -5;
+              else if (dayOfWeek === 2) offsetToWednesday = -6;
+              else if (dayOfWeek === 3) offsetToWednesday = 0;
+              else if (dayOfWeek === 4) offsetToWednesday = -1;
+              else if (dayOfWeek === 5) offsetToWednesday = -2;
+              else offsetToWednesday = -3;
+              
+              start.setDate(currentDate.getDate() + offsetToWednesday);
+              const end = new Date(start);
+              end.setDate(start.getDate() + 13);
+              return end;
+            })()}
+            initialMonth={getDisplayMonthDate(currentDate)}
+            onDateChange={handleScheduleDateChange}
+            onClose={() => setIsCalendarOpen(false)}
+            buttonRef={calendarButtonRef}
           />
         )}
     </div>

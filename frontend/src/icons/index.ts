@@ -15,3 +15,4 @@ export { ReactComponent as TimeIcon } from "./time.svg";
 export { ReactComponent as VacationIcon } from "./vacation.svg";
 export { ReactComponent as CalendarWhiteIcon } from "./calendarWhite.svg";
 export { ReactComponent as ArrowIcon } from "./arrow.svg";
+export { ReactComponent as NotificationIcon } from "./notification.svg";

@@ -19,10 +19,15 @@
 
 .manager-controls {
   display: flex;
-  gap: 18px;
   align-items: center;
   width: 100%;
   justify-content: flex-end;
+}
+
+.manager-controls .desktop-header-right {
+  display: flex;
+  align-items: center;
+  gap: 34px;
 }
 
 .nav-buttons {
@@ -64,6 +69,22 @@
   border-radius: 8px;
   cursor: pointer;
   margin-left: 4px;
+}
+
+.notifications-icon {
+  margin-left: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.notifications-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .settings {

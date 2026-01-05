@@ -15,12 +15,33 @@ export interface DayData {
 
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-// --- Генерация недели ---
+// --- Генерация недели (начинается со среды) ---
 export const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
   const days: DayData[] = [];
   const start = new Date(startDate);
-  start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
-
+  
+  // Вычисляем смещение до ближайшей прошедшей среды (среда = 3)
+  // Неделя: Ср, Чт, Пт, Сб, Вс, Пн, Вт
+  const dayOfWeek = start.getDay();
+  let offsetToWednesday: number;
+  
+  if (dayOfWeek === 0) { // Воскресенье - идем к среде 4 дня назад
+    offsetToWednesday = -4;
+  } else if (dayOfWeek === 1) { // Понедельник - идем к среде 5 дней назад (прошлая неделя)
+    offsetToWednesday = -5;
+  } else if (dayOfWeek === 2) { // Вторник - идем к среде 6 дней назад (прошлая неделя)
+    offsetToWednesday = -6;
+  } else if (dayOfWeek === 3) { // Среда - начало недели
+    offsetToWednesday = 0;
+  } else if (dayOfWeek === 4) { // Четверг - идем к среде 1 день назад
+    offsetToWednesday = -1;
+  } else if (dayOfWeek === 5) { // Пятница - идем к среде 2 дня назад
+    offsetToWednesday = -2;
+  } else { // Суббота (6) - идем к среде 3 дня назад
+    offsetToWednesday = -3;
+  }
+  
+  start.setDate(start.getDate() + offsetToWednesday);
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
@@ -61,11 +82,33 @@ export const generateMonthDays = (date: Date = new Date()): DayData[] => {
   return days;
 };
 
-// --- Генерация 2 недель (для мобильной версии) ---
+// --- Генерация 2 недель (для мобильной версии, начинается со среды) ---
 export const generateTwoWeeks = (startDate: Date = new Date()): DayData[] => {
   const days: DayData[] = [];
   const start = new Date(startDate);
-  start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
+  
+  // Вычисляем смещение до ближайшей прошедшей среды (среда = 3)
+  // Неделя: Ср, Чт, Пт, Сб, Вс, Пн, Вт
+  const dayOfWeek = start.getDay();
+  let offsetToWednesday: number;
+  
+  if (dayOfWeek === 0) { // Воскресенье - идем к среде 4 дня назад
+    offsetToWednesday = -4;
+  } else if (dayOfWeek === 1) { // Понедельник - идем к среде 5 дней назад (прошлая неделя)
+    offsetToWednesday = -5;
+  } else if (dayOfWeek === 2) { // Вторник - идем к среде 6 дней назад (прошлая неделя)
+    offsetToWednesday = -6;
+  } else if (dayOfWeek === 3) { // Среда - начало недели
+    offsetToWednesday = 0;
+  } else if (dayOfWeek === 4) { // Четверг - идем к среде 1 день назад
+    offsetToWednesday = -1;
+  } else if (dayOfWeek === 5) { // Пятница - идем к среде 2 дня назад
+    offsetToWednesday = -2;
+  } else { // Суббота (6) - идем к среде 3 дня назад
+    offsetToWednesday = -3;
+  }
+  
+  start.setDate(start.getDate() + offsetToWednesday);
 
   for (let i = 0; i < 14; i++) {
     const d = new Date(start);
@@ -86,7 +129,29 @@ export const generateTwoWeeks = (startDate: Date = new Date()): DayData[] => {
 // --- Заголовок для 2 недель (только название месяца для мобильной версии) ---
 export const getTwoWeeksLabel = (date: Date): string => {
   const start = new Date(date);
-  start.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+  
+  // Вычисляем смещение до ближайшей прошедшей среды (среда = 3)
+  // Неделя: Ср, Чт, Пт, Сб, Вс, Пн, Вт
+  const dayOfWeek = date.getDay();
+  let offsetToWednesday: number;
+  
+  if (dayOfWeek === 0) { // Воскресенье - идем к среде 4 дня назад
+    offsetToWednesday = -4;
+  } else if (dayOfWeek === 1) { // Понедельник - идем к среде 5 дней назад (прошлая неделя)
+    offsetToWednesday = -5;
+  } else if (dayOfWeek === 2) { // Вторник - идем к среде 6 дней назад (прошлая неделя)
+    offsetToWednesday = -6;
+  } else if (dayOfWeek === 3) { // Среда - начало недели
+    offsetToWednesday = 0;
+  } else if (dayOfWeek === 4) { // Четверг - идем к среде 1 день назад
+    offsetToWednesday = -1;
+  } else if (dayOfWeek === 5) { // Пятница - идем к среде 2 дня назад
+    offsetToWednesday = -2;
+  } else { // Суббота (6) - идем к среде 3 дня назад
+    offsetToWednesday = -3;
+  }
+  
+  start.setDate(date.getDate() + offsetToWednesday);
 
   const end = new Date(start);
   end.setDate(start.getDate() + 13);
@@ -110,14 +175,36 @@ export const getTwoWeeksLabel = (date: Date): string => {
     monthName = futureDate.toLocaleDateString("ru-RU", { month: "long" });
   }
 
-  // Делаем первую букву заглавной
-  return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  // Делаем первую букву заглавной и добавляем год
+  const year = startMonth === endMonth && startYear === endYear ? startYear : endYear;
+  return monthName.charAt(0).toUpperCase() + monthName.slice(1) + " " + year;
 };
 
-// --- Заголовок недели ---
+// --- Заголовок недели (начинается со среды) ---
 export const getWeekLabel = (date: Date): string => {
   const start = new Date(date);
-  start.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+  
+  // Вычисляем смещение до ближайшей среды (среда = 3)
+  const dayOfWeek = date.getDay();
+  let offsetToWednesday: number;
+  
+  if (dayOfWeek === 0) { // Воскресенье
+    offsetToWednesday = -4;
+  } else if (dayOfWeek === 1) { // Понедельник
+    offsetToWednesday = -6;
+  } else if (dayOfWeek === 2) { // Вторник
+    offsetToWednesday = -7;
+  } else if (dayOfWeek === 3) { // Среда
+    offsetToWednesday = 0;
+  } else if (dayOfWeek === 4) { // Четверг
+    offsetToWednesday = -1;
+  } else if (dayOfWeek === 5) { // Пятница
+    offsetToWednesday = -2;
+  } else { // Суббота (6)
+    offsetToWednesday = -3;
+  }
+  
+  start.setDate(date.getDate() + offsetToWednesday);
 
   const end = new Date(start);
   end.setDate(start.getDate() + 6);

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/reportPage.css";
 import * as Icons from "../icons/index.ts";
+import CoffeeShopSelector from "./CoffeeShopSelector.tsx";
 import { getMonthLabel } from "./useScheduleUtils.tsx";
 import { computeReport, ReportRow } from "./useReportUtils.tsx";
 
@@ -12,10 +13,22 @@ const ReportPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [shouldLogout, setShouldLogout] = useState(false);
+  const [selectedCoffeeShopId, setSelectedCoffeeShopId] = useState<number | null>(() => {
+    const saved = localStorage.getItem("selectedCoffeeShopId");
+    return saved ? parseInt(saved, 10) : null;
+  });
 
   const token = localStorage.getItem("token") || "";
   const role_id = Number(localStorage.getItem("role_id"));
+
+  // Обработчик изменения филиала
+  const handleCoffeeShopChange = (shopId: number) => {
+    setSelectedCoffeeShopId(shopId);
+    localStorage.setItem("selectedCoffeeShopId", shopId.toString());
+    // Перезагружаем данные
+    loadUsers();
+    loadSchedule();
+  };
 
   const { pathname } = useLocation();
   const scheduleActive = pathname.startsWith("/schedule");
@@ -38,7 +51,13 @@ const ReportPage: React.FC = () => {
         setUsers([]);
         return;
       }
-      setUsers(data);
+      
+      // Фильтруем пользователей по выбранному филиалу, если он выбран
+      const filteredUsers = selectedCoffeeShopId 
+        ? data.filter((u: any) => u.coffee_shop_id === selectedCoffeeShopId)
+        : data;
+      
+      setUsers(filteredUsers);
     } catch (e) {
       console.error("Ошибка /all_users:", e);
       setUsers([]);
@@ -69,7 +88,8 @@ const ReportPage: React.FC = () => {
       await Promise.all([loadUsers(), loadSchedule()]);
       setLoading(false);
     })();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCoffeeShopId]);
 
   // пересчитываем отчёт при изменении данных / даты
     useEffect(() => {
@@ -88,7 +108,6 @@ const ReportPage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    setShouldLogout(true);
     localStorage.removeItem("token");
     localStorage.removeItem("role_id");
     navigate("/");
@@ -99,20 +118,32 @@ const ReportPage: React.FC = () => {
       <header className="manager-header">
         <div className="logo-and-back">
           <Icons.LogoIcon className="logo" />
+          {/* Выпадающий список филиалов для ролей 1 и 2 */}
+          {(role_id === 1 || role_id === 2) && (
+            <CoffeeShopSelector
+              selectedShopId={selectedCoffeeShopId}
+              onShopChange={handleCoffeeShopChange}
+              roleId={role_id}
+            />
+          )}
         </div>
 
         <div className="manager-controls">
-          <div className="nav-buttons">
-            <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
-            <button className={`link-btn ${reportActive ? "active" : ""}`}>Отчёт</button>
-          </div>
-
-          <div className="period-controls">
-            <div className="date-pill">{getMonthLabel(currentDate)}</div>
-            <div className="arrows">
-              <button onClick={goPrev} className="arrow">‹</button>
-              <button onClick={goNext} className="arrow">›</button>
+          <div className="desktop-header-right">
+            <div className="nav-buttons">
+              <button className={`link-btn ${scheduleActive ? "active" : ""}`} onClick={() => navigate("/schedule")}>График работы</button>
+              <button className={`link-btn ${reportActive ? "active" : ""}`}>Отчёт</button>
             </div>
+
+            <div className="period-controls">
+              <div className="date-pill">{getMonthLabel(currentDate)}</div>
+              <div className="arrows">
+                <button onClick={goPrev} className="arrow">‹</button>
+                <button onClick={goNext} className="arrow">›</button>
+              </div>
+            </div>
+            
+            <Icons.NotificationIcon className="notifications-icon" title="Уведомления" style={{ cursor: "pointer" }} />
             <Icons.SettingsIcon className="settings" />
             <Icons.ExitIcon className="logout" onClick={handleLogout} />
           </div>

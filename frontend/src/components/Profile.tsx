@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
 import ReportDateRangePicker from "./ReportDateRangePicker.tsx";
+import CoffeeShopSelector from "./CoffeeShopSelector.tsx";
 import {
   DayData,
   generateWeekDays,
@@ -48,12 +49,15 @@ const ProfilePage: React.FC = () => {
   const [shouldLogout, setShouldLogout] = useState(false);
   const [mode, setMode] = useState<"week" | "month">("week");
   const [coffeeShopAddress, setCoffeeShopAddress] = useState<string>("");
+  const [selectedCoffeeShopId, setSelectedCoffeeShopId] = useState<number | null>(() => {
+    const saved = localStorage.getItem("selectedCoffeeShopId");
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [allSchedules, setAllSchedules] = useState<any[]>([]);
 
   const [days, setDays] = useState<DayData[]>([]);
   const [modalDate, setModalDate] = useState<Date | null>(null);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   
   // Состояние для периода отчета
@@ -71,13 +75,47 @@ const ProfilePage: React.FC = () => {
   const scheduleCalendarButtonRef = useRef<HTMLDivElement | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 394);
 
+  // Обработчик изменения филиала
+  const handleCoffeeShopChange = (shopId: number) => {
+    setSelectedCoffeeShopId(shopId);
+    localStorage.setItem("selectedCoffeeShopId", shopId.toString());
+    
+    // Обновляем адрес кофейни
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("/api/v1/coffee_shop/get_coffee_shops", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((coffeeShops) => {
+          const shop = Array.isArray(coffeeShops) 
+            ? coffeeShops.find((s: any) => s.id === shopId)
+            : null;
+          if (shop && shop.adress) {
+            setCoffeeShopAddress(shop.adress);
+          }
+        })
+        .catch((err) => {
+          console.error("Ошибка загрузки адреса кофейни:", err);
+        });
+    }
+    
+    // Перезагружаем данные
+    if (user) {
+      fetchReport();
+      fetchAllUsersAndSchedules();
+      fetchSchedule();
+    }
+  };
+
 
   const fetchSchedule = async () => {
     if (!user) return;
     const token = localStorage.getItem("token");
     if (!token) return;
-
-    setScheduleLoading(true);
 
     try {
       // Сначала генерируем пустые дни для текущего режима
@@ -154,13 +192,24 @@ const ProfilePage: React.FC = () => {
           const isConfirmed = scheduleItem.is_confirmed === true;
           const isActive = scheduleItem.status === "active";
 
+          // Определяем тип смены: утренняя или вечерняя (только для рабочих дней)
+          let shiftType = "full";
+          if (isActive && isConfirmed) {
+            const endHour = end.getHours();
+            const startHour = start.getHours();
+            const isMorningShift = endHour < 17 || (endHour === 17 && end.getMinutes() === 0);
+            const isEveningShift = startHour >= 17;
+            shiftType = isEveningShift ? "evening" : (isMorningShift ? "morning" : "full");
+          }
+
           return {
             ...emptyDay,
             date: emptyDay.date, // Сохраняем исходную дату
             time: `${formatTime(start)} ${formatTime(end)}`,
             isWorkDay: isActive && isConfirmed, // Подтвержденный рабочий день
             isEmpty: false, // Есть данные - не пустой
-            isConfirmed: isConfirmed
+            isConfirmed: isConfirmed,
+            shiftType: shiftType // Тип смены для стилизации
           };
         }
 
@@ -186,12 +235,13 @@ const ProfilePage: React.FC = () => {
       }
       setDays(errorDays.map(day => ({ ...day, isEmpty: true })));
     } finally {
-      setScheduleLoading(false);
+      // Schedule loading completed
     }
   };
 
 useEffect(() => {
   if (user) fetchSchedule();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [user, mode, currentDate, isMobile]);
 
 // Обработчик изменения размера окна для пересчета графика
@@ -371,11 +421,29 @@ const fetchReport = async () => {
   // Обработчик изменения даты для графика работы (выбираем начало двух недель)
   const handleScheduleDateChange = (startDate: Date, endDate: Date) => {
     // Используем начальную дату для установки currentDate
-    // Выравниваем на понедельник начала двухнедельного периода
+    // Выравниваем на среду начала двухнедельного периода
+    // Неделя: Ср, Чт, Пт, Сб, Вс, Пн, Вт
     const selectedDate = new Date(startDate);
     const dayOfWeek = selectedDate.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    selectedDate.setDate(selectedDate.getDate() + mondayOffset);
+    let wednesdayOffset: number;
+    
+    if (dayOfWeek === 0) { // Воскресенье - идем к среде 4 дня назад
+      wednesdayOffset = -4;
+    } else if (dayOfWeek === 1) { // Понедельник - идем к среде 5 дней назад (прошлая неделя)
+      wednesdayOffset = -5;
+    } else if (dayOfWeek === 2) { // Вторник - идем к среде 6 дней назад (прошлая неделя)
+      wednesdayOffset = -6;
+    } else if (dayOfWeek === 3) { // Среда - начало недели
+      wednesdayOffset = 0;
+    } else if (dayOfWeek === 4) { // Четверг - идем к среде 1 день назад
+      wednesdayOffset = -1;
+    } else if (dayOfWeek === 5) { // Пятница - идем к среде 2 дня назад
+      wednesdayOffset = -2;
+    } else { // Суббота (6) - идем к среде 3 дня назад
+      wednesdayOffset = -3;
+    }
+    
+    selectedDate.setDate(selectedDate.getDate() + wednesdayOffset);
     
     setCurrentDate(selectedDate);
     setIsScheduleCalendarOpen(false);
@@ -408,27 +476,42 @@ useEffect(() => {
       const data: UserData = await res.json();
       setUser(data);
       
+      // Устанавливаем выбранный филиал из localStorage или используем филиал пользователя
+      const shopIdToUse = selectedCoffeeShopId || data.coffee_shop_id;
+      if (shopIdToUse && shopIdToUse !== selectedCoffeeShopId) {
+        setSelectedCoffeeShopId(shopIdToUse);
+        localStorage.setItem("selectedCoffeeShopId", shopIdToUse.toString());
+      }
+      
       // Загружаем адрес кофейни
-      if (data.coffee_shop_id) {
-        try {
-          const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
-            method: "GET",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
-          });
-          
-          if (coffeeShopRes.ok) {
-            const coffeeShops = await coffeeShopRes.json();
-            const shop = Array.isArray(coffeeShops) 
-              ? coffeeShops.find((s: any) => s.id === data.coffee_shop_id)
-              : null;
-            if (shop && shop.adress) {
-              setCoffeeShopAddress(shop.adress);
+      const shopId = selectedCoffeeShopId || data.coffee_shop_id;
+      if (shopId) {
+        // Для роли 3 (сотрудник) не вызываем API, который требует прав админа/менеджера
+        if (data.role_id === 3) {
+          // Для роли 3 показываем просто "Филиал" без адреса, так как нет доступа к API
+          setCoffeeShopAddress("Филиал");
+        } else {
+          // Для ролей 1 и 2 загружаем список кофеен
+          try {
+            const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            });
+            
+            if (coffeeShopRes.ok) {
+              const coffeeShops = await coffeeShopRes.json();
+              const shop = Array.isArray(coffeeShops) 
+                ? coffeeShops.find((s: any) => s.id === shopId)
+                : null;
+              if (shop && shop.adress) {
+                setCoffeeShopAddress(shop.adress);
+              }
             }
+          } catch (err) {
+            console.error("Ошибка загрузки адреса кофейни:", err);
           }
-        } catch (err) {
-          console.error("Ошибка загрузки адреса кофейни:", err);
         }
       }
       
@@ -448,69 +531,15 @@ useEffect(() => {
   fetchUser();
 }, []);
 
-// Перезагружаем отчет при изменении периода
+// Перезагружаем отчет при изменении периода или филиала
 useEffect(() => {
   if (user) {
     fetchReport();
+    fetchAllUsersAndSchedules();
+    fetchSchedule();
   }
-}, [reportStartDate, reportEndDate]);
-
-
-const formatEarnings = (earnings: string): string => {
-  try {
-    // Преобразуем строку в число и округляем до 2 знаков
-    const amount = parseFloat(earnings);
-    if (isNaN(amount)) return "0.00 ₽";
-    
-    return `${amount.toFixed(2)} ₽`;
-  } catch (error) {
-    console.error("Ошибка форматирования заработка:", error);
-    return "0.00 ₽";
-  }
-};
-
-const handleAddSchedule = async (data: any) => {
-  if (!user) return;
-  const token = localStorage.getItem("token");
-
-  const body = {
-    user_id: user?.id,
-    coffee_shop_id: user?.coffee_shop_id,
-    status: data.status,
-    schedule_start_time: data.schedule_start_time,
-    schedule_end_time: data.schedule_end_time,
-    is_confirmed: false
-  };
-
-  try {
-    const response = await fetch("/api/v1/schedule/create_schedule", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-      throw new Error('Ошибка создания смены');
-    }
-
-    // Закрываем модалку
-    setModalDate(null);
-    
-    // Обновляем расписание
-    await fetchSchedule();
-    
-    // Обновляем отчет
-    await fetchReport();
-
-    console.log("Смена создана, данные обновлены");
-
-  } catch (err) {
-    console.error("Ошибка добавления расписания", err);
-  }
-};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [reportStartDate, reportEndDate, selectedCoffeeShopId]);
 
 
   /** === Форматирование имени и стажа === **/
@@ -634,67 +663,60 @@ const handleAddSchedule = async (data: any) => {
     );
   };
 
-/** === Компонент дня === **/
-const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
-  <div className={`day-card ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}
-    onClick={() => setModalDate(day.fullDate)}
-  >
-    <div className="day-header">
-      <div className="dow">{day.weekday}</div>
-      <div className="day-num">{day.dayNumber}</div>
-    </div>
-    <div className={`time-slots ${day.isWorkDay ? "isWorkDay" : ""} ${day.isEmpty ? "isEmpty" : ""}`}>
-      {!day.isEmpty && day.time ? (
-        <div className="time">{day.time}</div>
-      ) : ("")}
-    </div>
-    <div className="day-icon">
-      {day.status === "active" && <Icons.BriefcaseIcon />}
-      {day.status === "vacation" && <Icons.VacationIcon />}
-      {day.status === "sick" && <Icons.MedicalIcon />}
-    </div>
-    <div className="comment-popup">{day.comment}</div>
-  </div>
-);
-
   return (
     <div className="profile-page">
       {/* Верхняя панель - Десктоп */}
       <header className="profile-header desktop-header">
         <div className="desktop-header-left">
           <Icons.LogoIcon className="logo" title="logo" />
-          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-          {coffeeShopAddress && (
-            <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+          {/* Выпадающий список филиалов для ролей 1 и 2 */}
+          {user && (user.role_id === 1 || user.role_id === 2) ? (
+            <CoffeeShopSelector
+              selectedShopId={selectedCoffeeShopId}
+              onShopChange={handleCoffeeShopChange}
+              roleId={user.role_id}
+            />
+          ) : (
+            coffeeShopAddress && (
+              <span className="desktop-coffee-shop-address">{coffeeShopAddress}</span>
+            )
           )}
         </div>
 
-        {/* Для админа (1) и менеджера (2) показываем кнопки навигации */}
-        {(user.role_id === 1 || user.role_id === 2) && (
-          <div className="manager-controls">
-            <div className="nav-buttons">
-              <NavButtons />
+        <div className="desktop-header-right">
+          {/* Для админа (1) и менеджера (2) показываем кнопки навигации */}
+          {(user.role_id === 1 || user.role_id === 2) && (
+            <div className="manager-controls">
+              <div className="nav-buttons">
+                <NavButtons />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
+          <Icons.NotificationIcon className="notifications-icon" title="Уведомления" style={{ cursor: "pointer" }} />
+          <Icons.ExitIcon className="logout-icon" onClick={handleLogout} title="Выйти" />
+        </div>
       </header>
 
       {/* Мобильный хедер */}
       <header className="mobile-header">
         <div className="mobile-header-left">
           <Icons.LogoIcon className="mobile-logo" title="logo" />
-          {/* Адрес кофейни - подтягивается из бэкенда по coffee_shop_id */}
-          {coffeeShopAddress && (
-            <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+          {/* Выпадающий список филиалов для ролей 1 и 2 */}
+          {user && (user.role_id === 1 || user.role_id === 2) ? (
+            <CoffeeShopSelector
+              selectedShopId={selectedCoffeeShopId}
+              onShopChange={handleCoffeeShopChange}
+              roleId={user.role_id}
+            />
+          ) : (
+            coffeeShopAddress && (
+              <span className="mobile-coffee-shop-address">{coffeeShopAddress}</span>
+            )
           )}
         </div>
         <div className="mobile-header-right">
-          {/* Иконка уведомлений (assets/icon-bell.svg) - будет добавлена позже */}
-          <div className="mobile-notifications-icon">
-            {/* <!-- Иконка уведомлений (assets/icon-bell.svg) --> */}
-          </div>
+          <Icons.NotificationIcon className="mobile-notifications-icon" title="Уведомления" style={{ cursor: "pointer" }} />
           <Icons.ExitIcon className="mobile-logout-icon" onClick={handleLogout} title="Выйти" />
         </div>
       </header>
@@ -795,18 +817,20 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
           </div>
 
           <div className="report-stats">
-            <div className="report-stat-card">
-              <span className="report-stat-label">Рабочие часы</span>
-              <span className="report-stat-value">
-                {reportLoading ? "..." : Math.round(report?.work_hours || 0)}
-              </span>
-            </div>
+            <div className="report-stats-cards">
+              <div className="report-stat-card">
+                <span className="report-stat-label">Рабочие часы</span>
+                <span className="report-stat-value">
+                  {reportLoading ? "..." : Math.round(report?.work_hours || 0)}
+                </span>
+              </div>
 
-            <div className="report-stat-card">
-              <span className="report-stat-label">Смены</span>
-              <span className="report-stat-value">
-                {reportLoading ? "..." : (report?.work_days || 0)}
-              </span>
+              <div className="report-stat-card">
+                <span className="report-stat-label">Смены</span>
+                <span className="report-stat-value">
+                  {reportLoading ? "..." : (report?.work_days || 0)}
+                </span>
+              </div>
             </div>
 
             {/* Ближайшая смена - список сотрудников (десктопная версия) */}
@@ -884,7 +908,7 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
                              d.fullDate.getFullYear() === today.getFullYear();
               return (
                 <div key={i} className={`weekday-header-item ${isToday ? 'today' : ''}`}>
-                  <div className="weekday-name">{isMobile ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][i] : d.weekday}</div>
+                  <div className="weekday-name">{isMobile ? ['Ср', 'Чт', 'Пт', 'Сб', 'Вс', 'Пн', 'Вт'][i] : d.weekday}</div>
                 </div>
               );
             })}
@@ -893,7 +917,7 @@ const DayCard: React.FC<{ day: DayData }> = ({ day }) => (
             <div key={i} className="day-cell-wrapper">
               <div className="day-date-label">{d.dayNumber}</div>
               <div 
-                className={`day-col ${d.isEmpty ? 'empty-day' : d.isWorkDay ? 'work-day' : d.isConfirmed === false ? 'unconfirmed-day' : ''}`}
+                className={`day-col ${d.isEmpty ? 'empty-day' : d.isWorkDay ? `work-day shift-${(d as any).shiftType || 'full'}` : d.isConfirmed === false ? 'unconfirmed-day' : ''}`}
                 onClick={() => {
                   // При клике на пустой день открываем модалку для добавления смены
                   if (d.isEmpty) {

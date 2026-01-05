@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import "../styles/reportDateRangePicker.css";
-import * as Icons from "../icons/index.ts";
 
 interface ReportDateRangePickerProps {
   startDate: Date;
@@ -8,6 +7,7 @@ interface ReportDateRangePickerProps {
   onDateChange: (startDate: Date, endDate: Date) => void;
   onClose: () => void;
   buttonRef: React.RefObject<HTMLDivElement | null>;
+  initialMonth?: Date; // Опциональный месяц для инициализации календаря
 }
 
 const ReportDateRangePicker: React.FC<ReportDateRangePickerProps> = ({
@@ -16,8 +16,9 @@ const ReportDateRangePicker: React.FC<ReportDateRangePickerProps> = ({
   onDateChange,
   onClose,
   buttonRef,
+  initialMonth,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(startDate));
+  const [currentMonth, setCurrentMonth] = useState(initialMonth ? new Date(initialMonth) : new Date(startDate));
   const [selectedStart, setSelectedStart] = useState<Date | null>(startDate);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(endDate);
   const [selectingStart, setSelectingStart] = useState(true);

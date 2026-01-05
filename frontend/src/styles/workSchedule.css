@@ -99,7 +99,16 @@
 }
 
 .filters {
-    display: none; /* Скрываем фильтры в веб-версии */
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Скрываем фильтры в мобильной версии */
+@media (max-width: 394px) {
+    .filters {
+        display: none;
+    }
 }
 
 .filterBtn {

@@ -63,9 +63,43 @@ export const DayCell: React.FC<DayCellProps> = ({
       setOpenModalScheduleId(null);
       
       const rect = cellRef.current.getBoundingClientRect();
+      const modalWidth = 249; // Ширина модалки из CSS
+      const modalHeight = 200; // Примерная высота модалки
+      const spacing = 5; // Уменьшенный отступ от ячейки для более близкого расположения
+      
+      // Вычисляем позицию по горизонтали (центрируем относительно ячейки)
+      let left = rect.left + rect.width / 2;
+      
+      // Проверяем, не выходит ли модалка за правый край экрана
+      if (left + modalWidth / 2 > window.innerWidth) {
+        left = window.innerWidth - modalWidth / 2 - 10; // Отступ от края
+      }
+      // Проверяем, не выходит ли модалка за левый край экрана
+      if (left - modalWidth / 2 < 0) {
+        left = modalWidth / 2 + 10; // Отступ от края
+      }
+      
+      // Вычисляем позицию по вертикали - позиционируем модалку так, чтобы она частично перекрывала ячейку
+      // Смещаем модалку вверх на часть её высоты, чтобы она была "над" ячейкой
+      const overlapOffset = 30; // Насколько модалка перекрывает ячейку сверху
+      let top = rect.bottom - overlapOffset;
+      
+      // Проверяем, помещается ли модалка снизу
+      const spaceBelow = window.innerHeight - rect.bottom + overlapOffset;
+      const spaceAbove = rect.top;
+      
+      // Если модалка не помещается снизу, но помещается сверху - показываем сверху
+      if (spaceBelow < modalHeight && spaceAbove >= modalHeight) {
+        top = rect.top - modalHeight + overlapOffset;
+      }
+      // Если не помещается ни снизу, ни сверху - показываем по центру экрана
+      else if (spaceBelow < modalHeight && spaceAbove < modalHeight) {
+        top = window.innerHeight / 2;
+      }
+      
       setAddModalPosition({
-        top: rect.bottom + 10,
-        left: rect.left + rect.width / 2
+        top,
+        left
       });
       // Сбрасываем время только при первом открытии этой ячейки
       if (openAddModalKey !== addModalKey) {
