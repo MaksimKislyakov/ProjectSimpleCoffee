@@ -55,18 +55,22 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
                 </div>
             </div>
             <div className="filters">
-                <button
-                className={`filterBtn ${mode === "week" ? "active" : ""}`}
-                onClick={() => onChangeMode("week")}
-                >
-                Неделя
-                </button>
-                <button
-                className={`filterBtn ${mode === "month" ? "active" : ""}`}
-                onClick={() => onChangeMode("month")}
-                >
-                Месяц
-                </button>
+                {isMobile && (
+                  <>
+                    <button
+                      className={`filterBtn ${mode === "week" ? "active" : ""}`}
+                      onClick={() => onChangeMode("week")}
+                    >
+                      Неделя
+                    </button>
+                    <button
+                      className={`filterBtn ${mode === "month" ? "active" : ""}`}
+                      onClick={() => onChangeMode("month")}
+                    >
+                      Месяц
+                    </button>
+                  </>
+                )}
                 <Icons.SettingsIcon className="settingsBtn"/>
             </div>
         </div>

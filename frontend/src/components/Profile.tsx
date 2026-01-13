@@ -12,7 +12,6 @@ import {
   generateMonthDays,
   generateTwoWeeks,
   getWeekLabel,
-  getMonthLabel,
   getTwoWeeksLabel
 } from "../components/useScheduleUtils.tsx";
 
@@ -192,9 +191,10 @@ const ProfilePage: React.FC = () => {
           const isConfirmed = scheduleItem.is_confirmed === true;
           const isActive = scheduleItem.status === "active";
 
-          // Определяем тип смены: утренняя или вечерняя (только для рабочих дней)
+          // Определяем тип смены: утренняя или вечерняя (для всех смен с временем)
+          // Логика: до 17:00 - утренняя, после 17:00 - вечерняя, иначе - полная
           let shiftType = "full";
-          if (isActive && isConfirmed) {
+          if (start && end) {
             const endHour = end.getHours();
             const startHour = start.getHours();
             const isMorningShift = endHour < 17 || (endHour === 17 && end.getMinutes() === 0);
@@ -206,6 +206,8 @@ const ProfilePage: React.FC = () => {
             ...emptyDay,
             date: emptyDay.date, // Сохраняем исходную дату
             time: `${formatTime(start)} ${formatTime(end)}`,
+            startTime: formatTime(start),
+            endTime: formatTime(end),
             isWorkDay: isActive && isConfirmed, // Подтвержденный рабочий день
             isEmpty: false, // Есть данные - не пустой
             isConfirmed: isConfirmed,
@@ -532,14 +534,16 @@ useEffect(() => {
 }, []);
 
 // Перезагружаем отчет при изменении периода или филиала
+// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   if (user) {
     fetchReport();
     fetchAllUsersAndSchedules();
     fetchSchedule();
   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [reportStartDate, reportEndDate, selectedCoffeeShopId]);
+  // fetchReport использует reportStartDate и reportEndDate, которые уже в зависимостях
+  // selectedCoffeeShopId уже в зависимостях
+}, [reportStartDate, reportEndDate, selectedCoffeeShopId, user]);
 
 
   /** === Форматирование имени и стажа === **/
@@ -669,8 +673,13 @@ useEffect(() => {
       <header className="profile-header desktop-header">
         <div className="desktop-header-left">
           <Icons.LogoIcon className="logo" title="logo" />
-          {/* Выпадающий список филиалов для ролей 1 и 2 */}
-          {user && (user.role_id === 1 || user.role_id === 2) ? (
+          {user && (
+            <span className="account-owner">
+              {getRoleText(user.role_id)} - {getShortNameMobile(user.first_name, user.last_name || "", user.patronymic || "")}
+            </span>
+          )}
+          {/* Выпадающий список филиалов для роли 1 */}
+          {user && (user.role_id === 1) ? (
             <CoffeeShopSelector
               selectedShopId={selectedCoffeeShopId}
               onShopChange={handleCoffeeShopChange}
@@ -887,9 +896,7 @@ useEffect(() => {
           currentLabel={
             isMobile
               ? getTwoWeeksLabel(currentDate)
-              : mode === "week" 
-                ? getWeekLabel(currentDate) 
-                : getMonthLabel(currentDate)
+              : getWeekLabel(currentDate)
           }
           mode={mode}
           onPrev={goPrev}
@@ -926,9 +933,23 @@ useEffect(() => {
                 }}
                 style={{ cursor: d.isEmpty ? 'pointer' : 'default' }}
               >
-                {d.time && (
+                {d.time && (d as any).startTime && (d as any).endTime ? (
+                  (d as any).shiftType === "evening" ? (
+                    <>
+                      {/* Вечерняя смена: начало сверху, конец снизу */}
+                      <div className="day-cell-time day-cell-time-top">{(d as any).startTime}</div>
+                      <div className="day-cell-time day-cell-time-bottom">{(d as any).endTime}</div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Полная и утренняя смена: начало и конец сверху */}
+                      <div className="day-cell-time day-cell-time-top">{(d as any).startTime}</div>
+                      <div className="day-cell-time day-cell-time-top">{(d as any).endTime}</div>
+                    </>
+                  )
+                ) : d.time ? (
                   <div className="day-time">{d.time}</div>
-                )}
+                ) : null}
               </div>
             </div>
           ))}

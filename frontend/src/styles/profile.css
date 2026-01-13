@@ -26,6 +26,14 @@
   max-height: 67px;
 }
 
+.account-owner {
+  color: #3F3932;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 100%;
+  margin-right: 16px;
+}
+
 .desktop-header-left {
   display: flex;
   align-items: center;
@@ -969,6 +977,7 @@ h2 {
     margin-left: 0;
     text-align: left;
     justify-self: start;
+    font-size: 14px;
   }
 
   .report .employee-time {
@@ -1347,9 +1356,45 @@ h2 {
 
   /* Дни с работой (подтвержденные) */
   .profile-content .wrapper .day-col.work-day {
-    background: #E67634;
+    background: transparent;
     color: #fff;
-    border: none;
+    border: 1px solid #EE9F71;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Утренняя смена: заливка сверху (до 17:00) */
+  .profile-content .wrapper .day-col.work-day.shift-morning::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 55%;
+    background: #EE9F71;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 0;
+  }
+
+  /* Вечерняя смена: заливка снизу (после 17:00) */
+  .profile-content .wrapper .day-col.work-day.shift-evening::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 55%;
+    background: #EE9F71;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    z-index: 0;
+  }
+
+  /* Полная смена (если не утренняя и не вечерняя) */
+  .profile-content .wrapper .day-col.work-day.shift-full {
+    background: #EE9F71;
   }
 
   /* Неподтвержденные дни */
@@ -1379,4 +1424,92 @@ h2 {
     color: #FFFFFF;
     margin-top: 0;
   }
+
+  /* Стили для day-cell-time */
+  .profile-content .wrapper .day-col .day-cell-time {
+    font-size: clamp(8px, 2.5vw, 12px);
+    color: #fff;
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-content .wrapper .day-col .day-cell-time-top {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .profile-content .wrapper .day-col .day-cell-time-bottom {
+    margin-bottom: 0;
+    margin-top: auto;
+  }
+
+  /* Для вечерних смен: время снизу */
+  .profile-content .wrapper .day-col.work-day.shift-evening {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .profile-content .wrapper .day-col.work-day.shift-evening .day-cell-time-top {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .profile-content .wrapper .day-col.work-day.shift-evening .day-cell-time-bottom {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 }
+
+/* ========== ВЕБ-ВЕРСИЯ ГРАФИКА РАБОТЫ ========== */
+@media (min-width: 395px) {
+  .profile-content .wrapper .day-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Для полных и утренних смен: время сверху */
+  .profile-content .wrapper .day-col.work-day.shift-full,
+  .profile-content .wrapper .day-col.work-day.shift-morning {
+    justify-content: flex-start;
+  }
+
+  /* Для вечерних смен: время снизу */
+  .profile-content .wrapper .day-col.work-day.shift-evening {
+    justify-content: flex-end;
+  }
+
+  .profile-content .wrapper .day-col .day-cell-time {
+    font-size: clamp(8px, 2.5vw, 12px);
+    color: #fff;
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-content .wrapper .day-col .day-cell-time-top {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .profile-content .wrapper .day-col .day-cell-time-bottom {
+    margin-bottom: 0;
+    margin-top: auto;
+  }
+
+  /* Для вечерних смен: оба времени внизу */
+  .profile-content .wrapper .day-col.work-day.shift-evening .day-cell-time-top {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .profile-content .wrapper .day-col.work-day.shift-evening .day-cell-time-bottom {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }}

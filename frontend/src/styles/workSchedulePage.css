@@ -44,7 +44,7 @@
 .desktop-header-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .desktop-coffee-shop-address {
@@ -370,8 +370,8 @@
   width: 100%;
   min-width: clamp(130px, 10vw, 160px);
   max-width: clamp(130px, 10vw, 160px);
-  height: clamp(60px, 8vw, 80px);
-  min-height: clamp(60px, 8vw, 80px);
+  height: 60px;
+  min-height: 60px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -655,12 +655,14 @@
 .day-cell-time-top {
   margin-top: 0;
   margin-bottom: 0;
+  color: #fff;
 }
 
 /* Позиционирование времени снизу (для режима месяца с вечерними сменами) */
 .day-cell-time-bottom {
   margin-bottom: 0;
   margin-top: auto;
+  color: #fff;
 }
 
 /* Для утренних смен в режиме месяца: время сверху */

@@ -254,7 +254,7 @@ export const DayCell: React.FC<DayCellProps> = ({
       // Открываем модалку для этой смены
       const rect = cellRef.current.getBoundingClientRect();
       setModalPosition({
-        top: rect.bottom + 10, // 10px отступ снизу
+        top: rect.bottom + 10,
         left: rect.left + rect.width / 2
       });
       setOpenModalScheduleId(schedule.id);

@@ -4,7 +4,6 @@ import React, { useEffect, useState, useRef } from "react"
 import WorkScheduleHeader from "../components/WorkScheduleHeader.tsx"
 import WorkScheduleTable from "../components/WorkScheduleTable.tsx"
 import ScheduleSettingsSidebar from "../components/ScheduleSettingsSidebar.tsx"
-import CreateUserModal from "../components/CreateUserModal.tsx"
 import CoffeeShopSelector from "../components/CoffeeShopSelector.tsx"
 import ReportDateRangePicker from "../components/ReportDateRangePicker.tsx"
 import { DayData, generateWeekDays, generateMonthDays, generateTwoWeeks } from "../components/useScheduleUtils.tsx"
@@ -21,7 +20,6 @@ const WorkSchedulePage: React.FC = () => {
   const [days, setDays] = useState<DayData[]>([]);
   const [shouldLogout, setShouldLogout] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 394)
   const calendarButtonRef = useRef<HTMLDivElement>(null)
@@ -253,114 +251,6 @@ const WorkSchedulePage: React.FC = () => {
     }
   };
 
-  const createUser = async (userData: any) => {
-    try {
-      // Форматируем данные для отправки на бэкенд
-      // Pydantic принимает hourly_rate как строку или число, конвертирует в Decimal
-      // Если hourly_rate пустое, не отправляем поле вообще (или отправляем undefined)
-      
-      // Форматируем дату для бэкенда
-      // Pydantic принимает ISO формат без временной зоны: YYYY-MM-DDTHH:mm:ss
-      let formattedDate = userData.data_work_start;
-      if (formattedDate) {
-        try {
-          // Если дата в формате YYYY-MM-DD, добавляем время 00:00:00
-          if (typeof formattedDate === 'string' && formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            formattedDate = `${formattedDate}T00:00:00`;
-          } else {
-            // Если дата уже в ISO формате, убираем временную зону и миллисекунды
-            const dateObj = new Date(formattedDate);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const hours = String(dateObj.getHours()).padStart(2, '0');
-            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-            const seconds = String(dateObj.getSeconds()).padStart(2, '0');
-            formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-          }
-        } catch (e) {
-          console.error("Неверный формат даты:", formattedDate);
-          throw new Error("Неверный формат даты начала работы");
-        }
-      }
-      
-      const formattedData: any = {
-        first_name: userData.first_name.trim(),
-        last_name: userData.last_name.trim(),
-        patronymic: userData.patronymic ? userData.patronymic.trim() : null,
-        email: userData.email.trim(),
-        telephone: userData.telephone.trim(),
-        role_id: Number(userData.role_id),
-        coffee_shop_id: Number(userData.coffee_shop_id),
-        assessment_rate: Number(userData.assessment_rate) || 0,
-        work_experience: Number(userData.work_experience) || 0,
-        hashed_password: userData.hashed_password,
-        data_work_start: formattedDate
-      };
-
-      // Добавляем hourly_rate только если оно заполнено
-      // Pydantic не принимает null для Decimal, поэтому не отправляем поле, если оно пустое
-      if (userData.hourly_rate !== null && userData.hourly_rate !== undefined && userData.hourly_rate !== "") {
-        const hourlyRateValue = typeof userData.hourly_rate === 'string' 
-          ? userData.hourly_rate.trim()
-          : String(userData.hourly_rate);
-        if (hourlyRateValue !== "") {
-          formattedData.hourly_rate = hourlyRateValue;
-        }
-      }
-
-      // Логируем данные перед отправкой для отладки
-      console.log("Отправляемые данные для создания пользователя:", formattedData);
-      
-      const res = await fetch("/api/v1/user/create", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formattedData)
-      });
-
-      if (!res.ok) {
-        let errorData: any = {};
-        try {
-          errorData = await res.json();
-        } catch (e) {
-          // Если не удалось распарсить JSON, используем текст ответа
-          const text = await res.text().catch(() => '');
-          errorData = { detail: text || `Ошибка ${res.status}` };
-        }
-        
-        // Обрабатываем детали ошибки валидации
-        let errorMessage = `Ошибка ${res.status}`;
-        if (errorData.detail) {
-          if (Array.isArray(errorData.detail)) {
-            // Pydantic validation errors
-            errorMessage = errorData.detail.map((err: any) => {
-              const field = err.loc?.slice(1).join('.') || 'unknown';
-              return `${field}: ${err.msg}`;
-            }).join(', ');
-          } else if (typeof errorData.detail === 'string') {
-            errorMessage = errorData.detail;
-          } else {
-            errorMessage = JSON.stringify(errorData.detail);
-          }
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-        
-        console.error("Детали ошибки создания пользователя:", errorData);
-        console.error("Отправленные данные:", formattedData);
-        throw new Error(errorMessage);
-      }
-
-      // Обновляем список пользователей после создания
-      await loadUsers();
-    } catch (e: any) {
-      console.error("Ошибка создания пользователя:", e);
-      throw e;
-    }
-  };
 
   const createSchedule = async (date: Date, startTime: string, endTime: string, targetUserId?: number) => {
     try {
@@ -578,15 +468,51 @@ const WorkSchedulePage: React.FC = () => {
 
   const prev = () => {
     const d = new Date(currentDate)
-    if (mode === "week") d.setDate(d.getDate() - 7)
-    else d.setMonth(d.getMonth() - 1)
+    if (mode === "week") {
+      // Находим среду текущей недели
+      const dayOfWeek = d.getDay();
+      let offsetToWednesday: number;
+      
+      if (dayOfWeek === 0) offsetToWednesday = -4;
+      else if (dayOfWeek === 1) offsetToWednesday = -5;
+      else if (dayOfWeek === 2) offsetToWednesday = -6;
+      else if (dayOfWeek === 3) offsetToWednesday = 0;
+      else if (dayOfWeek === 4) offsetToWednesday = -1;
+      else if (dayOfWeek === 5) offsetToWednesday = -2;
+      else offsetToWednesday = -3;
+      
+      // Устанавливаем на среду текущей недели
+      d.setDate(d.getDate() + offsetToWednesday);
+      // Переходим на предыдущую неделю (вычитаем 7 дней)
+      d.setDate(d.getDate() - 7);
+    } else {
+      d.setMonth(d.getMonth() - 1)
+    }
     setCurrentDate(d)
   }
 
   const next = () => {
     const d = new Date(currentDate)
-    if (mode === "week") d.setDate(d.getDate() + 7)
-    else d.setMonth(d.getMonth() + 1)
+    if (mode === "week") {
+      // Находим среду текущей недели
+      const dayOfWeek = d.getDay();
+      let offsetToWednesday: number;
+      
+      if (dayOfWeek === 0) offsetToWednesday = -4;
+      else if (dayOfWeek === 1) offsetToWednesday = -5;
+      else if (dayOfWeek === 2) offsetToWednesday = -6;
+      else if (dayOfWeek === 3) offsetToWednesday = 0;
+      else if (dayOfWeek === 4) offsetToWednesday = -1;
+      else if (dayOfWeek === 5) offsetToWednesday = -2;
+      else offsetToWednesday = -3;
+      
+      // Устанавливаем на среду текущей недели
+      d.setDate(d.getDate() + offsetToWednesday);
+      // Переходим на следующую неделю (добавляем 7 дней)
+      d.setDate(d.getDate() + 7);
+    } else {
+      d.setMonth(d.getMonth() + 1)
+    }
     setCurrentDate(d)
   }
 
@@ -644,6 +570,19 @@ const WorkSchedulePage: React.FC = () => {
             <header className="profile-header desktop-header">
               <div className="desktop-header-left">
                 <Icons.LogoIcon className="logo" title="logo" />
+                {user && (
+                  <span style={{ 
+                    color: "#3F3932", 
+                    fontFamily: "Montserrat",
+                    fontWeight: 600,
+                    fontSize: "20px",
+                    lineHeight: "100%",
+                    letterSpacing: "0%",
+                    marginRight: "16px"
+                  }}>
+                    {getRoleText(user.role_id)} - {getShortNameMobile(user.first_name, user.last_name || "", user.patronymic || "")}
+                  </span>
+                )}
                 {/* Выпадающий список филиалов для ролей 1 и 2 */}
                 {(role_id === 1 || role_id === 2) ? (
                   <CoffeeShopSelector
@@ -675,6 +614,19 @@ const WorkSchedulePage: React.FC = () => {
       <header className="mobile-header">
         <div className="mobile-header-left">
           <Icons.LogoIcon className="mobile-logo" title="logo" />
+          {user && (
+            <span style={{ 
+              color: "#3F3932", 
+              fontFamily: "Montserrat",
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: "100%",
+              letterSpacing: "0%",
+              marginRight: "12px"
+            }}>
+              {getRoleText(user.role_id)} - {getShortNameMobile(user.first_name, user.last_name || "", user.patronymic || "")}
+            </span>
+          )}
           {/* Выпадающий список филиалов для ролей 1 и 2 */}
           {(role_id === 1 || role_id === 2) ? (
             <CoffeeShopSelector
@@ -724,24 +676,6 @@ const WorkSchedulePage: React.FC = () => {
             calendarButtonRef={calendarButtonRef}
             showSettings={true}
           />
-          {role_id === 1 && (
-            <button
-              onClick={() => setIsCreateUserModalOpen(true)}
-              style={{
-                padding: "10px 20px",
-                background: "#ff7b32",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: 500,
-                cursor: "pointer",
-                fontFamily: "Montserrat, sans-serif"
-              }}
-            >
-              + Добавить пользователя
-            </button>
-          )}
         </div>
 
         <WorkScheduleTable
@@ -767,14 +701,6 @@ const WorkSchedulePage: React.FC = () => {
           users={users}
         />
 
-        {role_id === 1 && (
-          <CreateUserModal
-            isOpen={isCreateUserModalOpen}
-            onClose={() => setIsCreateUserModalOpen(false)}
-            onCreate={createUser}
-            coffeeShops={coffeeShops}
-          />
-        )}
 
         {isCalendarOpen && isMobile && (
           <ReportDateRangePicker

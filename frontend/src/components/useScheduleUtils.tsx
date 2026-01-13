@@ -59,16 +59,19 @@ export const generateWeekDays = (startDate: Date = new Date()): DayData[] => {
   return days;
 };
 
-// --- Генерация месяца ---
+// --- Генерация месяца (с 1 числа по последний день месяца) ---
 export const generateMonthDays = (date: Date = new Date()): DayData[] => {
   const days: DayData[] = [];
   const year = date.getFullYear();
   const month = date.getMonth();
 
-  const cur = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
-  while (cur <= last) {
+  // Генерируем дни месяца с 1 числа по последний день
+  const cur = new Date(firstDay);
+  
+  while (cur <= lastDay) {
     days.push({
       weekday: WEEKDAYS[cur.getDay()],
       dayNumber: cur.getDate(),

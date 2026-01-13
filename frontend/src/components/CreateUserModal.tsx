@@ -103,6 +103,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setError("Выберите кофейню");
       return false;
     }
+    if (!formData.data_work_start) {
+      setError("Дата начала работы обязательна для заполнения");
+      return false;
+    }
     return true;
   };
 
@@ -118,6 +122,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
     try {
       // Форматируем данные для отправки на бэкенд
+      const coffeeShopId = Number(formData.coffee_shop_id);
+      if (isNaN(coffeeShopId) || coffeeShopId === 0) {
+        setError("Выберите кофейню");
+        setIsLoading(false);
+        return;
+      }
+
       const userData = {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
@@ -125,12 +136,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         email: formData.email.trim(),
         telephone: formData.telephone.trim(),
         role_id: formData.role_id,
-        coffee_shop_id: Number(formData.coffee_shop_id),
+        coffee_shop_id: coffeeShopId,
         hourly_rate: formData.hourly_rate || "", // Оставляем как строку или пустую строку
         assessment_rate: formData.assessment_rate || 0,
         work_experience: formData.work_experience || 0,
         hashed_password: formData.hashed_password,
-        data_work_start: formData.data_work_start // Оставляем как есть, форматирование будет в WorkSchedulePage
+        data_work_start: formData.data_work_start // Оставляем как есть, форматирование будет в ReportSettingsSidebar
       };
 
       await onCreate(userData);
@@ -299,12 +310,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
 
             <div className="create-user-form-group">
-              <label>Дата начала работы</label>
+              <label>Дата начала работы *</label>
               <input
                 type="date"
                 name="data_work_start"
                 value={formData.data_work_start}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
