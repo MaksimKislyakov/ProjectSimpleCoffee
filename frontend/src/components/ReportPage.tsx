@@ -7,11 +7,17 @@ import { getMonthLabel } from "./useScheduleUtils.tsx";
 import { computeReport, ReportRow } from "./useReportUtils.tsx";
 import ReportDateRangePicker from "./ReportDateRangePicker.tsx";
 import ReportSettingsSidebar from "./ReportSettingsSidebar.tsx";
+import BonusFineContextMenu from "./BonusFineContextMenu.tsx";
+import BonusFineFormModal from "./BonusFineFormModal.tsx";
+import EmployeeInfoModal from "./EmployeeInfoModal.tsx";
+import { useToastContext } from "../contexts/ToastContext.tsx";
 
 const ReportPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToastContext();
   const [users, setUsers] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
@@ -25,6 +31,13 @@ const ReportPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [isSettingsSidebarOpen, setIsSettingsSidebarOpen] = useState(false);
   const [coffeeShops, setCoffeeShops] = useState<any[]>([]);
+  const [contextMenuOpen, setContextMenuOpen] = useState<number | null>(null);
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<{ id: number; name: string } | null>(null);
+  const [selectedType, setSelectedType] = useState<"bonus" | "fine" | null>(null);
+  const [employeeInfoModalOpen, setEmployeeInfoModalOpen] = useState(false);
+  const [selectedEmployeeForInfo, setSelectedEmployeeForInfo] = useState<any | null>(null);
+  const employeeButtonRefs = useRef<Map<number, React.RefObject<HTMLButtonElement | null>>>(new Map());
 
   const token = localStorage.getItem("token") || "";
   const role_id = Number(localStorage.getItem("role_id"));
@@ -139,8 +152,8 @@ const ReportPage: React.FC = () => {
 
   // пересчитываем отчёт при изменении данных / даты
     useEffect(() => {
-      setReportData(computeReport(users, schedule, currentDate));
-    }, [users, schedule, currentDate]);
+      setReportData(computeReport(users, schedule, reports, currentDate));
+    }, [users, schedule, reports, currentDate]);
     
   const goPrev = () => {
     const d = new Date(currentDate);
@@ -190,6 +203,148 @@ const ReportPage: React.FC = () => {
     if (!firstName) return "";
     const lastNameInitial = lastName ? lastName.charAt(0).toUpperCase() + "." : "";
     return lastNameInitial ? `${firstName} ${lastNameInitial}` : firstName;
+  };
+
+  // Получаем или создаем ref для кнопки сотрудника
+  const getEmployeeButtonRef = (employeeId: number): React.RefObject<HTMLButtonElement | null> => {
+    if (!employeeButtonRefs.current.has(employeeId)) {
+      employeeButtonRefs.current.set(employeeId, React.createRef<HTMLButtonElement | null>());
+    }
+    return employeeButtonRefs.current.get(employeeId)!;
+  };
+
+  // Обработчик открытия контекстного меню
+  const handleOpenContextMenu = (employeeId: number) => {
+    setContextMenuOpen(employeeId);
+  };
+
+  // Обработчик выбора типа (премия/штраф) из контекстного меню
+  const handleSelectType = (employeeId: number, employeeName: string, type: "bonus" | "fine") => {
+    setSelectedEmployee({ id: employeeId, name: employeeName });
+    setSelectedType(type);
+    setFormModalOpen(true);
+  };
+
+  // Обработчик открытия модального окна с информацией о сотруднике
+  const handleEmployeeCardClick = (employeeId: number) => {
+    const employee = users.find((u: any) => u.id === employeeId);
+    if (employee) {
+      setSelectedEmployeeForInfo(employee);
+      setEmployeeInfoModalOpen(true);
+    }
+  };
+
+  // Обработчик обновления данных сотрудника
+  const handleUpdateEmployee = async (userId: number, data: any) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Токен не найден");
+      }
+
+      // Отправляем запрос на обновление пользователя
+      const response = await fetch(`/api/v1/user/update/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Ошибка при обновлении данных сотрудника");
+      }
+
+      const updatedUser = await response.json();
+      
+      // Обновляем локальное состояние
+      setUsers((prevUsers) =>
+        prevUsers.map((u: any) => (u.id === userId ? { ...u, ...updatedUser } : u))
+      );
+      
+      // Обновляем данные выбранного сотрудника в модальном окне
+      if (selectedEmployeeForInfo && selectedEmployeeForInfo.id === userId) {
+        setSelectedEmployeeForInfo({ ...selectedEmployeeForInfo, ...updatedUser });
+      }
+      
+      // Перезагружаем данные для обновления отчета
+      await loadUsers();
+      showToast("Данные сотрудника успешно обновлены", "success");
+    } catch (error: any) {
+      console.error("Ошибка обновления сотрудника:", error);
+      showToast(error.message || "Ошибка при обновлении данных сотрудника", "error");
+      throw error;
+    }
+  };
+
+  // Обработчик удаления сотрудника
+  const handleDeleteEmployee = async (userId: number) => {
+    try {
+      const response = await fetch(`/api/v1/user/delete_user/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Ошибка при удалении");
+      }
+
+      // Удаляем пользователя из локального состояния
+      setUsers((prevUsers) => prevUsers.filter((u: any) => u.id !== userId));
+      
+      // Перезагружаем данные
+      await loadUsers();
+      showToast("Учетная запись сотрудника успешно удалена", "success");
+    } catch (error) {
+      console.error("Ошибка удаления сотрудника:", error);
+      throw error;
+    }
+  };
+
+  // Обработчик отправки формы премии/штрафа
+  const handleSubmitBonusFine = async (amount: number, reason: string) => {
+    if (!selectedEmployee || !selectedType) return;
+
+    try {
+      const response = await fetch("/api/v1/report/create_report_total_award_or_fine", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: selectedEmployee.id,
+          total_award: selectedType === "bonus" ? amount : null,
+          total_fine: selectedType === "fine" ? amount : null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Ошибка при назначении");
+      }
+
+      const result = await response.json();
+      
+      // Добавляем созданный report в локальное состояние
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const reportDate = new Date(result.date_of_issue || new Date());
+      
+      // Проверяем, что report попадает в текущий месяц
+      if (reportDate.getFullYear() === year && reportDate.getMonth() === month) {
+        setReports((prevReports) => [...prevReports, result]);
+      }
+
+      showToast(selectedType === "bonus" ? "Премия успешно назначена!" : "Штраф успешно назначен!", "success");
+    } catch (error: any) {
+      throw error;
+    }
   };
 
   return (
@@ -303,9 +458,45 @@ const ReportPage: React.FC = () => {
             filteredReportData.map(row => (
               <div key={row.user_id} className="report-row">
                 <div className="col employee-col">
-                  <div className="employee-card">
-                    <p className="employee-name">{row.name}</p>
-                    <p className="employee-role">{row.roleName || "Бариста"}</p>
+                  <div 
+                    className="employee-card"
+                    onClick={(e) => {
+                      // Открываем модальное окно для ролей 1 и 2, если клик не на кнопку меню
+                      if ((role_id === 1 || role_id === 2) && !(e.target as HTMLElement).closest('.employee-menu-btn')) {
+                        handleEmployeeCardClick(row.user_id);
+                      }
+                    }}
+                    style={{ cursor: (role_id === 1 || role_id === 2) ? 'pointer' : 'default' }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
+                      <div style={{ flex: 1 }}>
+                        <p className="employee-name">{row.name}</p>
+                        <p className="employee-role">{row.roleName || "Бариста"}</p>
+                      </div>
+                      {(role_id === 1 || role_id === 2) && (
+                        <>
+                          <button
+                            ref={getEmployeeButtonRef(row.user_id)}
+                            className="employee-menu-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenContextMenu(row.user_id);
+                            }}
+                            title="Меню"
+                          >
+                            <span className="three-dots">⋯</span>
+                          </button>
+                          {contextMenuOpen === row.user_id && (
+                            <BonusFineContextMenu
+                              isOpen={true}
+                              onClose={() => setContextMenuOpen(null)}
+                              onSelect={(type) => handleSelectType(row.user_id, row.name, type)}
+                              buttonRef={getEmployeeButtonRef(row.user_id)}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -336,6 +527,34 @@ const ReportPage: React.FC = () => {
           loadCoffeeShops();
           loadUsers();
         }}
+      />
+
+      {/* Bonus/Fine Form Modal */}
+      {selectedEmployee && selectedType && (
+        <BonusFineFormModal
+          isOpen={formModalOpen}
+          onClose={() => {
+            setFormModalOpen(false);
+            setSelectedEmployee(null);
+            setSelectedType(null);
+          }}
+          onSubmit={handleSubmitBonusFine}
+          type={selectedType}
+          employeeName={selectedEmployee.name}
+        />
+      )}
+
+      {/* Employee Info Modal */}
+      <EmployeeInfoModal
+        isOpen={employeeInfoModalOpen}
+        onClose={() => {
+          setEmployeeInfoModalOpen(false);
+          setSelectedEmployeeForInfo(null);
+        }}
+        employee={selectedEmployeeForInfo}
+        onUpdate={handleUpdateEmployee}
+        onDelete={handleDeleteEmployee}
+        coffeeShops={coffeeShops}
       />
     </div>
   );

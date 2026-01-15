@@ -1,0 +1,134 @@
+.bonus-fine-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+}
+
+.bonus-fine-form-modal {
+  background: #f4f4f4;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0px 4px 8px 2px #00000040;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bonus-fine-form-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #3F3932;
+  font-family: "Montserrat", sans-serif;
+}
+
+.bonus-fine-form-employee-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: #3F3932;
+  font-family: "Montserrat", sans-serif;
+}
+
+.bonus-fine-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bonus-fine-form-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bonus-fine-form-input-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3F3932;
+  font-family: "Montserrat", sans-serif;
+}
+
+.bonus-fine-form-input {
+  padding: 10px;
+  border: 1px solid #B7B7B7;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bonus-fine-form-input:focus {
+  outline: none;
+  border-color: #E67634;
+}
+
+.bonus-fine-form-error {
+  color: #d32f2f;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.bonus-fine-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.bonus-fine-form-cancel-btn {
+  padding: 10px 20px;
+  border: 1px solid #B7B7B7;
+  border-radius: 8px;
+  background: #f4f4f4;
+  color: #3F3932;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  transition: background 0.2s;
+}
+
+.bonus-fine-form-cancel-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.bonus-fine-form-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bonus-fine-form-save-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #E67634;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  transition: opacity 0.2s;
+}
+
+.bonus-fine-form-save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.bonus-fine-form-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

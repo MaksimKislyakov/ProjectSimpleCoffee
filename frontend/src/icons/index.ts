@@ -17,3 +17,4 @@ export { ReactComponent as CalendarWhiteIcon } from "./calendarWhite.svg";
 export { ReactComponent as ArrowIcon } from "./arrow.svg";
 export { ReactComponent as NotificationIcon } from "./notification.svg";
 export { ReactComponent as ReportSettingsIcon } from "./reportSettings.svg";
+export { ReactComponent as EditIcon } from "./edit.svg";

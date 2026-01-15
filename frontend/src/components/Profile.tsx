@@ -6,6 +6,7 @@ import WorkSchedule from "./WorkSchedule.tsx";
 import AddScheduleModal from "./AddScheduleModal.tsx";
 import ReportDateRangePicker from "./ReportDateRangePicker.tsx";
 import CoffeeShopSelector from "./CoffeeShopSelector.tsx";
+import ScheduleSettingsSidebar from "./ScheduleSettingsSidebar.tsx";
 import {
   DayData,
   generateWeekDays,
@@ -19,7 +20,7 @@ import {
 interface UserData {
   first_name: string;
   last_name: string;
-  patronymic: string;
+  patronymic: string | null | undefined;
   email: string;
   telephone: string;
   role_id: number;
@@ -32,9 +33,12 @@ interface UserData {
 }
 
 interface ReportData {
-  work_days: number;
-  work_hours: number;
+  work_days: number | null | undefined;
+  work_hours: number | null | undefined;
   total_earnings: string;
+  total_award?: number | null;
+  total_fine?: number | null;
+  user_id?: number;
 }
 
 
@@ -52,6 +56,7 @@ const ProfilePage: React.FC = () => {
     const saved = localStorage.getItem("selectedCoffeeShopId");
     return saved ? parseInt(saved, 10) : null;
   });
+  const [coffeeShops, setCoffeeShops] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [allSchedules, setAllSchedules] = useState<any[]>([]);
 
@@ -73,39 +78,23 @@ const ProfilePage: React.FC = () => {
   const [isScheduleCalendarOpen, setIsScheduleCalendarOpen] = useState(false);
   const scheduleCalendarButtonRef = useRef<HTMLDivElement | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 394);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Обработчик изменения филиала
-  const handleCoffeeShopChange = (shopId: number) => {
+  const handleCoffeeShopChange = async (shopId: number) => {
     setSelectedCoffeeShopId(shopId);
     localStorage.setItem("selectedCoffeeShopId", shopId.toString());
     
-    // Обновляем адрес кофейни
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetch("/api/v1/coffee_shop/get_coffee_shops", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((coffeeShops) => {
-          const shop = Array.isArray(coffeeShops) 
-            ? coffeeShops.find((s: any) => s.id === shopId)
-            : null;
-          if (shop && shop.adress) {
-            setCoffeeShopAddress(shop.adress);
-          }
-        })
-        .catch((err) => {
-          console.error("Ошибка загрузки адреса кофейни:", err);
-        });
+    // Обновляем адрес кофейни из уже загруженных данных
+    const shop = coffeeShops.find((s: any) => s.id === shopId);
+    if (shop && shop.adress) {
+      setCoffeeShopAddress(shop.adress);
     }
     
     // Перезагружаем данные
     if (user) {
-      fetchReport();
-      fetchAllUsersAndSchedules();
+      const { schedules } = await fetchAllUsersAndSchedules();
+      await fetchReport(schedules);
       fetchSchedule();
     }
   };
@@ -189,7 +178,7 @@ const ProfilePage: React.FC = () => {
             });
 
           const isConfirmed = scheduleItem.is_confirmed === true;
-          const isActive = scheduleItem.status === "active";
+          const isActive = scheduleItem.status === "active" || scheduleItem.status === "Рабочая смена";
 
           // Определяем тип смены: утренняя или вечерняя (для всех смен с временем)
           // Логика: до 17:00 - утренняя, после 17:00 - вечерняя, иначе - полная
@@ -257,7 +246,66 @@ useEffect(() => {
   return () => window.removeEventListener('resize', handleResize);
 }, []);
 
-const fetchReport = async () => {
+// Функция для подсчета рабочих часов на клиенте (используем ту же логику, что и в отчете)
+const countWorkHoursForUser = (userId: number, schedules: any[], startDate: Date, endDate: Date): number => {
+  let totalHours = 0;
+  
+  schedules.forEach((s: any) => {
+    if (!s || s.user_id !== userId || !s.schedule_start_time || !s.schedule_end_time) return;
+    
+    const sd = new Date(s.schedule_start_time);
+    // Проверяем, что попадает в целевой период
+    if (sd < startDate || sd > endDate) return;
+
+    // Проверяем, что это рабочая смена (единый формат: "Рабочая смена")
+    // Также учитываем "active" для обратной совместимости со старыми данными
+    const status = (s.status || "").toLowerCase();
+    const isWorkShift = status === "рабочая смена" || status === "active";
+    if (!isWorkShift) return; // Пропускаем нерабочие смены (выходные, больничные и т.д.)
+
+    // Проверяем, что смена завершена (end_time > start_time) - как в бэкенде
+    const start = new Date(s.schedule_start_time);
+    const end = new Date(s.schedule_end_time);
+    if (end.getTime() <= start.getTime()) return;
+    
+    // Считаем длительность в часах
+    const ms = Math.max(0, end.getTime() - start.getTime());
+    const hours = ms / (1000 * 60 * 60);
+    totalHours += hours;
+  });
+  
+  return Math.round(totalHours);
+};
+
+// Функция для подсчета смен на клиенте (используем ту же логику, что и в отчете)
+const countShiftsForUser = (userId: number, schedules: any[], startDate: Date, endDate: Date): number => {
+  let shifts = 0;
+  
+  schedules.forEach((s: any) => {
+    if (!s || s.user_id !== userId || !s.schedule_start_time || !s.schedule_end_time) return;
+    
+    const sd = new Date(s.schedule_start_time);
+    // Проверяем, что попадает в целевой период
+    if (sd < startDate || sd > endDate) return;
+
+    // Проверяем, что это рабочая смена (единый формат: "Рабочая смена")
+    // Также учитываем "active" для обратной совместимости со старыми данными
+    const status = (s.status || "").toLowerCase();
+    const isWorkShift = status === "рабочая смена" || status === "active";
+    if (!isWorkShift) return; // Пропускаем нерабочие смены (выходные, больничные и т.д.)
+
+    // Проверяем, что смена завершена (end_time > start_time) - как в бэкенде
+    const start = new Date(s.schedule_start_time);
+    const end = new Date(s.schedule_end_time);
+    if (end.getTime() <= start.getTime()) return;
+    
+    shifts += 1;
+  });
+  
+  return shifts;
+};
+
+const fetchReport = async (schedulesOverride?: any[]) => {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -288,6 +336,24 @@ const fetchReport = async () => {
     }
 
     const reportData: ReportData = await res.json();
+    console.log("Report data from API:", reportData);
+    console.log("work_days value:", reportData.work_days, "type:", typeof reportData.work_days);
+    
+    // Пересчитываем рабочие часы и смены на клиенте, если есть расписания
+    // Это нужно, потому что бэкенд считает все часы (включая выходные), а не только рабочие
+    const schedulesToUse = schedulesOverride ?? allSchedules;
+    if (user && schedulesToUse.length > 0) {
+      const calculatedShifts = countShiftsForUser(user.id, schedulesToUse, reportStartDate, reportEndDate);
+      const calculatedHours = countWorkHoursForUser(user.id, schedulesToUse, reportStartDate, reportEndDate);
+      
+      console.log("Recalculated shifts:", calculatedShifts, "hours:", calculatedHours);
+      
+      // Обновляем данные только если пересчет дал другие результаты
+      // (бэкенд может возвращать неправильные данные из-за отсутствия проверки статуса)
+      reportData.work_days = calculatedShifts;
+      reportData.work_hours = calculatedHours;
+    }
+    
     setReport(reportData);
     
   } catch (err) {
@@ -299,28 +365,87 @@ const fetchReport = async () => {
 
   const fetchAllUsersAndSchedules = async () => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) return { users: [], schedules: [] };
 
     try {
       // Загружаем всех пользователей
       const usersRes = await fetch("/api/v1/user/all_users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
+      let usersData: any[] = [];
       if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setAllUsers(Array.isArray(usersData) ? usersData : []);
+        const usersJson = await usersRes.json();
+        usersData = Array.isArray(usersJson) ? usersJson : [];
+        setAllUsers(usersData);
       }
 
       // Загружаем все расписания
       const schedulesRes = await fetch("/api/v1/schedule/get_all_schedule", {
         headers: { "Authorization": `Bearer ${token}` }
       });
+      let schedulesData: any[] = [];
       if (schedulesRes.ok) {
-        const schedulesData = await schedulesRes.json();
-        setAllSchedules(Array.isArray(schedulesData) ? schedulesData : []);
+        const schedulesJson = await schedulesRes.json();
+        schedulesData = Array.isArray(schedulesJson) ? schedulesJson : [];
+        setAllSchedules(schedulesData);
       }
+
+      return { users: usersData, schedules: schedulesData };
     } catch (err) {
       console.error("Ошибка загрузки пользователей и расписания:", err);
+    }
+    return { users: [], schedules: [] };
+  };
+
+  const saveSchedules = async (schedules: any[]) => {
+    const token = localStorage.getItem("token");
+    const role_id = Number(localStorage.getItem("role_id"));
+    const user_id = Number(localStorage.getItem("user_id"));
+    
+    if (!token) {
+      throw new Error("Токен не найден");
+    }
+
+    try {
+      // Отправляем каждую смену отдельным запросом
+      const promises = schedules.map(async (schedule, index) => {
+        // Для роли 3 (бариста) всегда используем текущий user_id
+        const scheduleData = role_id === 3 
+          ? { ...schedule, user_id: user_id }
+          : schedule;
+        
+        const res = await fetch("/api/v1/schedule/create_schedule", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(scheduleData)
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          console.error(`Ошибка создания смены ${index + 1}:`, res.status, errorData);
+          return { success: false, error: errorData.detail || `Ошибка ${res.status}`, index };
+        }
+        
+        return { success: true, index };
+      });
+
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => !r.success);
+      
+      if (errors.length > 0) {
+        const errorMessages = errors.map(e => `Смена ${e.index + 1}: ${e.error}`).join("\n");
+        throw new Error(`Ошибка создания ${errors.length} из ${schedules.length} смен:\n${errorMessages}`);
+      }
+
+      // Обновляем расписание после сохранения
+      await fetchSchedule();
+      await fetchAllUsersAndSchedules();
+    } catch (e) {
+      console.error("Ошибка сохранения графика:", e);
+      throw e;
     }
   };
 
@@ -478,20 +603,53 @@ useEffect(() => {
       const data: UserData = await res.json();
       setUser(data);
       
-      // Устанавливаем выбранный филиал из localStorage или используем филиал пользователя
-      const shopIdToUse = selectedCoffeeShopId || data.coffee_shop_id;
-      if (shopIdToUse && shopIdToUse !== selectedCoffeeShopId) {
-        setSelectedCoffeeShopId(shopIdToUse);
-        localStorage.setItem("selectedCoffeeShopId", shopIdToUse.toString());
+      const isBarista = data.role_id === 3;
+      // Устанавливаем выбранный филиал из localStorage только для админа/менеджера
+      if (!isBarista) {
+        const shopIdToUse = selectedCoffeeShopId || data.coffee_shop_id;
+        if (shopIdToUse && shopIdToUse !== selectedCoffeeShopId) {
+          setSelectedCoffeeShopId(shopIdToUse);
+          localStorage.setItem("selectedCoffeeShopId", shopIdToUse.toString());
+        }
+      } else {
+        // Для бариста не используем выбор филиала и не трогаем localStorage
+        setSelectedCoffeeShopId(null);
       }
       
       // Загружаем адрес кофейни
-      const shopId = selectedCoffeeShopId || data.coffee_shop_id;
+      const shopId = isBarista ? data.coffee_shop_id : (selectedCoffeeShopId || data.coffee_shop_id);
       if (shopId) {
-        // Для роли 3 (сотрудник) не вызываем API, который требует прав админа/менеджера
-        if (data.role_id === 3) {
-          // Для роли 3 показываем просто "Филиал" без адреса, так как нет доступа к API
-          setCoffeeShopAddress("Филиал");
+        // Для роли 3 (сотрудник) используем coffee_shop_id из данных пользователя
+        // Делаем запрос на /api/v1/coffee_shop/{coffee_shop_id} для получения адреса
+        if (isBarista) {
+          if (data.coffee_shop_id) {
+            try {
+              const coffeeShopRes = await fetch(`/api/v1/coffee_shop/${data.coffee_shop_id}`, {
+                method: "GET",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                },
+              });
+              
+              if (coffeeShopRes.ok) {
+                const shopData = await coffeeShopRes.json();
+                const addressValue = shopData?.adress || shopData?.address;
+                if (addressValue) {
+                  setCoffeeShopAddress(addressValue);
+                } else {
+                  setCoffeeShopAddress(`Филиал #${data.coffee_shop_id}`);
+                }
+              } else {
+                // Если не получилось получить адрес (нет прав), показываем ID
+                setCoffeeShopAddress(`Филиал #${data.coffee_shop_id}`);
+              }
+            } catch (err) {
+              console.error("Ошибка загрузки кофейни для роли 3:", err);
+              setCoffeeShopAddress(`Филиал #${data.coffee_shop_id}`);
+            }
+          } else {
+            setCoffeeShopAddress("Филиал");
+          }
         } else {
           // Для ролей 1 и 2 загружаем список кофеен
           try {
@@ -503,10 +661,11 @@ useEffect(() => {
             });
             
             if (coffeeShopRes.ok) {
-              const coffeeShops = await coffeeShopRes.json();
-              const shop = Array.isArray(coffeeShops) 
-                ? coffeeShops.find((s: any) => s.id === shopId)
-                : null;
+              const coffeeShopsData = await coffeeShopRes.json();
+              const shopsArray = Array.isArray(coffeeShopsData) ? coffeeShopsData : [];
+              setCoffeeShops(shopsArray);
+              
+              const shop = shopsArray.find((s: any) => s.id === shopId);
               if (shop && shop.adress) {
                 setCoffeeShopAddress(shop.adress);
               }
@@ -517,10 +676,10 @@ useEffect(() => {
         }
       }
       
-      // После успешной загрузки пользователя загружаем отчет
-      await fetchReport();
       // Загружаем всех пользователей и расписание для ближайшей смены
-      await fetchAllUsersAndSchedules();
+      const { schedules } = await fetchAllUsersAndSchedules();
+      // После загрузки расписаний загружаем отчет (чтобы можно было пересчитать смены)
+      await fetchReport(schedules);
       
     } catch (err) {
       console.error(err);
@@ -537,9 +696,12 @@ useEffect(() => {
 // eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   if (user) {
-    fetchReport();
-    fetchAllUsersAndSchedules();
-    fetchSchedule();
+    const loadData = async () => {
+      const { schedules } = await fetchAllUsersAndSchedules();
+      await fetchReport(schedules);
+      fetchSchedule();
+    };
+    loadData();
   }
   // fetchReport использует reportStartDate и reportEndDate, которые уже в зависимостях
   // selectedCoffeeShopId уже в зависимостях
@@ -551,6 +713,19 @@ useEffect(() => {
   const getShortName = (fullName: string) => {
     if (fullName.length <= 23) return fullName;
     return fullName.slice(0, 23) + "...";
+  };
+
+  // Форматирование имени в формате "Имя Ф. С." (где Ф - первая буква отчества, С - первая буква фамилии)
+  const getNameWithPatronymicInitial = (firstName: string, lastName: string, patronymic: string | null | undefined): string => {
+    if (!firstName) return "";
+    const patronymicInitial = (patronymic && patronymic.trim()) ? patronymic.charAt(0).toUpperCase() + "." : "";
+    const lastNameInitial = (lastName && lastName.trim()) ? lastName.charAt(0).toUpperCase() + "." : "";
+    
+    const parts = [firstName];
+    if (patronymicInitial) parts.push(patronymicInitial);
+    if (lastNameInitial) parts.push(lastNameInitial);
+    
+    return parts.join(" ");
   };
 
   const formatYears = (years: number) => {
@@ -582,7 +757,8 @@ useEffect(() => {
   const getShortNameMobile = (firstName: string, lastName: string, patronymic: string): string => {
     if (!firstName) return "";
     
-    const patronymicInitial = patronymic ? patronymic.charAt(0).toUpperCase() + "." : "";
+    // Проверяем, что отчество не пустое и не null
+    const patronymicInitial = (patronymic && patronymic.trim()) ? patronymic.charAt(0).toUpperCase() + "." : "";
     
     // Если фамилия отсутствует или совпадает с именем, не добавляем её
     if (!lastName || lastName.trim() === "" || lastName.toLowerCase() === firstName.toLowerCase()) {
@@ -594,7 +770,7 @@ useEffect(() => {
       ? lastName.charAt(0).toUpperCase() + "." 
       : lastName;
     
-    return `${firstName} ${shortLastName} ${patronymicInitial}`.trim();
+    return `${firstName} ${shortLastName}${patronymicInitial ? ` ${patronymicInitial}` : ""}`.trim();
   };
 
   useEffect(() => {
@@ -641,7 +817,7 @@ useEffect(() => {
 
   // Пока загружаются данные
   if (loading) {
-    return <div className="profile-page">Загрузка...</div>;
+    return <div className="profile-page profile-loading">Загрузка...</div>;
   }
 
   // Если пользователь не загрузился
@@ -650,7 +826,7 @@ useEffect(() => {
   }
 
   // Формирование ФИО
-  const fullFIO = `${user.last_name} ${user.first_name} ${user.patronymic}`;
+  const fullFIO = `${user.last_name} ${user.first_name}${user.patronymic ? ` ${user.patronymic}` : ""}`.trim();
   const shortFIO = getShortName(fullFIO);
 
   // Общие навигационные кнопки для менеджера/админа
@@ -684,6 +860,7 @@ useEffect(() => {
               selectedShopId={selectedCoffeeShopId}
               onShopChange={handleCoffeeShopChange}
               roleId={user.role_id}
+              coffeeShops={coffeeShops}
             />
           ) : (
             coffeeShopAddress && (
@@ -717,6 +894,7 @@ useEffect(() => {
               selectedShopId={selectedCoffeeShopId}
               onShopChange={handleCoffeeShopChange}
               roleId={user.role_id}
+              coffeeShops={coffeeShops}
             />
           ) : (
             coffeeShopAddress && (
@@ -737,31 +915,27 @@ useEffect(() => {
 
           {/* Десктопная версия */}
           <div className="info-left desktop-info">
-            <h2>Информация о сотруднике</h2>
+            <h2>{getRoleText(user.role_id)} - {getNameWithPatronymicInitial(user.first_name, user.last_name, user.patronymic)}</h2>
 
-            <div className="fio-wrapper">
-              <p className="fio-label">ФИО:</p>
-
-              <div className="fio-container">
-                <span className="fio-text">{shortFIO}</span>
-
-                <div className="fio-popup">
-                  {fullFIO}
-                  <div className="fio-popup-arrow"></div>
-                </div>
-              </div>
+            <div className="info-column">
+              <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
+              <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
             </div>
-
-            <p><span>Должность:</span> {user.role_id}</p>
-            <p><span>Почта:</span> {user.email}</p>
-            <p><span>Телефон:</span> {user.telephone}</p>
           </div>
 
           <div className="info-right desktop-info">
-            <p><span>Опыт работы:</span> {formatYears(user.work_experience)}</p>
-            <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
-            <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
-            <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
+            <div className="info-column">
+              <p>
+                <span>Почта:</span> 
+                <span 
+                  className={user.email.length > 30 ? "email-tooltip" : ""}
+                  title={user.email.length > 30 ? user.email : ""}
+                >
+                  {user.email.length > 30 ? `${user.email.slice(0, 30)}...` : user.email}
+                </span>
+              </p>
+              <p><span>Телефон:</span> {user.telephone}</p>
+            </div>
           </div>
 
           {/* Мобильная версия - объединенный блок */}
@@ -777,7 +951,7 @@ useEffect(() => {
                   <span className="mobile-employee-role">{getRoleText(user.role_id)}</span>
                   <span className="mobile-employee-separator"> - </span>
                   <span className="mobile-employee-name">
-                    {getShortNameMobile(user.first_name || "", user.last_name || "", user.patronymic || "") || user.first_name || "Пользователь"}
+                    {getNameWithPatronymicInitial(user.first_name || "", user.last_name || "", user.patronymic) || user.first_name || "Пользователь"}
                   </span>
                 </span>
               </div>
@@ -787,7 +961,15 @@ useEffect(() => {
             <div className="mobile-info-details">
               <p><span>Начало работы:</span> {new Date(user.data_work_start).toLocaleDateString()}</p>
               <p><span>Уровень аттестации:</span> {user.assessment_rate}</p>
-              <p><span>Почта:</span> {user.email}</p>
+              <p>
+                <span>Почта:</span> 
+                <span 
+                  className={user.email.length > 30 ? "email-tooltip" : ""}
+                  title={user.email.length > 30 ? user.email : ""}
+                >
+                  {user.email.length > 30 ? `${user.email.slice(0, 30)}...` : user.email}
+                </span>
+              </p>
               <p><span>Телефон:</span> {user.telephone}</p>
               {(user.role_id === 1 || user.role_id === 2) && (
                 <p><span>Часовая ставка:</span> {Number(user.hourly_rate)} ₽</p>
@@ -837,7 +1019,7 @@ useEffect(() => {
               <div className="report-stat-card">
                 <span className="report-stat-label">Смены</span>
                 <span className="report-stat-value">
-                  {reportLoading ? "..." : (report?.work_days || 0)}
+                  {reportLoading ? "..." : (report?.work_days ?? 0)}
                 </span>
               </div>
             </div>
@@ -905,6 +1087,7 @@ useEffect(() => {
           isMobile={isMobile}
           onCalendarClick={isMobile ? () => setIsScheduleCalendarOpen(!isScheduleCalendarOpen) : undefined}
           calendarButtonRef={scheduleCalendarButtonRef}
+          onSettingsClick={() => setIsSidebarOpen(true)}
         >
           {/* Заголовок с названиями дней недели */}
           <div className="schedule-weekdays-header">
@@ -973,7 +1156,7 @@ useEffect(() => {
               const body = {
                 user_id: user.id,
                 coffee_shop_id: user.coffee_shop_id,
-                status: "active",
+                status: "Рабочая смена",
                 schedule_start_time: formatLocalDateTime(modalDate, startTime),
                 schedule_end_time: formatLocalDateTime(modalDate, endTime),
                 is_confirmed: false
@@ -1012,6 +1195,16 @@ useEffect(() => {
             buttonRef={calendarButtonRef}
           />
         )}
+
+        <ScheduleSettingsSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          onSave={saveSchedules}
+          currentUserId={Number(localStorage.getItem("user_id")) || null}
+          coffeeShopId={user?.coffee_shop_id || null}
+          roleId={Number(localStorage.getItem("role_id")) || 0}
+          users={allUsers}
+        />
 
         {isScheduleCalendarOpen && isMobile && (
           <ReportDateRangePicker

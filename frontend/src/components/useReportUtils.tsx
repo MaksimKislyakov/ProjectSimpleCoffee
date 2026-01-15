@@ -36,12 +36,13 @@ export const formatMoney = (v: number) =>
   v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₽";
 
 /**
- * computeReport(users, schedule, monthDate)
+ * computeReport(users, schedule, reports, monthDate)
  * - users: массив пользователей (должен содержать id, first_name, last_name, patronymic, hourly_rate, role_id)
  * - schedule: массив всех смен (должен содержать user_id, schedule_start_time, schedule_end_time, optionally fine, bonus, status)
+ * - reports: массив премий/штрафов из таблицы reports (должен содержать user_id, total_award, total_fine, date_of_issue)
  * - monthDate: любая дата в месяце, за который создаём отчёт
  */
-export const computeReport = (users: any[], schedule: any[], monthDate: Date): ReportRow[] => {
+export const computeReport = (users: any[], schedule: any[], reports: any[], monthDate: Date): ReportRow[] => {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
@@ -67,12 +68,22 @@ export const computeReport = (users: any[], schedule: any[], monthDate: Date): R
     // проверяем, что попадает в целевой месяц
     if (sd.getFullYear() !== year || sd.getMonth() !== month) return;
 
+    // Проверяем, что это рабочая смена (единый формат: "Рабочая смена")
+    // Также учитываем "active" для обратной совместимости со старыми данными
+    const status = (s.status || "").toLowerCase();
+    const isWorkShift = status === "рабочая смена" || status === "active";
+    if (!isWorkShift) return; // Пропускаем нерабочие смены (выходные, больничные и т.д.)
+
     const userRow = idx.get(s.user_id);
     if (!userRow) return;
 
     // считаем длительность в часах
     const start = new Date(s.schedule_start_time);
     const end = new Date(s.schedule_end_time);
+    
+    // Проверяем, что смена завершена (end_time > start_time) - как в бэкенде
+    if (end.getTime() <= start.getTime()) return;
+    
     const ms = Math.max(0, end.getTime() - start.getTime());
     const hours = ms / (1000 * 60 * 60);
 
@@ -91,6 +102,29 @@ export const computeReport = (users: any[], schedule: any[], monthDate: Date): R
     userRow.total_fine += isFinite(fine) ? fine : 0;
     userRow.total_award += isFinite(bonus) ? bonus : 0;
   });
+
+  // Добавляем премии и штрафы из reports
+  if (reports && Array.isArray(reports)) {
+    reports.forEach((report: any) => {
+      if (!report || !report.user_id) return;
+
+      // Проверяем, что report попадает в целевой месяц
+      if (report.date_of_issue) {
+        const reportDate = new Date(report.date_of_issue);
+        if (reportDate.getFullYear() !== year || reportDate.getMonth() !== month) return;
+      }
+
+      const userRow = idx.get(report.user_id);
+      if (!userRow) return;
+
+      // Добавляем премии и штрафы из reports
+      const fine = Number(report.total_fine || 0);
+      const award = Number(report.total_award || 0);
+
+      userRow.total_fine += isFinite(fine) ? fine : 0;
+      userRow.total_award += isFinite(award) ? award : 0;
+    });
+  }
 
   // финальные поля и форматирование
   rows.forEach(r => {

@@ -10,12 +10,14 @@ interface CoffeeShopSelectorProps {
   selectedShopId: number | null;
   onShopChange: (shopId: number) => void;
   roleId: number;
+  coffeeShops?: CoffeeShop[]; // Опциональный проп для передачи уже загруженных филиалов
 }
 
 const CoffeeShopSelector: React.FC<CoffeeShopSelectorProps> = ({
   selectedShopId,
   onShopChange,
   roleId,
+  coffeeShops: externalCoffeeShops,
 }) => {
   const [coffeeShops, setCoffeeShops] = useState<CoffeeShop[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -23,12 +25,38 @@ const CoffeeShopSelector: React.FC<CoffeeShopSelectorProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  // Используем переданные филиалы или загружаем их
   useEffect(() => {
     // Показываем только для ролей 1 и 2
     if (roleId !== 1 && roleId !== 2) {
       return;
     }
 
+    // Если филиалы переданы извне, используем их
+    if (externalCoffeeShops && externalCoffeeShops.length > 0) {
+      setCoffeeShops(externalCoffeeShops);
+      
+      // Устанавливаем выбранный филиал
+      if (selectedShopId) {
+        const shop = externalCoffeeShops.find((s: CoffeeShop) => s.id === selectedShopId);
+        if (shop) {
+          setSelectedShop(shop);
+        }
+      } else if (externalCoffeeShops.length > 0) {
+        // Если нет выбранного филиала, проверяем localStorage
+        const saved = localStorage.getItem("selectedCoffeeShopId");
+        if (saved) {
+          const savedId = parseInt(saved, 10);
+          const shop = externalCoffeeShops.find((s: CoffeeShop) => s.id === savedId);
+          if (shop) {
+            setSelectedShop(shop);
+          }
+        }
+      }
+      return;
+    }
+
+    // Если филиалы не переданы, загружаем их
     const fetchCoffeeShops = async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
@@ -68,7 +96,17 @@ const CoffeeShopSelector: React.FC<CoffeeShopSelectorProps> = ({
     };
 
     fetchCoffeeShops();
-  }, [selectedShopId, roleId, onShopChange]);
+  }, [selectedShopId, roleId, onShopChange, externalCoffeeShops]);
+
+  // Обновляем выбранный филиал при изменении selectedShopId без перезагрузки данных
+  useEffect(() => {
+    if (coffeeShops.length > 0 && selectedShopId) {
+      const shop = coffeeShops.find((s: CoffeeShop) => s.id === selectedShopId);
+      if (shop) {
+        setSelectedShop(shop);
+      }
+    }
+  }, [selectedShopId, coffeeShops]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

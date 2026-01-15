@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import * as Icons from "../icons/index.ts";
+import { useToastContext } from "../contexts/ToastContext.tsx";
 
 interface ScheduleSettingsSidebarProps {
   isOpen: boolean;
@@ -126,25 +127,25 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
   const validateForm = (): boolean => {
     if (template === "weekdays") {
       if (selectedDays.length === 0) {
-        alert("Выберите хотя бы один рабочий день");
+        showToast("Выберите хотя бы один рабочий день", "error");
         return false;
       }
     } else {
       const workDays = parseInt(pattern.work);
       const restDays = parseInt(pattern.rest);
       if (!workDays || !restDays || workDays < 1 || restDays < 1) {
-        alert("Введите корректный паттерн (например: 2/2)");
+        showToast("Введите корректный паттерн (например: 2/2)", "error");
         return false;
       }
     }
 
     if (!interval || parseInt(interval) < 1) {
-      alert("Введите корректный интервал действия");
+      showToast("Введите корректный интервал действия", "error");
       return false;
     }
 
     if (!startTime || !endTime) {
-      alert("Выберите время работы");
+      showToast("Выберите время работы", "error");
       return false;
     }
 
@@ -154,7 +155,7 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
     const endMinutes = endHour * 60 + endMin;
 
     if (endMinutes <= startMinutes) {
-      alert("Время окончания должно быть позже времени начала");
+      showToast("Время окончания должно быть позже времени начала", "error");
       return false;
     }
 
@@ -206,10 +207,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
           const scheduleEnd = new Date(currentDate);
           scheduleEnd.setHours(endHour, endMin, 0, 0);
 
+          // Преобразуем статус в единый формат: "active" -> "Рабочая смена"
+          const normalizedStatus = status === "active" ? "Рабочая смена" : status;
           schedules.push({
             user_id: targetUserId,
             coffee_shop_id: targetCoffeeShopId,
-            status: status,
+            status: normalizedStatus,
             schedule_start_time: formatLocalDateTime(scheduleStart),
             schedule_end_time: formatLocalDateTime(scheduleEnd),
             is_confirmed: false,
@@ -239,10 +242,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
           const scheduleEnd = new Date(currentDate);
           scheduleEnd.setHours(endHour, endMin, 0, 0);
 
+          // Преобразуем статус в единый формат: "active" -> "Рабочая смена"
+          const normalizedStatus = status === "active" ? "Рабочая смена" : status;
           schedules.push({
             user_id: targetUserId,
             coffee_shop_id: targetCoffeeShopId,
-            status: status,
+            status: normalizedStatus,
             schedule_start_time: formatLocalDateTime(scheduleStart),
             schedule_end_time: formatLocalDateTime(scheduleEnd),
             is_confirmed: false,
@@ -260,12 +265,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
     if (!validateForm()) return;
 
     if (showEmployeeSelect && !selectedEmployeeId) {
-      alert("Ошибка: выберите сотрудника для создания смены");
+      showToast("Ошибка: выберите сотрудника для создания смены", "error");
       return;
     }
 
     if (!targetUserId) {
-      alert("Ошибка: не удалось определить ID пользователя");
+      showToast("Ошибка: не удалось определить ID пользователя", "error");
       return;
     }
 
@@ -273,24 +278,24 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
       const employeeName = showEmployeeSelect && selectedEmployeeId
         ? users.find(u => u.id === selectedEmployeeId)?.last_name || "выбранный сотрудник"
         : "вы";
-      alert(`Ошибка: не удалось определить ID кофейни для ${employeeName}. Проверьте, что ${showEmployeeSelect ? "сотрудник" : "вы"} привязан к кофейне.`);
+      showToast(`Ошибка: не удалось определить ID кофейни для ${employeeName}. Проверьте, что ${showEmployeeSelect ? "сотрудник" : "вы"} привязан к кофейне.`, "error");
       return;
     }
 
     const schedules = generateSchedules();
     if (schedules.length === 0) {
-      alert("Не удалось сгенерировать смены. Проверьте настройки:\n- Выберите дни недели (для шаблона 'По дням недели')\n- Проверьте паттерн (для шаблона 'По сменам')");
+      showToast("Не удалось сгенерировать смены. Проверьте настройки: выберите дни недели или проверьте паттерн", "error");
       return;
     }
 
     try {
       await onSave(schedules);
-      alert("График успешно сохранен!");
+      showToast("График успешно сохранен!", "success");
       onClose();
     } catch (error: any) {
       console.error("Ошибка сохранения графика:", error);
       const errorMessage = error?.message || "Ошибка при сохранении графика";
-      alert(errorMessage);
+      showToast(errorMessage, "error");
     }
   };
 

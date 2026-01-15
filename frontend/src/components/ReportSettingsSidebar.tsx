@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import CreateUserModal from "./CreateUserModal.tsx";
+import CreateCoffeeShopModal from "./CreateCoffeeShopModal.tsx";
 import "../styles/reportPage.css";
+import { useToastContext } from "../contexts/ToastContext.tsx";
 
 interface ReportSettingsSidebarProps {
   isOpen: boolean;
@@ -21,14 +23,10 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
   onUserCreated,
   onCoffeeShopCreated,
 }) => {
+  const { showToast } = useToastContext();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showCreateCoffeeShopForm, setShowCreateCoffeeShopForm] = useState(false);
-  const [coffeeShopForm, setCoffeeShopForm] = useState({
-    adress: "",
-  });
-  const [isLoadingCoffeeShop, setIsLoadingCoffeeShop] = useState(false);
-  const [coffeeShopError, setCoffeeShopError] = useState<string | null>(null);
+  const [showCreateCoffeeShopModal, setShowCreateCoffeeShopModal] = useState(false);
 
   // Refs для обработки свайпа
   const touchStartY = useRef<number>(0);
@@ -143,21 +141,13 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
       if (onUserCreated) {
         onUserCreated();
       }
-      alert("Пользователь успешно создан!");
+      showToast("Пользователь успешно создан!", "success");
     } catch (error: any) {
       throw new Error(error.message || "Ошибка при создании пользователя");
     }
   };
 
-  const handleCreateCoffeeShop = async () => {
-    if (!coffeeShopForm.adress.trim()) {
-      setCoffeeShopError("Адрес кофейни обязателен");
-      return;
-    }
-
-    setIsLoadingCoffeeShop(true);
-    setCoffeeShopError(null);
-
+  const handleCreateCoffeeShop = async (coffeeShopData: { adress: string }) => {
     try {
       const response = await fetch("/api/v1/coffee_shop/create", {
         method: "POST",
@@ -166,7 +156,7 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          adress: coffeeShopForm.adress,
+          adress: coffeeShopData.adress,
         }),
       });
 
@@ -175,24 +165,19 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
         throw new Error(error.detail || "Ошибка при создании кофейни");
       }
 
-      setCoffeeShopForm({ adress: "" });
-      setShowCreateCoffeeShopForm(false);
-      setIsLoadingCoffeeShop(false);
+      setShowCreateCoffeeShopModal(false);
       if (onCoffeeShopCreated) {
         onCoffeeShopCreated();
       }
-      alert("Кофейня успешно добавлена!");
+      showToast("Кофейня успешно добавлена!", "success");
     } catch (error: any) {
-      setCoffeeShopError(error.message || "Ошибка при создании кофейни");
-      setIsLoadingCoffeeShop(false);
+      throw error;
     }
   };
 
   const handleCancel = () => {
     setShowCreateUserModal(false);
-    setShowCreateCoffeeShopForm(false);
-    setCoffeeShopForm({ adress: "" });
-    setCoffeeShopError(null);
+    setShowCreateCoffeeShopModal(false);
     onClose();
   };
 
@@ -297,51 +282,11 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
           <div className="settings-section">
             <button
               className="add-button add-coffee-shop-button"
-              onClick={() => setShowCreateCoffeeShopForm(!showCreateCoffeeShopForm)}
+              onClick={() => setShowCreateCoffeeShopModal(true)}
             >
               Добавить кофейню
             </button>
           </div>
-
-          {/* Форма добавления кофейни */}
-          {showCreateCoffeeShopForm && (
-            <div className="coffee-shop-form">
-              <div className="form-group">
-                <label className="settings-label">Адрес кофейни</label>
-                <input
-                  type="text"
-                  value={coffeeShopForm.adress}
-                  onChange={(e) =>
-                    setCoffeeShopForm({ ...coffeeShopForm, adress: e.target.value })
-                  }
-                  placeholder="Введите адрес"
-                  className="coffee-shop-input"
-                />
-              </div>
-              {coffeeShopError && (
-                <div className="error-message">{coffeeShopError}</div>
-              )}
-              <div className="coffee-shop-form-buttons">
-                <button
-                  className="form-cancel-button"
-                  onClick={() => {
-                    setShowCreateCoffeeShopForm(false);
-                    setCoffeeShopForm({ adress: "" });
-                    setCoffeeShopError(null);
-                  }}
-                >
-                  Отменить
-                </button>
-                <button
-                  className="form-save-button"
-                  onClick={handleCreateCoffeeShop}
-                  disabled={isLoadingCoffeeShop}
-                >
-                  {isLoadingCoffeeShop ? "Сохранение..." : "Сохранить"}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Кнопки управления */}
@@ -361,6 +306,13 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
         onClose={() => setShowCreateUserModal(false)}
         onCreate={handleCreateUser}
         coffeeShops={coffeeShops}
+      />
+
+      {/* Modal для создания кофейни */}
+      <CreateCoffeeShopModal
+        isOpen={showCreateCoffeeShopModal}
+        onClose={() => setShowCreateCoffeeShopModal(false)}
+        onCreate={handleCreateCoffeeShop}
       />
     </>
   );

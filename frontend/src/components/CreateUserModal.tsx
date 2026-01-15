@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "../styles/createUserModal.css";
+import * as Icons from "../icons/index.ts";
+import { useToastContext } from "../contexts/ToastContext.tsx";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -15,17 +17,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onCreate,
   coffeeShops
 }) => {
+  const { showToast } = useToastContext();
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    patronymic: "",
+    fullName: "",
     email: "",
     telephone: "",
     role_id: 3,
     coffee_shop_id: coffeeShops.length > 0 ? coffeeShops[0].id : (null as any),
     hourly_rate: "",
-    assessment_rate: 0,
-    work_experience: 0,
     hashed_password: "",
     data_work_start: new Date().toISOString().split('T')[0]
   });
@@ -37,42 +36,82 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      // Сброс формы при открытии
       setFormData({
-        first_name: "",
-        last_name: "",
-        patronymic: "",
+        fullName: "",
         email: "",
         telephone: "",
         role_id: 3,
         coffee_shop_id: coffeeShops.length > 0 ? coffeeShops[0].id : (null as any),
         hourly_rate: "",
-        assessment_rate: 0,
-        work_experience: 0,
         hashed_password: "",
         data_work_start: new Date().toISOString().split('T')[0]
       });
     }
   }, [isOpen, coffeeShops]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === "role_id" || name === "coffee_shop_id" || name === "assessment_rate" || name === "work_experience"
-        ? parseInt(value) || 0
-        : value
-    }));
-    setError(null);
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, onClose]);
+
+  const getRoleText = (roleId: number): string => {
+    switch (roleId) {
+      case 1:
+        return "Администратор";
+      case 2:
+        return "Управляющий";
+      case 3:
+        return "Бариста";
+      default:
+        return "Бариста";
+    }
+  };
+
+  const parseFullName = (fullName: string): { first_name: string; last_name: string; patronymic: string | null } => {
+    const parts = fullName.trim().split(/\s+/).filter(part => part.length > 0);
+    
+    if (parts.length === 0) {
+      return { first_name: "", last_name: "", patronymic: null };
+    }
+    
+    if (parts.length === 1) {
+      return { first_name: parts[0], last_name: "", patronymic: null };
+    }
+    
+    if (parts.length === 2) {
+      return { first_name: parts[1], last_name: parts[0], patronymic: null };
+    }
+    
+    // Если 3 и более слов: первое - фамилия, второе - имя, остальное - отчество
+    return {
+      first_name: parts[1],
+      last_name: parts[0],
+      patronymic: parts.slice(2).join(" ") || null
+    };
   };
 
   const validateForm = (): boolean => {
-    if (!formData.first_name.trim()) {
-      setError("Имя обязательно для заполнения");
+    if (!formData.fullName.trim()) {
+      setError("ФИО обязательно для заполнения");
       return false;
     }
-    if (!formData.last_name.trim()) {
-      setError("Фамилия обязательна для заполнения");
+    
+    const nameParts = parseFullName(formData.fullName);
+    if (!nameParts.first_name || !nameParts.last_name) {
+      setError("Введите фамилию и имя");
       return false;
     }
     if (!formData.email.trim()) {
@@ -121,7 +160,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setError(null);
 
     try {
-      // Форматируем данные для отправки на бэкенд
       const coffeeShopId = Number(formData.coffee_shop_id);
       if (isNaN(coffeeShopId) || coffeeShopId === 0) {
         setError("Выберите кофейню");
@@ -129,249 +167,216 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         return;
       }
 
+      const nameParts = parseFullName(formData.fullName);
+      
       const userData = {
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
-        patronymic: formData.patronymic.trim() || null,
+        first_name: nameParts.first_name,
+        last_name: nameParts.last_name,
+        patronymic: nameParts.patronymic,
         email: formData.email.trim(),
         telephone: formData.telephone.trim(),
         role_id: formData.role_id,
         coffee_shop_id: coffeeShopId,
-        hourly_rate: formData.hourly_rate || "", // Оставляем как строку или пустую строку
-        assessment_rate: formData.assessment_rate || 0,
-        work_experience: formData.work_experience || 0,
+        hourly_rate: formData.hourly_rate || "0",
+        assessment_rate: 0,
+        work_experience: 0,
         hashed_password: formData.hashed_password,
-        data_work_start: formData.data_work_start // Оставляем как есть, форматирование будет в ReportSettingsSidebar
+        data_work_start: formData.data_work_start
       };
 
       await onCreate(userData);
       onClose();
+      showToast("Пользователь успешно создан!", "success");
     } catch (err: any) {
-      setError(err.message || "Ошибка при создании пользователя");
+      const errorMessage = err.message || "Ошибка при создании пользователя";
+      setError(errorMessage);
+      showToast(errorMessage, "error");
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose();
-    }
-  };
+  if (!isOpen) return null;
 
-  if (!isOpen) {
-    return null;
-  }
-
-  const modalContent = (
-    <div
-      className="create-user-modal-overlay"
-      onClick={onClose}
-      onKeyDown={handleKeyDown}
-    >
+  return createPortal(
+    <div className="employee-info-modal-overlay" onClick={onClose}>
       <div
-        ref={modalRef}
-        className="create-user-modal"
+        className="employee-info-modal"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
+        ref={modalRef}
       >
-        <div className="create-user-modal-header">
-          <h2>Создать пользователя</h2>
-          <button className="create-user-modal-close" onClick={onClose}>×</button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="create-user-form">
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Имя *</label>
-              <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="create-user-form-group">
-              <label>Фамилия *</label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Отчество</label>
-              <input
-                type="text"
-                name="patronymic"
-                value={formData.patronymic}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="create-user-form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Телефон *</label>
+        <div className="employee-info-header">
+          <div className="employee-photo-placeholder"></div>
+          <div className="employee-contacts-section">
+            <h2 className="contacts-title">Контакты</h2>
+            <div className="contact-item">
               <input
                 type="tel"
-                name="telephone"
+                placeholder="Телефон"
                 value={formData.telephone}
-                onChange={handleChange}
-                placeholder="+79991234567"
+                onChange={(e) => {
+                  setFormData({ ...formData, telephone: e.target.value });
+                  setError(null);
+                }}
+                className="create-user-input"
                 required
               />
             </div>
-
-            <div className="create-user-form-group">
-              <label>Пароль *</label>
+            <div className="contact-item">
+              <input
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  setError(null);
+                }}
+                className="create-user-input"
+                required
+              />
+            </div>
+            <div className="contact-item">
               <input
                 type="password"
-                name="hashed_password"
+                placeholder="Пароль"
                 value={formData.hashed_password}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setFormData({ ...formData, hashed_password: e.target.value });
+                  setError(null);
+                }}
+                className="create-user-input"
                 required
                 minLength={4}
               />
             </div>
           </div>
+        </div>
 
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Роль *</label>
-              <select
-                name="role_id"
-                value={formData.role_id}
-                onChange={handleChange}
-                required
-              >
-                <option value={1}>Администратор</option>
-                <option value={2}>Менеджер</option>
-                <option value={3}>Бариста</option>
-              </select>
-            </div>
-
-            <div className="create-user-form-group">
-              <label>Кофейня *</label>
-              {coffeeShops.length > 0 ? (
-                <select
-                  name="coffee_shop_id"
-                  value={formData.coffee_shop_id}
-                  onChange={handleChange}
-                  required
-                >
-                  {coffeeShops.map(shop => (
-                    <option key={shop.id} value={shop.id}>
-                      Кофейня #{shop.id} {shop.adress ? `(${shop.adress})` : ""}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="number"
-                  name="coffee_shop_id"
-                  value={formData.coffee_shop_id || ""}
-                  onChange={handleChange}
-                  placeholder="ID кофейни"
-                  required
-                />
-              )}
-            </div>
+        <div className="employee-info-section">
+          <h2 className="info-title">Информация о сотруднике</h2>
+          
+          <div className="info-item">
+            <span className="info-label">ФИО:</span>
+            <input
+              type="text"
+              placeholder="Фамилия Имя Отчество"
+              value={formData.fullName}
+              onChange={(e) => {
+                setFormData({ ...formData, fullName: e.target.value });
+                setError(null);
+              }}
+              className="create-user-input"
+              required
+            />
           </div>
 
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Почасовая ставка</label>
+          <div className="info-item">
+            <span className="info-label">Должность:</span>
+            <select
+              value={formData.role_id}
+              onChange={(e) => {
+                setFormData({ ...formData, role_id: parseInt(e.target.value) });
+                setError(null);
+              }}
+              className="create-user-input"
+              required
+            >
+              <option value={1}>Администратор</option>
+              <option value={2}>Управляющий</option>
+              <option value={3}>Бариста</option>
+            </select>
+          </div>
+
+          <div className="info-item">
+            <span className="info-label">Начало работы:</span>
+            <input
+              type="date"
+              value={formData.data_work_start}
+              onChange={(e) => {
+                setFormData({ ...formData, data_work_start: e.target.value });
+                setError(null);
+              }}
+              className="create-user-input"
+              required
+            />
+          </div>
+
+          <div className="info-item">
+            <span className="info-label">Ставка в час:</span>
+            <div className="edit-field-group">
               <input
                 type="number"
-                name="hourly_rate"
+                placeholder="0"
                 value={formData.hourly_rate}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setFormData({ ...formData, hourly_rate: e.target.value });
+                  setError(null);
+                }}
+                className="create-user-input"
                 step="0.01"
                 min="0"
               />
+              <span className="currency">руб.</span>
             </div>
+          </div>
 
-            <div className="create-user-form-group">
-              <label>Дата начала работы *</label>
+          <div className="info-item">
+            <span className="info-label">Кофейня:</span>
+            {coffeeShops.length > 0 ? (
+              <select
+                value={formData.coffee_shop_id || ""}
+                onChange={(e) => {
+                  setFormData({ ...formData, coffee_shop_id: parseInt(e.target.value) });
+                  setError(null);
+                }}
+                className="create-user-input"
+                required
+              >
+                {coffeeShops.map(shop => (
+                  <option key={shop.id} value={shop.id}>
+                    {shop.adress || `Кофейня #${shop.id}`}
+                  </option>
+                ))}
+              </select>
+            ) : (
               <input
-                type="date"
-                name="data_work_start"
-                value={formData.data_work_start}
-                onChange={handleChange}
+                type="number"
+                placeholder="ID кофейни"
+                value={formData.coffee_shop_id || ""}
+                onChange={(e) => {
+                  setFormData({ ...formData, coffee_shop_id: parseInt(e.target.value) });
+                  setError(null);
+                }}
+                className="create-user-input"
                 required
               />
-            </div>
+            )}
           </div>
+        </div>
 
-          <div className="create-user-form-row">
-            <div className="create-user-form-group">
-              <label>Оценка</label>
-              <input
-                type="number"
-                name="assessment_rate"
-                value={formData.assessment_rate}
-                onChange={handleChange}
-                min="0"
-                max="5"
-              />
-            </div>
+        {error && <div className="create-user-error">{error}</div>}
 
-            <div className="create-user-form-group">
-              <label>Опыт работы (месяцы)</label>
-              <input
-                type="number"
-                name="work_experience"
-                value={formData.work_experience}
-                onChange={handleChange}
-                min="0"
-              />
-            </div>
-          </div>
-
-          {error && <div className="create-user-error">{error}</div>}
-
-          <div className="create-user-modal-actions">
-            <button
-              type="button"
-              className="create-user-cancel-btn"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Отменить
-            </button>
-            <button
-              type="submit"
-              className="create-user-submit-btn"
-              disabled={isLoading}
-            >
-              {isLoading ? "Создание..." : "Создать"}
-            </button>
-          </div>
-        </form>
+        <div className="employee-info-footer">
+          <button
+            type="button"
+            className="create-user-cancel-btn"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Отменить
+          </button>
+          <button
+            type="button"
+            className="create-user-submit-btn"
+            onClick={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? "Создание..." : "Сохранить"}
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  return createPortal(modalContent, document.body);
 };
 
 export default CreateUserModal;
-

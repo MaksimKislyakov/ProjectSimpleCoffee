@@ -13,6 +13,7 @@ interface WorkScheduleProps {
   isMobile?: boolean;
   onCalendarClick?: () => void;
   calendarButtonRef?: React.RefObject<HTMLDivElement | null>;
+  onSettingsClick?: () => void;
 }
 
 
@@ -26,6 +27,7 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
   isMobile,
   onCalendarClick,
   calendarButtonRef,
+  onSettingsClick,
 }) => {
   const navigate = useNavigate();
   return (
@@ -71,7 +73,11 @@ export const WorkSchedule: React.FC<WorkScheduleProps> = ({
                     </button>
                   </>
                 )}
-                <Icons.SettingsIcon className="settingsBtn"/>
+                <Icons.SettingsIcon 
+                  className="settingsBtn" 
+                  onClick={onSettingsClick}
+                  style={onSettingsClick ? { cursor: "pointer" } : undefined}
+                />
             </div>
         </div>
 

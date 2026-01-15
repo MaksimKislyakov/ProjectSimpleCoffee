@@ -278,7 +278,7 @@ const WorkSchedulePage: React.FC = () => {
       const scheduleData = {
         user_id: scheduleUserId,
         coffee_shop_id: scheduleCoffeeShopId,
-        status: "active",
+        status: "Рабочая смена",
         schedule_start_time: formatLocalDateTime(date, startTime),
         schedule_end_time: formatLocalDateTime(date, endTime),
         is_confirmed: false

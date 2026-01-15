@@ -179,7 +179,7 @@ export const DayCell: React.FC<DayCellProps> = ({
   // Для не-рабочих дней: время не показываем
   const confirmed = schedule.is_confirmed === true;
   const statusLower = schedule.status?.toLowerCase() || "";
-  const isWorkDay = statusLower === "active" || statusLower === "рабочий день";
+  const isWorkDay = statusLower === "active" || statusLower === "рабочая смена" || statusLower === "рабочий день";
   
   // Если смена подтверждена и не является явным выходным/отпуском/больничным, 
   // то считаем её рабочей сменой (для отображения оранжевым цветом)
