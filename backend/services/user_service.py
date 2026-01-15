@@ -85,8 +85,6 @@ class UserService:
         Raises:
             HTTPException: 404 если пользователи не найдены
         """
-        if current_user.role_id not in (RolesEnum.barista, RolesEnum.manager, RolesEnum.admin):
-            raise HTTPException(status_code=403, detail="Не достаточно прав")
         all_users = await self.user_repo.get_all_users()
 
         if all_users is None:

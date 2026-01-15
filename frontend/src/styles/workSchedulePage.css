@@ -44,7 +44,7 @@
 .desktop-header-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .desktop-coffee-shop-address {
@@ -60,12 +60,13 @@
 .go-to-schedule {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: clamp(10px, 3.5vw, 15px);
     cursor: pointer;
 }
 
 .go-to-icon {
   transform: rotate(180deg);
+  opacity: 0.7;
 }
 
 /* --- Заголовок страницы --- */
@@ -74,6 +75,25 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 8px;
+  width: 100%;
+}
+
+.schedule-header-block {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.schedule-header-left {
+  justify-content: flex-start;
+}
+
+.schedule-header-center {
+  justify-content: center;
+}
+
+.schedule-header-right {
+  justify-content: flex-end;
 }
 
 .schedule-header .period {
@@ -119,8 +139,8 @@
 }
 
 .left-column {
-  width: 280px;
-  min-width: 280px;
+  width: clamp(240px, 18vw, 260px);
+  min-width: clamp(240px, 18vw, 260px);
   background: white;
   z-index: 10;
   position: sticky;
@@ -136,7 +156,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 17px;
+  margin-bottom: 8px;
   box-sizing: border-box;
   gap: 20px;
 }
@@ -269,8 +289,8 @@
 
 .left-employee {
   padding: 15px 11px;
-  height: 105px;
-  min-height: 105px;
+  height: clamp(105px, 12vw, 130px);
+  min-height: clamp(105px, 12vw, 130px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -318,7 +338,7 @@
 
 .header-row {
   display: grid;
-  grid-template-columns: 290px 1fr; 
+  grid-template-columns: clamp(240px, 18vw, 260px) 1fr; 
   position: sticky;
   top: 0;
   background: #fff;
@@ -343,12 +363,15 @@
 }
 
 .day-col {
-  padding: 10px 6px;
+  padding: clamp(8px, 1vw, 12px);
   text-align: center;
-  border-radius: 10px;
+  border-radius: clamp(8px, 1.2vw, 10px);
   background: #F4F4F4;
-  width: 36px;
+  width: 100%;
+  min-width: clamp(130px, 10vw, 160px);
+  max-width: clamp(130px, 10vw, 160px);
   height: 60px;
+  min-height: 60px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -405,14 +428,14 @@
   display: grid;
   grid-template-columns: 1fr; /* один столбец — days-row */
   padding: 0;
-  margin-bottom: 8px;
+  margin-bottom: clamp(8px, 1.5vw, 10px);
   align-items: stretch;
 }
 
 .rows {
   display: flex;
   flex-direction: column;
-  margin-top: 17px;
+  margin-top: 0;
 }
 
 /* Левая ячейка — сотрудник */
@@ -425,7 +448,7 @@
   border: 1px solid #B7B7B7;
   background: #F4F4F4;
   border-radius: 10px;
-  width: 300px;
+  width: clamp(240px, 18vw, 260px);
   height: 105px;
   gap: 1px;
 }
@@ -454,15 +477,16 @@
 /* Ячейки дней */
 .days-row {
   display: grid; /* inline grid устанавливается из компонента */
-  gap: 8px;
+  gap: clamp(5px, 1vw, 7px);
   align-items: stretch;
 }
 
 .day-cell {
-  height: 105px !important;
-  min-height: 105px;
-  min-width: 36px;
-  width: 100%;
+  height: clamp(105px, 12vw, 130px) !important;
+  min-height: clamp(105px, 12vw, 130px) !important;
+  min-width: clamp(130px, 10vw, 160px);
+  max-width: clamp(130px, 10vw, 160px);
+  width: clamp(130px, 10vw, 160px);
   box-sizing: border-box;
 }
 
@@ -631,12 +655,14 @@
 .day-cell-time-top {
   margin-top: 0;
   margin-bottom: 0;
+  color: #fff;
 }
 
 /* Позиционирование времени снизу (для режима месяца с вечерними сменами) */
 .day-cell-time-bottom {
   margin-bottom: 0;
   margin-top: auto;
+  color: #fff;
 }
 
 /* Для утренних смен в режиме месяца: время сверху */
@@ -770,13 +796,41 @@
 /* Для режима неделя — шире ячейки */
 .days-row.week-mode .day-cell,
 .days-header.week-mode .day-col {
-  min-width: 130px !important;
-  width: 100%;
+  min-width: clamp(130px, 10vw, 160px) !important;
+  max-width: clamp(130px, 10vw, 160px) !important;
+  width: clamp(130px, 10vw, 160px) !important;
 }
 
-@media (max-width: 1200px) {
-  .day-cell, .day-col {
-    min-width: 56px;
+/* Для режима месяца - компактные ячейки (только для веб-версии) */
+@media (min-width: 395px) {
+  .days-row:not(.week-mode) .day-cell {
+    min-width: 36px;
+    max-width: 36px;
+    width: 36px;
+    height: clamp(105px, 12vw, 130px);
+    min-height: clamp(105px, 12vw, 130px);
+  }
+
+  .days-header:not(.week-mode) .day-col {
+    min-width: 36px;
+    max-width: 36px;
+    width: 36px;
+    height: 60px;
+    min-height: 60px;
+  }
+
+  /* Скрываем кнопку редактирования графика в веб-версии */
+  .schedule-header .mobile-settings-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) and (min-width: 395px) {
+  .days-row:not(.week-mode) .day-cell,
+  .days-header:not(.week-mode) .day-col {
+    min-width: 36px;
+    max-width: 36px;
+    width: 36px;
   }
 }
 
@@ -807,6 +861,10 @@
   padding: 40px;
   box-sizing: border-box;
   overflow-y: auto;
+}
+
+.sidebar-drag-handle {
+  display: none; /* Скрыто по умолчанию, показывается только в мобильной версии */
 }
 
 .sidebar-title {
@@ -1201,7 +1259,7 @@
   .mobile-header-left {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 14px;
     flex: 1;
     min-width: 0;
   }
@@ -1233,20 +1291,23 @@
   }
 
   .mobile-notifications-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* Временная заглушка для иконки уведомлений */
-    background: #f0f0f0;
-    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .mobile-notifications-icon svg {
+    width: 100%;
+    height: 100%;
   }
 
   .mobile-logout-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
     cursor: pointer;
     flex-shrink: 0;
   }
@@ -1263,4 +1324,354 @@
     margin: 0;
     border-radius: 0;
   }
+
+  /* Левая колонка в мобильной версии */
+  .left-column {
+    width: clamp(132px, 35vw, 144px);
+    min-width: clamp(132px, 35vw, 144px);
+  }
+
+  /* Блок с именем сотрудника в мобильной версии */
+  .left-employee {
+    width: clamp(132px, 35vw, 144px);
+    height: clamp(45px, 12vw, 50px);
+    min-height: clamp(45px, 12vw, 50px);
+    padding: clamp(4px, 1.2vw, 5px);
+    border-radius: 5px;
+    border-bottom: 1px solid #B7B7B7;
+    gap: clamp(8px, 2.5vw, 10px);
+    margin-bottom: clamp(8px, 2.5vw, 10px);
+  }
+
+  .left-employee .name {
+    font-size: clamp(12px, 3vw, 14px);
+  }
+
+  .left-employee .role {
+    font-size: clamp(10px, 2.5vw, 12px);
+  }
+
+  /* Ячейки дней недели в мобильной версии - только для страницы графика работы */
+  .work-schedule-page .day-col,
+  .schedule-wrapper .day-col {
+    width: clamp(40px, 10.5vw, 43px) !important;
+    min-width: clamp(40px, 10.5vw, 43px) !important;
+    max-width: clamp(40px, 10.5vw, 43px) !important;
+    height: clamp(28px, 7.5vw, 30px) !important;
+    min-height: clamp(28px, 7.5vw, 30px) !important;
+    border-radius: 5px;
+    padding: clamp(4px, 1.5vw, 6px) clamp(4px, 1.5vw, 6px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Ячейки дней в мобильной версии */
+  .day-cell {
+    width: clamp(40px, 10.5vw, 43px) !important;
+    min-width: clamp(40px, 10.5vw, 43px) !important;
+    max-width: clamp(40px, 10.5vw, 43px) !important;
+    height: clamp(45px, 12vw, 50px) !important;
+    min-height: clamp(45px, 12vw, 50px) !important;
+  }
+
+  /* Скрываем фильтры месяц/неделя в мобильной версии */
+  .schedule-header .filters {
+    display: none;
+  }
+
+  .schedule-header .controls .mode-switch {
+    display: none;
+  }
+
+  /* Заголовок страницы в мобильной версии */
+  .schedule-header {
+    padding: 0 4px;
+    justify-content: flex-start;
+    gap: 15px;
+  }
+
+  .schedule-header .period {
+    font-size: clamp(14px, 3.5vw, 16px);
+  }
+
+  /* Название "График работы" в мобильной версии */
+  .go-to-schedule p {
+    font-size: 20px !important;
+  }
+
+  /* Блок calendar в мобильной версии - как в профиле */
+  .schedule-header .calendar {
+    width: 108px;
+    height: 24px;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    box-sizing: border-box;
+    background: #F4F4F4;
+    box-shadow: 0px 2px 4px 0px #00000040;
+  }
+
+  .schedule-header .calendar svg {
+    width: 12px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .schedule-header .calendar .label {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #3F3932;
+  }
+
+  /* Кнопка редактирования графика в мобильной версии */
+  .schedule-header .mobile-settings-btn {
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+
+  .schedule-header .mobile-settings-btn svg {
+    width: 24px;
+    height: 24px;
+    color: #3F3932;
+  }
+
+  .schedule-header .mobile-settings-btn:hover {
+    background: none;
+  }
+
+  /* Настройка отступов для currentPeriod в мобильной версии */
+  .schedule-header .currentPeriod {
+    gap: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .schedule-header .go-to-schedule {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .schedule-header .go-to-schedule p {
+    margin: 0;
+  }
+
+  /* Кнопка настроек */
+  .schedule-header .mobile-settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Скрываем стрелки в мобильной версии */
+  .schedule-header .arrows {
+    display: none;
+  }
+
+  /* Скрываем кнопку "Добавить пользователя" в мобильной версии */
+  .container-page > div > button[style*="background"] {
+    display: none !important;
+  }
+
+  /* Отступы для строк */
+  .rows {
+    margin-top: 0;
+  }
+
+  .employee-row {
+    margin-bottom: clamp(8px, 2.5vw, 10px);
+  }
+
+  /* Размер цифры в ячейках дней недели в мобильной версии */
+  .work-schedule-page .day-col .day-num,
+  .schedule-wrapper .day-col .day-num {
+    font-size: 12px !important;
+  }
+
+  /* Заголовок дней недели */
+  .days-header {
+    margin-bottom: 15px;
+  }
+
+  /* Отступ между заголовком и строками */
+  .left-header {
+    margin-bottom: 15px;
+  }
+
+  /* Grid для заголовка дней и строк в мобильной версии - в одну строчку со скроллом */
+  .right-area {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .days-header {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(40px, 10.5vw, 43px);
+    gap: clamp(5px, 1.8vw, 7px) !important;
+    width: max-content;
+    min-width: 100%;
+    margin-bottom: 15px !important;
+  }
+
+  .days-row {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(40px, 10.5vw, 43px);
+    gap: clamp(5px, 1.8vw, 7px) !important;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* Блок с поиском и фильтром "Сегодня" в мобильной версии */
+  .left-header {
+    width: clamp(132px, 35vw, 144px);
+    height: clamp(28px, 7.5vw, 30px);
+    min-height: clamp(28px, 7.5vw, 30px);
+    flex-direction: row;
+    gap: clamp(4px, 1vw, 5px);
+    padding: clamp(4px, 1vw, 5px);
+    box-sizing: border-box;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .left-header .search-container {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: flex-start;
+  }
+
+  .left-header .search-container p {
+    display: block;
+    margin: 0;
+    font-size: clamp(10px, 3vw, 12px);
+    line-height: 1;
+  }
+
+  .left-header .search-wrapper {
+    width: 100%;
+  }
+
+  .left-header .search-input {
+    width: clamp(70px, 19vw, 76px);
+    height: clamp(15px, 4vw, 17px);
+    min-height: clamp(15px, 4vw, 17px);
+    padding: clamp(2px, 0.5vw, 3px) clamp(4px, 1vw, 5px);
+    font-size: clamp(10px, 2.5vw, 12px);
+  }
+
+  .left-header .today-filter-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: clamp(2px, 0.5vw, 3px);
+    flex-shrink: 0;
+  }
+
+  .left-header .today-filter-container p {
+    display: block;
+    margin: 0;
+    margin-bottom: clamp(3px, 1vw, 5px);
+    font-size: clamp(10px, 3vw, 12px);
+    line-height: 1;
+  }
+
+  .left-header .today-toggle {
+    width: clamp(40px, 10vw, 45px);
+    height: clamp(18px, 4.5vw, 20px);
+    min-width: clamp(40px, 10vw, 45px);
+    min-height: clamp(18px, 4.5vw, 20px);
+  }
+
+  .left-header .today-toggle-slider {
+    width: clamp(14px, 3.5vw, 16px);
+    height: clamp(14px, 3.5vw, 16px);
+  }
+
+  .left-header .today-toggle.active .today-toggle-slider {
+    transform: translateX(clamp(20px, 5vw, 25px));
+  }
+
+  /* Сайдбар настроек графика в мобильной версии */
+  .schedule-settings-sidebar {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 0;
+    padding: clamp(20px, 5vw, 30px);
+    padding-top: clamp(12px, 3vw, 16px);
+    touch-action: pan-y;
+  }
+
+  /* Полоска для свайпа вниз */
+  .sidebar-drag-handle {
+    display: block;
+    width: clamp(36px, 9vw, 40px);
+    height: clamp(4px, 1vw, 5px);
+    background: #B7B7B7;
+    border-radius: 2px;
+    margin: 0 auto clamp(8px, 2vw, 12px);
+    cursor: grab;
+    flex-shrink: 0;
+  }
+
+  .sidebar-drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .sidebar-title {
+    font-size: clamp(16px, 5vw, 20px);
+    margin-top: 0;
+  }
+
+  .settings-label {
+    font-size: clamp(10px, 3vw, 12px);
+  }
+
+  /* Уменьшаем размер текста времени в ячейках смен в мобильной версии */
+  .shift-work-day .day-cell-time {
+    font-size: clamp(8px, 2.5vw, 10px) !important;
+  }
+
+  /* Увеличиваем высоту заливки для утренних смен в мобильной версии */
+  .shift-work-day.shift-morning::before {
+    height: 70%;
+  }
+
+  /* Увеличиваем высоту заливки для вечерних смен в мобильной версии */
+  .shift-work-day.shift-evening::before {
+    height: 70%;
+  }
+
 }

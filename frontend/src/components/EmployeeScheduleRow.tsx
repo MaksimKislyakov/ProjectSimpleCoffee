@@ -37,8 +37,8 @@ export const EmployeeScheduleRow: React.FC<EmployeeScheduleRowProps> = ({
   // gridTemplateColumns повторяет количество колонок (чтобы выровнять с заголовком)
   const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: `repeat(${days.length}, 1fr)`,
-    gap: "8px",
+    gridTemplateColumns: mode === "week" ? `repeat(${Math.min(7, days.length)}, minmax(clamp(130px, 10vw, 160px), 1fr))` : `repeat(${days.length}, 1fr)`,
+    gap: mode === "week" ? "clamp(5px, 1vw, 7px)" : "8px",
     alignItems: "stretch"
   }
 

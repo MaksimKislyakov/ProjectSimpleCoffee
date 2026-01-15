@@ -119,14 +119,14 @@ const WorkScheduleTable: React.FC<Props> = ({
 
 
   return (
-    <div className="schedule-wrapper">
+    <div className={`schedule-wrapper ${mode === "week" ? "week-mode" : "month-mode"}`}>
 
       {/* ЛЕВАЯ ФИКСИРОВАННАЯ КОЛОНКА */}
       <div className="left-column">
         <div className="left-header">
-          <div className="search-container">
+          <div className="search-container" ref={searchRef}>
             <p>Сотрудники</p>
-            <div className="search-wrapper" ref={searchRef}>
+            <div className="search-wrapper">
               <input
                 type="text"
                 className="search-input"
@@ -206,8 +206,8 @@ const WorkScheduleTable: React.FC<Props> = ({
           className={`days-header${mode === "week" ? " week-mode" : ""}`}
           style={{
             display: "grid",
-            gridTemplateColumns: gridTemplate,
-            gap: "8px",
+            gridTemplateColumns: mode === "week" ? `repeat(${Math.min(7, days.length)}, minmax(clamp(130px, 10vw, 160px), 1fr))` : gridTemplate,
+            gap: mode === "week" ? "clamp(5px, 1vw, 7px)" : "8px",
             alignItems: "stretch",
             padding: "0 0 0 0",
             marginBottom: "8px"

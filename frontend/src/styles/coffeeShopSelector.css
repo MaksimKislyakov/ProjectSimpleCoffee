@@ -1,0 +1,119 @@
+.coffee-shop-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.coffee-shop-selector-button {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 12px);
+  padding: clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 16px);
+  background: transparent;
+  border: none;
+  border-radius: clamp(5px, 1.2vw, 8px);
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 400;
+  color: #3F3932;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.coffee-shop-selector-button:hover {
+  background: transparent;
+  border-color: #E67634;
+}
+
+.coffee-shop-selector-text {
+  max-width: clamp(150px, 20vw, 250px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coffee-shop-selector-arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.coffee-shop-selector-arrow.open {
+  transform: rotate(180deg);
+}
+
+.coffee-shop-selector-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: clamp(4px, 1vw, 8px);
+  background: #fff;
+  border: 1px solid #B7B7B7;
+  border-radius: clamp(5px, 1.2vw, 8px);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 100%;
+  max-width: clamp(200px, 30vw, 350px);
+  max-height: clamp(200px, 40vh, 400px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.coffee-shop-selector-item {
+  padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px);
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 400;
+  color: #3F3932;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #F4F4F4;
+  word-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.coffee-shop-selector-item:last-child {
+  border-bottom: none;
+}
+
+.coffee-shop-selector-item:hover {
+  background: #F4F4F4;
+}
+
+.coffee-shop-selector-item.selected {
+  background: #E67634;
+  color: #fff;
+}
+
+.coffee-shop-selector-item.selected:hover {
+  background: #D66523;
+}
+
+/* Мобильная версия */
+@media (max-width: 394px) {
+  .coffee-shop-selector-button {
+    padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);
+    font-size: clamp(10px, 2.5vw, 12px);
+    gap: clamp(4px, 1vw, 6px);
+  }
+
+  .coffee-shop-selector-text {
+    max-width: clamp(100px, 25vw, 150px);
+  }
+
+  .coffee-shop-selector-arrow {
+    width: 10px;
+    height: 6px;
+  }
+
+  .coffee-shop-selector-dropdown {
+    max-width: calc(100vw - 2rem);
+    max-height: clamp(150px, 30vh, 250px);
+  }
+
+  .coffee-shop-selector-item {
+    padding: clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 12px);
+    font-size: clamp(12px, 3vw, 14px);
+  }
+}
+

@@ -1,7 +1,7 @@
 """Модульные тесты для API эндпоинтов пользователей.
 
 Этот модуль содержит тесты для эндпоинтов, связанных с пользователями, в FastAPI приложении.
-Тесты используют мокированные зависимости для изоляции API слоя от сервисного и репозиторного
+Тесты используют мокированные зависимости для изоляции API слоя от сервисного и репозиторного 
 слоев, гарантируя тестирование только HTTP интерфейса.
 
 Фикстуры тестов определены в tests/conftest.py и предоставляют:
@@ -22,16 +22,18 @@ from models.roleEnum import RolesEnum
 
 
 def test_get_current_user_with_mocked_dependencies(
-    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+    mock_user: MagicMock,
+    mock_user_service: MagicMock,
+    client: TestClient
 ) -> None:
     """Тестирует GET /api/v1/user/me эндпоинт для получения информации о текущем пользователе.
-
+    
     Проверяет:
     1. Эндпоинт возвращает HTTP статус код 200
     2. Ответ содержит корректные данные пользователя
     3. UserService.get_user_info() вызывается с правильным ID пользователя
     4. Возвращенные данные соответствуют мокированной информации пользователя
-
+    
     Аргументы:
         mock_user: Мок объект User из фикстуры
         mock_user_service: Мок сервиса пользователей из фикстуры
@@ -57,7 +59,7 @@ def test_get_current_user_with_mocked_dependencies(
     response = client.get("/api/v1/user/me")
 
     assert response.status_code == 200
-
+    
     data: Dict[str, Any] = response.json()
     assert data["id"] == 1
     assert data["email"] == "test@example.com"
@@ -66,16 +68,18 @@ def test_get_current_user_with_mocked_dependencies(
 
 
 def test_create_user(
-    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+    mock_user: MagicMock,
+    mock_user_service: MagicMock,
+    client: TestClient
 ) -> None:
     """Тестирует POST /api/v1/user/create эндпоинт для создания нового пользователя.
-
+    
     Проверяет:
     1. Эндпоинт возвращает HTTP статус код 200 при успешном создании
     2. UserService.create_new_user() вызывается с корректными данными
     3. Пользователь должен иметь права администратора для создания
     4. Возвращается созданный пользователь с присвоенным ID
-
+    
     Аргументы:
         mock_user: Мок объект User из фикстуры
         mock_user_service: Мок сервиса пользователей из фикстуры
@@ -95,7 +99,7 @@ def test_create_user(
         "work_experience": 0,
         "data_work_start": datetime.now().isoformat(),
     }
-
+    
     created_user_dict: Dict[str, Any] = {
         "id": 2,
         "first_name": "New",
@@ -122,16 +126,18 @@ def test_create_user(
 
 
 def test_get_all_users(
-    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+    mock_user: MagicMock,
+    mock_user_service: MagicMock,
+    client: TestClient
 ) -> None:
     """Тестирует GET /api/v1/user/all_users эндпоинт для получения списка всех пользователей.
-
+    
     Проверяет:
     1. Эндпоинт возвращает HTTP статус код 200
     2. UserService.get_all_users() вызывается с текущим пользователем
     3. Возвращается список пользователей в формате JSON
     4. Пользователь должен иметь права администратора для доступа
-
+    
     Аргументы:
         mock_user: Мок объект User из фикстуры
         mock_user_service: Мок сервиса пользователей из фикстуры
@@ -170,16 +176,18 @@ def test_get_all_users(
 
 
 def test_delete_user(
-    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+    mock_user: MagicMock,
+    mock_user_service: MagicMock,
+    client: TestClient
 ) -> None:
     """Тестирует DELETE /api/v1/user/delete_user/{user_id} эндпоинт для удаления пользователя.
-
+    
     Проверяет:
     1. Эндпоинт возвращает HTTP статус код 200 при успешном удалении
     2. UserService.delete_user() вызывается с правильными аргументами
     3. Передается ID удаляемого пользователя и текущий пользователь
     4. Пользователь должен иметь права администратора для удаления
-
+    
     Аргументы:
         mock_user: Мок объект User из фикстуры
         mock_user_service: Мок сервиса пользователей из фикстуры
@@ -210,16 +218,18 @@ def test_delete_user(
 
 
 def test_get_users_for_coffeeshop(
-    mock_user: MagicMock, mock_user_service: MagicMock, client: TestClient
+    mock_user: MagicMock,
+    mock_user_service: MagicMock,
+    client: TestClient
 ) -> None:
     """Тестирует GET /api/v1/user/get_users_for_coffeshop/{coffee_shop_id} эндпоинт.
-
+    
     Проверяет:
     1. Эндпоинт возвращает HTTP статус код 200
     2. UserService.get_all_users_for_coffeshop() вызывается с правильными аргументами
     3. Передается ID кофейни и текущий пользователь
     4. Пользователь должен иметь права администратора или менеджера для доступа
-
+    
     Аргументы:
         mock_user: Мок объект User из фикстуры
         mock_user_service: Мок сервиса пользователей из фикстуры

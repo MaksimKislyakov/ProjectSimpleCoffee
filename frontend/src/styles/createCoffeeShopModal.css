@@ -1,0 +1,165 @@
+.create-coffee-shop-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  pointer-events: auto;
+}
+
+.create-coffee-shop-modal {
+  background: #F4F4F4;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.create-coffee-shop-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.create-coffee-shop-modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #3F3932;
+  font-family: "Montserrat", sans-serif;
+}
+
+.coffee-shop-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coffee-shop-icon {
+  width: 48px;
+  height: 48px;
+  color: #4A90E2;
+}
+
+.create-coffee-shop-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3F3932;
+  font-family: "Montserrat", sans-serif;
+}
+
+.form-group input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #B7B7B7;
+  background: #F4F4F4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif;
+  box-sizing: border-box;
+  color: #3F3932;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #E67634;
+  background: #fff;
+}
+
+.form-group input::placeholder {
+  color: #B7B7B7;
+}
+
+.work-hours-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.work-hours-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.work-hours-inputs input {
+  flex: 1;
+}
+
+.work-hours-separator {
+  font-size: 16px;
+  color: #3F3932;
+  font-weight: 500;
+  font-family: "Montserrat", sans-serif;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  margin-top: -10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  transition: opacity 0.2s;
+  border: none;
+}
+
+.cancel-btn {
+  background: #fff;
+  color: #3F3932;
+  border: 1px solid #B7B7B7;
+}
+
+.save-btn {
+  background: #E67634;
+  color: #fff;
+}
+
+.cancel-btn:disabled,
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-btn:hover:not(:disabled),
+.save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+

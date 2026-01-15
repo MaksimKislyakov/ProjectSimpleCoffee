@@ -47,11 +47,11 @@ from api.main import app
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Создает экземпляр event loop для сессии тестов.
-
+    
     Эта фикстура необходима для работы асинхронных тестов в pytest.
     Создает новый event loop для тестовой сессии и корректно закрывает его
     после завершения всех тестов.
-
+    
     Yields:
         asyncio.AbstractEventLoop: Event loop для асинхронных операций
     """
@@ -63,11 +63,11 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest.fixture
 def mock_user() -> MagicMock:
     """Создает мокированный объект пользователя с правами администратора.
-
+    
     Возвращает MagicMock с настройками для объекта User, который используется
     в качестве текущего аутентифицированного пользователя в тестах.
     По умолчанию пользователь имеет права администратора.
-
+    
     Returns:
         MagicMock: Мокированный объект пользователя со следующими атрибутами:
             - id: 1
@@ -102,10 +102,10 @@ def mock_user() -> MagicMock:
 @pytest.fixture
 def mock_user_service() -> MagicMock:
     """Создает мокированный экземпляр UserService.
-
+    
     Возвращает MagicMock с указанием спецификации UserService, что позволяет
     проверять вызовы методов сервиса с правильными сигнатурами.
-
+    
     Returns:
         MagicMock: Мокированный сервис пользователей с поддержкой
                   асинхронных методов через AsyncMock
@@ -116,22 +116,22 @@ def mock_user_service() -> MagicMock:
 
 @pytest.fixture
 def override_dependencies(
-    mock_user: MagicMock, mock_user_service: MagicMock
+    mock_user: MagicMock,
+    mock_user_service: MagicMock
 ) -> Generator[None, None, None]:
     """Переопределяет зависимости FastAPI на мокированные версии.
-
+    
     Эта фикстура временно заменяет зависимости get_current_user и get_user_service
     в FastAPI приложении на мокированные версии для изолированного тестирования.
     После завершения теста зависимости возвращаются в исходное состояние.
-
+    
     Аргументы:
         mock_user: Мокированный объект пользователя
         mock_user_service: Мокированный сервис пользователей
-
+    
     Yields:
         None: Фикстура не возвращает значения, только выполняет setup/teardown
     """
-
     async def override_get_current_user() -> MagicMock:
         """Возвращает мокированного пользователя для зависимости get_current_user."""
         return mock_user
@@ -149,15 +149,17 @@ def override_dependencies(
 
 
 @pytest.fixture
-def client(override_dependencies: None) -> Generator[TestClient, None, None]:
+def client(
+    override_dependencies: None
+) -> Generator[TestClient, None, None]:
     """Создает тестовый клиент с переопределенными зависимостями.
-
+    
     Возвращает экземпляр TestClient для FastAPI приложения с уже
     примененными переопределениями зависимостей из фикстуры override_dependencies.
-
+    
     Аргументы:
         override_dependencies: Фикстура, которая переопределяет зависимости
-
+    
     Yields:
         TestClient: Тестовый клиент для отправки HTTP запросов к API
     """

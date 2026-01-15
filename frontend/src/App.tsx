@@ -7,27 +7,30 @@ import ProfilePage from "./components/Profile.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import WorkSchedulePage from "./components/WorkSchedulePage.tsx";
 import ReportPage from "./components/ReportPage.tsx";
+import { ToastProvider } from "./contexts/ToastContext.tsx";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Authorization />} />
+    <ToastProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Authorization />} />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="*" element={<Authorization />} />
-        <Route path="/schedule" element={<WorkSchedulePage />} />
-        <Route path="/report" element={<ReportPage />} />
-      </Routes>
-    </Router>
+          <Route path="*" element={<Authorization />} />
+          <Route path="/schedule" element={<WorkSchedulePage />} />
+          <Route path="/report" element={<ReportPage />} />
+        </Routes>
+      </Router>
+    </ToastProvider>
   );
 }
 

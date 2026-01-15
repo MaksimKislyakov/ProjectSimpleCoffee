@@ -1,7 +1,8 @@
 // src/components/ScheduleSettingsSidebar.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as Icons from "../icons/index.ts";
+import { useToastContext } from "../contexts/ToastContext.tsx";
 
 interface ScheduleSettingsSidebarProps {
   isOpen: boolean;
@@ -54,6 +55,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
   
+  // Refs для обработки свайпа
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const dragHandleRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const touchStartTime = useRef<number>(0);
+  
   // Определяем, показывать ли поле выбора сотрудника (только для админа и менеджера)
   const showEmployeeSelect = roleId === 1 || roleId === 2;
   
@@ -85,7 +92,7 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
       setTemplate("weekdays");
       setPattern({ work: "2", rest: "2" });
       setSelectedDays([]);
-      setInterval("4");
+      setInterval("4"); // eslint-disable-line no-implied-eval
       setStatus("active");
       setStartTime("09:00");
       setEndTime("21:00");
@@ -120,25 +127,25 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
   const validateForm = (): boolean => {
     if (template === "weekdays") {
       if (selectedDays.length === 0) {
-        alert("Выберите хотя бы один рабочий день");
+        showToast("Выберите хотя бы один рабочий день", "error");
         return false;
       }
     } else {
       const workDays = parseInt(pattern.work);
       const restDays = parseInt(pattern.rest);
       if (!workDays || !restDays || workDays < 1 || restDays < 1) {
-        alert("Введите корректный паттерн (например: 2/2)");
+        showToast("Введите корректный паттерн (например: 2/2)", "error");
         return false;
       }
     }
 
     if (!interval || parseInt(interval) < 1) {
-      alert("Введите корректный интервал действия");
+      showToast("Введите корректный интервал действия", "error");
       return false;
     }
 
     if (!startTime || !endTime) {
-      alert("Выберите время работы");
+      showToast("Выберите время работы", "error");
       return false;
     }
 
@@ -148,7 +155,7 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
     const endMinutes = endHour * 60 + endMin;
 
     if (endMinutes <= startMinutes) {
-      alert("Время окончания должно быть позже времени начала");
+      showToast("Время окончания должно быть позже времени начала", "error");
       return false;
     }
 
@@ -200,10 +207,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
           const scheduleEnd = new Date(currentDate);
           scheduleEnd.setHours(endHour, endMin, 0, 0);
 
+          // Преобразуем статус в единый формат: "active" -> "Рабочая смена"
+          const normalizedStatus = status === "active" ? "Рабочая смена" : status;
           schedules.push({
             user_id: targetUserId,
             coffee_shop_id: targetCoffeeShopId,
-            status: status,
+            status: normalizedStatus,
             schedule_start_time: formatLocalDateTime(scheduleStart),
             schedule_end_time: formatLocalDateTime(scheduleEnd),
             is_confirmed: false,
@@ -233,10 +242,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
           const scheduleEnd = new Date(currentDate);
           scheduleEnd.setHours(endHour, endMin, 0, 0);
 
+          // Преобразуем статус в единый формат: "active" -> "Рабочая смена"
+          const normalizedStatus = status === "active" ? "Рабочая смена" : status;
           schedules.push({
             user_id: targetUserId,
             coffee_shop_id: targetCoffeeShopId,
-            status: status,
+            status: normalizedStatus,
             schedule_start_time: formatLocalDateTime(scheduleStart),
             schedule_end_time: formatLocalDateTime(scheduleEnd),
             is_confirmed: false,
@@ -254,12 +265,12 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
     if (!validateForm()) return;
 
     if (showEmployeeSelect && !selectedEmployeeId) {
-      alert("Ошибка: выберите сотрудника для создания смены");
+      showToast("Ошибка: выберите сотрудника для создания смены", "error");
       return;
     }
 
     if (!targetUserId) {
-      alert("Ошибка: не удалось определить ID пользователя");
+      showToast("Ошибка: не удалось определить ID пользователя", "error");
       return;
     }
 
@@ -267,30 +278,113 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
       const employeeName = showEmployeeSelect && selectedEmployeeId
         ? users.find(u => u.id === selectedEmployeeId)?.last_name || "выбранный сотрудник"
         : "вы";
-      alert(`Ошибка: не удалось определить ID кофейни для ${employeeName}. Проверьте, что ${showEmployeeSelect ? "сотрудник" : "вы"} привязан к кофейне.`);
+      showToast(`Ошибка: не удалось определить ID кофейни для ${employeeName}. Проверьте, что ${showEmployeeSelect ? "сотрудник" : "вы"} привязан к кофейне.`, "error");
       return;
     }
 
     const schedules = generateSchedules();
     if (schedules.length === 0) {
-      alert("Не удалось сгенерировать смены. Проверьте настройки:\n- Выберите дни недели (для шаблона 'По дням недели')\n- Проверьте паттерн (для шаблона 'По сменам')");
+      showToast("Не удалось сгенерировать смены. Проверьте настройки: выберите дни недели или проверьте паттерн", "error");
       return;
     }
 
     try {
       await onSave(schedules);
-      alert("График успешно сохранен!");
+      showToast("График успешно сохранен!", "success");
       onClose();
     } catch (error: any) {
       console.error("Ошибка сохранения графика:", error);
       const errorMessage = error?.message || "Ошибка при сохранении графика";
-      alert(errorMessage);
+      showToast(errorMessage, "error");
     }
   };
 
   const handleCancel = () => {
     onClose();
   };
+
+  // Обработчики для свайпа вниз (используем нативные обработчики с passive: false)
+  useEffect(() => {
+    if (!isOpen || !sidebarRef.current) return;
+
+    const sidebar = sidebarRef.current;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Проверяем, что касание началось в верхней части сайдбара (первые 80px)
+      const touchY = e.touches[0].clientY;
+      const sidebarTop = sidebar.getBoundingClientRect().top;
+      const relativeY = touchY - sidebarTop;
+      
+      // Разрешаем свайп только если касание началось в верхней части (полоска + заголовок)
+      if (relativeY <= 80) {
+        touchStartY.current = e.touches[0].clientY;
+        touchStartTime.current = Date.now();
+        e.stopPropagation();
+      } else {
+        // Сбрасываем, чтобы не обрабатывать свайп при скролле контента
+        touchStartY.current = 0;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!sidebar || touchStartY.current === 0) return;
+      
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - touchStartY.current;
+      
+      // Разрешаем свайп только вниз
+      if (deltaY > 0) {
+        e.preventDefault(); // Предотвращаем скролл страницы
+        // Применяем трансформацию для визуального эффекта
+        sidebar.style.transform = `translateY(${deltaY}px)`;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!sidebar || touchStartY.current === 0) return;
+      
+      const currentY = e.changedTouches[0].clientY;
+      const deltaY = currentY - touchStartY.current;
+      const deltaTime = Date.now() - touchStartTime.current;
+      const velocity = deltaY / deltaTime;
+      
+      // Пороги для закрытия: минимум 100px или быстрый свайп (velocity > 0.3)
+      const threshold = 100;
+      const minVelocity = 0.3;
+      
+      if (deltaY > threshold || (deltaY > 50 && velocity > minVelocity)) {
+        // Закрываем с анимацией
+        sidebar.style.transition = 'transform 0.3s ease-out';
+        sidebar.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+          onClose();
+        }, 300);
+      } else {
+        // Возвращаем на место
+        sidebar.style.transition = 'transform 0.2s ease-out';
+        sidebar.style.transform = 'translateY(0)';
+        setTimeout(() => {
+          if (sidebar) {
+            sidebar.style.transition = '';
+          }
+        }, 200);
+      }
+      
+      // Сбрасываем начальную позицию
+      touchStartY.current = 0;
+    };
+
+    // Добавляем обработчики с опцией passive: false для возможности preventDefault
+    sidebar.addEventListener('touchstart', handleTouchStart, { passive: false });
+    sidebar.addEventListener('touchmove', handleTouchMove, { passive: false });
+    sidebar.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      sidebar.removeEventListener('touchstart', handleTouchStart);
+      sidebar.removeEventListener('touchmove', handleTouchMove);
+      sidebar.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -303,7 +397,15 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
   return (
     <>
       <div className="sidebar-overlay" onClick={handleCancel} />
-      <div className="schedule-settings-sidebar">
+      <div 
+        className="schedule-settings-sidebar"
+        ref={sidebarRef}
+      >
+        {/* Полоска для свайпа вниз (только в мобильной версии) */}
+        <div 
+          className="sidebar-drag-handle"
+          ref={dragHandleRef}
+        />
         <h2 className="sidebar-title">Настройки графика</h2>
 
         {/* Выбор шаблона */}

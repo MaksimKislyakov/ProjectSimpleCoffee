@@ -8,28 +8,19 @@
   background: #F4F4F4;
 }
 
-.manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 28px;
+.manager-header.desktop-header {
   background: #fff;
-  border-bottom: 1px solid #eee;
 }
 
 .manager-controls {
   display: flex;
-  gap: 18px;
   align-items: center;
-  width: 100%;
-  justify-content: flex-end;
 }
 
 .nav-buttons {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-right: 16px;
 }
 
 .link-btn {
@@ -38,23 +29,41 @@
   border: 1px solid #e6e6e6;
   background: #fff;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 400;
+}
+
+.link-btn.active {
+  font-weight: 600;
 }
 
 
 .period-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 45px;
+}
+
+.period-controls .settings-icon {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.controls {
+  display: flex;
+  flex-direction: row;
 }
 
 .date-pill {
-  background: #ff7b32;
+  display: flex;
+  background: #E67634;
   color: #fff;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.06);
-  font-weight: 600;
+  align-items: center;
+  gap: 7px;
 }
 
 .arrows .arrow {
@@ -66,81 +75,153 @@
   margin-left: 4px;
 }
 
-.settings {
-  margin-left: 12px;
+.notifications-icon {
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
-.logout {
-  margin-left: 8px;
+.notifications-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.logout-icon {
   cursor: pointer;
 }
 
 /* контейнер */
 .manager-container {
-  padding: 24px 34px;
+  padding: clamp(12px, 2vw, 18px) clamp(10px, 2vw, 15px);
   width: 100%;
   box-sizing: border-box;
-  max-width: 1200px;
-  margin: 0 auto;
+}
+
+.report-header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(16px, 2.5vw, 24px) clamp(16px, 2.5vw, 24px) clamp(12px, 2vw, 18px);
 }
 
 .manager-title {
-  margin: 6px 0 18px 0;
-  font-size: 26px;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 500;
 }
 
 /* таблица */
 .report-table {
   background: #fff;
   border-radius: 12px;
-  padding: 8px;
+  padding: 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   overflow-x: auto;
 }
 
 .report-header-row, .report-row {
   display: grid;
-  grid-template-columns: 320px repeat(6, 1fr);
+  grid-template-columns: clamp(200px, 28vw, 266px) repeat(6, minmax(0, 1fr));
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px clamp(16px, 2.5vw, 24px);
   border-bottom: 1px solid #f3f3f3;
+}
+
+.report-header-row > .col:first-child,
+.report-row > .col:first-child {
+  width: clamp(200px, 28vw, 266px);
+  min-width: clamp(200px, 28vw, 266px);
+  max-width: clamp(200px, 28vw, 266px);
 }
 
 .report-header-row {
   font-weight: 600;
   color: #6b6b6b;
-  background: #fafafa;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  background: #fff;
 }
 
 .report-row {
   background: transparent;
 }
 
+.col {
+  color: #000000;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+}
+
+/* Переопределяем стили для колонки сотрудников */
+.employee-col {
+  background: transparent;
+}
+
 .employee-col {
   display: flex;
   align-items: center;
+  font-size: clamp(20px, 3vw, 30px);
+  width: clamp(200px, 28vw, 266px);
+  min-width: clamp(200px, 28vw, 266px);
+  max-width: clamp(200px, 28vw, 266px);
 }
 
 /* карточка сотрудника */
 .employee-card {
   background: #f4f4f4;
-  padding: 12px 14px;
+  padding: clamp(8px, 1.2vw, 12px) clamp(10px, 1.8vw, 14px);
   border-radius: 10px;
+  border-bottom: 1px solid #B7B7B7;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .employee-name {
-  font-weight: 600;
-  margin-bottom: 6px;
+  margin: 0;
+  margin-right: auto;
 }
 
 .employee-role {
-  color: #8a8a8a;
+  margin: 0;
+  color: #746D66;
   font-size: 14px;
+  margin-right: auto;
+}
+
+.employee-menu-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.employee-menu-btn:hover {
+  opacity: 0.7;
+}
+
+.three-dots {
+  font-size: 20px;
+  line-height: 1;
+  color: #3F3932;
+  font-weight: bold;
+  letter-spacing: 2px;
+  transform: rotate(90deg);
+  display: inline-block;
 }
 
 /* мобильная подгонка */
@@ -155,4 +236,245 @@
   padding: 24px;
   text-align: center;
   color: #888;
+}
+
+/* Sidebar styles */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.schedule-settings-sidebar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 412px;
+  height: calc(100vh - 85px);
+  max-height: calc(100vh - 85px);
+  background: #FFFFFF;
+  border-top-left-radius: 20px;
+  box-shadow: -4px 0px 8px 2px #00000040;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar-drag-handle {
+  display: none; /* Скрыто по умолчанию, показывается только в мобильной версии */
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.settings-dynamic {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.settings-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.add-button {
+  width: 320px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.add-button:hover {
+  border-color: #ff7b32;
+  background: #fff;
+}
+
+.add-user-button {
+  color: #333;
+}
+
+.add-coffee-shop-button {
+  color: #333;
+}
+
+.coffee-shop-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #F4F4F4;
+  border-radius: 8px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coffee-shop-input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #B7B7B7;
+  background: #fff;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  box-sizing: border-box;
+}
+
+.coffee-shop-input:focus {
+  outline: none;
+  border-color: #ff7b32;
+  background: #fff;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.coffee-shop-form-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.form-cancel-button,
+.form-save-button {
+  flex: 1;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.form-cancel-button {
+  background: #E8E8E8;
+  color: #333;
+}
+
+.form-cancel-button:hover {
+  background: #D0D0D0;
+}
+
+.form-save-button {
+  background: #E67634;
+  color: #fff;
+}
+
+.form-save-button:hover:not(:disabled) {
+  background: #d66f2e;
+}
+
+.form-save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 20px;
+  flex-shrink: 0;
+}
+
+.cancel-button,
+.save-button {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cancel-button {
+  background: #E8E8E8;
+  color: #333;
+}
+
+.cancel-button:hover {
+  background: #D0D0D0;
+}
+
+.save-button {
+  background: #E67634;
+  color: #fff;
+}
+
+.save-button:hover {
+  background: #d66f2e;
+}
+
+@media (max-width: 920px) {
+  .schedule-settings-sidebar {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    height: auto;
+    max-height: 80vh;
+  }
+
+  .sidebar-drag-handle {
+    display: block;
+    height: 4px;
+    width: 40px;
+    background: #D0D0D0;
+    border-radius: 2px;
+    margin: 8px auto 16px auto;
+    cursor: grab;
+  }
+
+  .settings-dynamic {
+    width: 100%;
+  }
+
+  .add-button,
+  .coffee-shop-input {
+    width: 100%;
+  }
 }

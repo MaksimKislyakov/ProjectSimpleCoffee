@@ -66,7 +66,7 @@
   background: #F4F4F4;
   border-radius: 5px;
   padding: 7px 9px;
-  font-size: 14px;
+  font-size: 12px;
   font-family: "Montserrat", sans-serif;
   box-sizing: border-box;
   outline: none;
@@ -158,18 +158,21 @@
   }
 
   .confirm-schedule-time-inputs {
-    flex-direction: column;
     gap: 15px;
     padding: 0 20px;
   }
 
   .time-separator {
-    margin: 0;
-    transform: rotate(90deg);
+    align-self: center;
+    margin-top: clamp(18px, 5vw, 22px);
   }
 
   .time-input-wrapper {
     width: 100%;
+  }
+
+  .time-input {
+    font-size: 12px;
   }
 
   .confirm-schedule-actions {
