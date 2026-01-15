@@ -126,8 +126,7 @@ async def get_coffee_shop_by_id(
             detail=f"Кофейня с ID {coffee_shop_id} не найдена"
         )
     
-    # Проверка прав
-    if user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+    if user.role_id not in (RolesEnum.admin, RolesEnum.manager, RolesEnum.barista):
         raise HTTPException(status_code=403, detail="Недостаточно прав")
     
     # Если пользователь менеджер, проверяем что кофейня его
