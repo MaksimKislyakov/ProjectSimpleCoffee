@@ -244,7 +244,7 @@ const ReportPage: React.FC = () => {
 
       // Отправляем запрос на обновление пользователя
       const response = await fetch(`/api/v1/user/update/${userId}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
