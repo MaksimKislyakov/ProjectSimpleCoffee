@@ -44,9 +44,6 @@ class CoffeeShopService:
                 detail="Не найдено ни одной кофейни",
             )
 
-<<<<<<< HEAD
-        return coffee_shop
-=======
         return coffee_shops
 
     async def create_coffee_shop(
@@ -208,4 +205,3 @@ class CoffeeShopService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Ошибка при удалении кофейни: {str(e)}"
             )
->>>>>>> 4ce8e9e09f45bd648c52305cf938e06dd46b8fb1

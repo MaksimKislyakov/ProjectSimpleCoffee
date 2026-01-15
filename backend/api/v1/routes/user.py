@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends
-from schemas.user_schemas import UserRead, UserCreate
+from fastapi import APIRouter, Depends, Path
+from schemas.user_schemas import UserRead, UserCreate, UserUpdate
 from services.user_service import UserService
 from models.user_model import User
 from api.v1.dependencies import get_user_service, get_current_user
@@ -49,3 +49,37 @@ async def get_users_for_coffeshop(
     user: User = Depends(get_current_user),
 ):
     return await user_service.get_all_users_for_coffeshop(coffee_shop_id, user)
+
+@router.patch(
+    "/update/{user_id}",
+    response_model=UserRead,
+    summary="Обновление данных пользователя",
+    description="""Обновление данных пользователя. 
+    Доступно для:
+    - Администратора: может обновлять любых пользователей
+    - Менеджера: может обновлять только пользователей своей кофейни
+    - Обычного пользователя: может обновлять только свои данные""",
+    tags=["user", "admin", "manager"]
+)
+async def update_user(
+    user_id: int = Path(..., description="ID пользователя для обновления", gt=0),
+    update_data: UserUpdate = None,
+    user_service: UserService = Depends(get_user_service),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Обновление данных пользователя.
+    
+    Параметры:
+    - **user_id**: ID пользователя для обновления
+    - **update_data**: JSON с полями для обновления
+    
+    Права доступа:
+    - Администратор: может обновлять любых пользователей
+    - Менеджер: может обновлять только пользователей своей кофейни
+    - Обычный пользователь: может обновлять только свои данные
+    """
+    if update_data is None:
+        update_data = UserUpdate()
+    
+    return await user_service.update_user(user_id, update_data, current_user)

@@ -1,7 +1,9 @@
 from sqlalchemy.future import select
+from sqlalchemy import update
 from models.user_model import User
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Any
+from core.security import hash_password
 
 
 class UserRepository:
@@ -88,3 +90,42 @@ class UserRepository:
         )
 
         return result.scalars().all()
+    
+    async def update_user(self, user_id: int, update_data: dict[str, Any]) -> User:
+        """Обновляет данные пользователя.
+
+        Args:
+            user_id: ID пользователя для обновления
+            update_data: Словарь с данными для обновления
+
+        Returns:
+            User: Обновленный пользователь или None если не найден
+        """
+        # Проверяем существование пользователя
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+
+        # Если передали пароль - хэшируем его
+        if 'hashed_password' in update_data and update_data['hashed_password']:
+            update_data['hashed_password'] = hash_password(update_data['hashed_password'])
+
+        # Удаляем None значения, чтобы не перезаписывать существующие
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+
+        # Если нечего обновлять - возвращаем пользователя как есть
+        if not update_data:
+            return user
+
+        # Выполняем обновление
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(**update_data)
+        )
+        
+        await self.session.execute(stmt)
+        await self.session.commit()
+        
+        # Возвращаем обновленного пользователя
+        return await self.get_by_id(user_id)

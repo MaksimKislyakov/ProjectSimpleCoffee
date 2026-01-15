@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from repositories.user_repository import UserRepository
-from schemas.user_schemas import UserCreate
+from schemas.user_schemas import UserCreate, UserUpdate
 from models.user_model import User
 from core.security import hash_password
 from models.roleEnum import RolesEnum
@@ -127,3 +127,124 @@ class UserService:
         users = await self.user_repo.get_users_for_coffeshop(coffee_shop_id)
 
         return users
+
+    async def update_user(
+        self, 
+        user_id: int, 
+        update_data: UserUpdate, 
+        current_user: User
+    ):
+        """Обновляет данные пользователя.
+
+        Args:
+            user_id: ID пользователя для обновления
+            update_data: Данные для обновления
+            current_user: Текущий аутентифицированный пользователь
+
+        Returns:
+            User: Обновленный пользователь
+
+        Raises:
+            HTTPException: 403 если недостаточно прав
+            HTTPException: 404 если пользователь не найден
+            HTTPException: 400 если ошибка валидации
+        """
+        # Проверяем существование пользователя
+        existing_user = await self.user_repo.get_by_id(user_id)
+        if not existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Пользователь с ID {user_id} не найден"
+            )
+
+        # Проверка прав доступа
+        await self._check_update_permissions(user_id, existing_user, current_user)
+
+        # Подготавливаем данные для обновления
+        update_dict = update_data.dict(exclude_unset=True, exclude_none=True)
+        
+        # Удаляем поле hashed_password если оно пустое
+        if 'hashed_password' in update_dict and not update_dict['hashed_password']:
+            del update_dict['hashed_password']
+
+        # Проверяем уникальность email если он обновляется
+        if 'email' in update_dict:
+            existing_email_user = await self.user_repo.get_by_email(update_dict['email'])
+            if existing_email_user and existing_email_user.id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Пользователь с таким email уже существует"
+                )
+
+        # Проверяем уникальность телефона если он обновляется
+        if 'telephone' in update_dict:
+            existing_phone_user = await self.user_repo.get_by_phone(update_dict['telephone'])
+            if existing_phone_user and existing_phone_user.id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Пользователь с таким телефоном уже существует"
+                )
+
+        # Проверяем права на изменение роли
+        if 'role_id' in update_dict:
+            if current_user.role_id != RolesEnum.admin:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Только администратор может изменять роль пользователя"
+                )
+
+        # Проверяем права на изменение кофейни
+        if 'coffee_shop_id' in update_dict:
+            if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Только администратор или менеджер может изменять привязку к кофейне"
+                )
+
+        # Обновляем пользователя
+        updated_user = await self.user_repo.update_user(user_id, update_dict)
+        
+        if not updated_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Пользователь с ID {user_id} не найден после обновления"
+            )
+
+        return updated_user
+
+    async def _check_update_permissions(
+        self, 
+        user_id: int, 
+        target_user: User, 
+        current_user: User
+    ):
+        """Проверяет права на обновление пользователя.
+
+        Args:
+            user_id: ID пользователя для обновления
+            target_user: Целевой пользователь
+            current_user: Текущий пользователь
+
+        Raises:
+            HTTPException: 403 если недостаточно прав
+        """
+        # Администратор может обновлять любого пользователя
+        if current_user.role_id == RolesEnum.admin:
+            return
+
+        # Менеджер может обновлять только пользователей своей кофейни
+        if current_user.role_id == RolesEnum.manager:
+            if target_user.coffee_shop_id != current_user.coffee_shop_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Вы можете обновлять только пользователей своей кофейни"
+                )
+            return
+
+        # Пользователь может обновлять только себя
+        if current_user.role_id not in (RolesEnum.admin, RolesEnum.manager):
+            if current_user.id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Вы можете обновлять только свои данные"
+                )
