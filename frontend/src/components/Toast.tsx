@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import "../styles/toast.css";
 
 export type ToastType = "success" | "error" | "info";
@@ -25,13 +24,12 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  return createPortal(
+  return (
     <div className={`toast toast-${type} ${isClosing ? "toast-closing" : ""}`}>
       <div className="toast-content">
         <span className="toast-message">{message}</span>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 };
 

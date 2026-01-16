@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import Toast, { ToastType } from "./Toast.tsx";
 import "../styles/toast.css";
 
@@ -14,7 +15,7 @@ interface ToastContainerProps {
 }
 
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
-  return (
+  return createPortal(
     <div className="toast-container">
       {toasts.map((toast) => (
         <Toast
@@ -24,7 +25,8 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
           onClose={() => onRemove(toast.id)}
         />
       ))}
-    </div>
+    </div>,
+    document.body
   );
 };
 
