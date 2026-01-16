@@ -4,8 +4,8 @@ from sqlalchemy import create_engine
 from alembic import context
 from db.base import Base
 from core.config import settings
-from models.roles_model import Roles
 from models.user_model import User
+from models.roles_model import Roles
 from models.schedule_model import Schedule
 from models.coffeshops_model import CoffeeShops
 from models.report_model import ReportModel
