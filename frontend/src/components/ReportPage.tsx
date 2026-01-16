@@ -71,7 +71,6 @@ const ReportPage: React.FC = () => {
 
       // Если API вернул ошибку — игнорируем
       if (!res.ok || !Array.isArray(data)) {
-        console.warn("Некорректный ответ /all_users:", data);
         setUsers([]);
         return;
       }
@@ -83,7 +82,6 @@ const ReportPage: React.FC = () => {
       
       setUsers(filteredUsers);
     } catch (e) {
-      console.error("Ошибка /all_users:", e);
       setUsers([]);
     }
   };
@@ -97,14 +95,12 @@ const ReportPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok || !Array.isArray(data)) {
-        console.warn("Некорректный ответ /schedule:", data);
         setSchedule([]);
         return;
       }
       
       setSchedule(data);
     } catch (e) {
-      console.error("Ошибка /schedule:", e);
       setSchedule([]);
     }
   };
@@ -121,7 +117,6 @@ const ReportPage: React.FC = () => {
         setCoffeeShops([]);
       }
     } catch (e) {
-      console.error("Ошибка при загрузке кофеен:", e);
       setCoffeeShops([]);
     }
   };
@@ -143,7 +138,6 @@ const ReportPage: React.FC = () => {
           setCurrentUser(userData);
         }
       } catch (e) {
-        console.error("Ошибка загрузки текущего пользователя:", e);
       }
     };
     loadCurrentUser();
@@ -273,7 +267,6 @@ const ReportPage: React.FC = () => {
       await loadUsers();
       showToast("Данные сотрудника успешно обновлены", "success");
     } catch (error: any) {
-      console.error("Ошибка обновления сотрудника:", error);
       showToast(error.message || "Ошибка при обновлении данных сотрудника", "error");
       throw error;
     }
@@ -301,7 +294,6 @@ const ReportPage: React.FC = () => {
       await loadUsers();
       showToast("Учетная запись сотрудника успешно удалена", "success");
     } catch (error) {
-      console.error("Ошибка удаления сотрудника:", error);
       throw error;
     }
   };

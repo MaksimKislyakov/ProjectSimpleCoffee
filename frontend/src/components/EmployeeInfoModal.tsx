@@ -88,7 +88,6 @@ const EmployeeInfoModal: React.FC<EmployeeInfoModalProps> = ({
           setIsEditing({ ...isEditing, [field]: false });
         }
       } catch (error) {
-        console.error("Ошибка обновления:", error);
         showToast("Ошибка при сохранении изменений", "error");
       }
     } else {
@@ -165,7 +164,6 @@ const EmployeeInfoModal: React.FC<EmployeeInfoModalProps> = ({
       onClose();
       showToast("Учетная запись успешно удалена", "success");
     } catch (error) {
-      console.error("Ошибка удаления:", error);
       showToast("Ошибка при удалении учетной записи", "error");
     } finally {
       setIsDeleting(false);
@@ -307,7 +305,6 @@ const EmployeeInfoModal: React.FC<EmployeeInfoModalProps> = ({
                         setIsEditing({ ...isEditing, fullName: false });
                         showToast("Данные успешно сохранены", "success");
                       } catch (error) {
-                        console.error("Ошибка обновления:", error);
                         showToast("Ошибка при сохранении изменений", "error");
                       }
                     } else {

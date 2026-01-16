@@ -9,6 +9,7 @@ import CoffeeShopSelector from "./CoffeeShopSelector.tsx";
 import ScheduleSettingsSidebar from "./ScheduleSettingsSidebar.tsx";
 import {
   DayData,
+  ScheduleItem,
   generateWeekDays,
   generateMonthDays,
   generateTwoWeeks,
@@ -198,7 +199,6 @@ const ProfilePage: React.FC = () => {
 
       setDays(updatedDays);
     } catch (err) {
-      console.error("Ошибка получения расписания", err);
       // При ошибке показываем пустые дни
       let errorDays: DayData[] = [];
       if (isMobile) {
@@ -313,15 +313,11 @@ const fetchReport = async (schedulesOverride?: any[]) => {
     );
 
     if (!res.ok) {
-      console.error("Ошибка загрузки отчета:", res.status);
       const errorData = await res.json().catch(() => ({}));
-      console.error("Детали ошибки:", errorData);
       return;
     }
 
     const reportData: ReportData = await res.json();
-    console.log("Report data from API:", reportData);
-    console.log("work_days value:", reportData.work_days, "type:", typeof reportData.work_days);
     
     // Пересчитываем рабочие часы и смены на клиенте, если есть расписания
     // Это нужно, потому что бэкенд считает все часы (включая выходные), а не только рабочие
@@ -330,7 +326,6 @@ const fetchReport = async (schedulesOverride?: any[]) => {
       const calculatedShifts = countShiftsForUser(user.id, schedulesToUse, reportStartDate, reportEndDate);
       const calculatedHours = countWorkHoursForUser(user.id, schedulesToUse, reportStartDate, reportEndDate);
       
-      console.log("Recalculated shifts:", calculatedShifts, "hours:", calculatedHours);
       
       // Обновляем данные только если пересчет дал другие результаты
       // (бэкенд может возвращать неправильные данные из-за отсутствия проверки статуса)
@@ -341,7 +336,6 @@ const fetchReport = async (schedulesOverride?: any[]) => {
     setReport(reportData);
     
   } catch (err) {
-    console.error("Ошибка получения отчета", err);
   } finally {
     setReportLoading(false);
   }
@@ -374,7 +368,6 @@ const fetchReport = async (schedulesOverride?: any[]) => {
 
       return { users: usersData, schedules: schedulesData };
     } catch (err) {
-      console.error("Ошибка загрузки пользователей и расписания:", err);
     }
     return { users: [], schedules: [] };
   };
@@ -407,7 +400,6 @@ const fetchReport = async (schedulesOverride?: any[]) => {
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
-          console.error(`Ошибка создания смены ${index + 1}:`, res.status, errorData);
           return { success: false, error: errorData.detail || `Ошибка ${res.status}`, index };
         }
         
@@ -426,7 +418,6 @@ const fetchReport = async (schedulesOverride?: any[]) => {
       await fetchSchedule();
       await fetchAllUsersAndSchedules();
     } catch (e) {
-      console.error("Ошибка сохранения графика:", e);
       throw e;
     }
   };
@@ -479,7 +470,7 @@ const fetchReport = async (schedulesOverride?: any[]) => {
           ...employee,
           roleText: getRoleText(employee.role_id),
           time: `${startTime} - ${endTime}`,
-          isCurrentUser: employee.id === user.id // Для выделения текущего пользователя
+          isCurrentUser: user ? employee.id === user.id : false // Для выделения текущего пользователя
         };
       })
       .filter((e: any) => e !== null)
@@ -626,7 +617,6 @@ useEffect(() => {
                 setCoffeeShopAddress(`Филиал #${data.coffee_shop_id}`);
               }
             } catch (err) {
-              console.error("Ошибка загрузки кофейни для роли 3:", err);
               setCoffeeShopAddress(`Филиал #${data.coffee_shop_id}`);
             }
           } else {
@@ -653,7 +643,6 @@ useEffect(() => {
               }
             }
           } catch (err) {
-            console.error("Ошибка загрузки адреса кофейни:", err);
           }
         }
       }
@@ -664,7 +653,6 @@ useEffect(() => {
       await fetchReport(schedules);
       
     } catch (err) {
-      console.error(err);
       setShouldLogout(true);
     } finally {
       setLoading(false);

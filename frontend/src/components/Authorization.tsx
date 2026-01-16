@@ -80,7 +80,6 @@ const Authorization: React.FC = () => {
                 setSuccess(false);
             }
 
-            console.log("Авторизация успешна:", data.access_token);
         } catch (err: any) {
             setError(err.message || "Ошибка при авторизации");
         }

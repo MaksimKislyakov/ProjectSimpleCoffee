@@ -58,7 +58,6 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
             formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
           }
         } catch (e) {
-          console.error("Неверный формат даты:", formattedDate);
           throw new Error("Неверный формат даты начала работы");
         }
       }
@@ -93,7 +92,6 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
       }
 
       // Логируем данные перед отправкой для отладки
-      console.log("Отправляемые данные для создания пользователя:", formattedData);
       
       const response = await fetch("/api/v1/user/create", {
         method: "POST",
@@ -132,8 +130,6 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
           errorMessage = errorData.message;
         }
         
-        console.error("Детали ошибки создания пользователя:", errorData);
-        console.error("Отправленные данные:", formattedData);
         throw new Error(errorMessage);
       }
 

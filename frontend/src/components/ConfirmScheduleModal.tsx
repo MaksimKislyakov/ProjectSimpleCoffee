@@ -165,7 +165,6 @@ const ConfirmScheduleModal: React.FC<ConfirmScheduleModalProps> = ({
         // Закрываем модалку после успешного удаления
         onClose();
       } catch (err: any) {
-        console.error("Ошибка при удалении смены:", err);
         setError(err.message || "Ошибка при удалении смены");
         setIsLoading(false);
         // Не закрываем модалку при ошибке

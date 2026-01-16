@@ -175,12 +175,10 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
 
   const generateSchedules = (): any[] => {
     if (!targetUserId) {
-      console.error("targetUserId не установлен");
       return [];
     }
     
     if (!targetCoffeeShopId) {
-      console.error("targetCoffeeShopId не установлен");
       return [];
     }
 
@@ -293,7 +291,6 @@ const ScheduleSettingsSidebar: React.FC<ScheduleSettingsSidebarProps> = ({
       showToast("График успешно сохранен!", "success");
       onClose();
     } catch (error: any) {
-      console.error("Ошибка сохранения графика:", error);
       const errorMessage = error?.message || "Ошибка при сохранении графика";
       showToast(errorMessage, "error");
     }

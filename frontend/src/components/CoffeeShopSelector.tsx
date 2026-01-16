@@ -91,7 +91,6 @@ const CoffeeShopSelector: React.FC<CoffeeShopSelectorProps> = ({
           }
         }
       } catch (e) {
-        console.error("Ошибка загрузки филиалов:", e);
       }
     };
 

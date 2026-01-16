@@ -61,7 +61,6 @@ const WorkSchedulePage: React.FC = () => {
 
     // Если API вернул ошибку — игнорируем
     if (!res.ok || !Array.isArray(data)) {
-      console.warn("Некорректный ответ /all_users:", data);
       setUsers([]);
       return;
     }
@@ -73,7 +72,6 @@ const WorkSchedulePage: React.FC = () => {
 
     setUsers(filteredUsers);
   } catch (e) {
-    console.error("Ошибка /all_users:", e);
     setUsers([]);
   }
 };
@@ -88,14 +86,12 @@ const WorkSchedulePage: React.FC = () => {
     const data = await res.json();
 
     if (!res.ok || !Array.isArray(data)) {
-      console.warn("Некорректный ответ /schedule:", data);
       setSchedule([]);
       return;
     }
 
     setSchedule(data);
   } catch (e) {
-    console.error("Ошибка /schedule:", e);
     setSchedule([]);
   }
 };
@@ -163,7 +159,6 @@ const WorkSchedulePage: React.FC = () => {
       // Обновляем расписание после подтверждения
       await loadSchedule();
     } catch (e: any) {
-      console.error("Ошибка подтверждения смены:", e);
       throw e;
     }
   };
@@ -187,7 +182,6 @@ const WorkSchedulePage: React.FC = () => {
       // Обновляем расписание после удаления
       await loadSchedule();
     } catch (e: any) {
-      console.error("Ошибка удаления смены:", e);
       throw e;
     }
   };
@@ -212,7 +206,6 @@ const WorkSchedulePage: React.FC = () => {
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
-          console.error(`Ошибка создания смены ${index + 1}:`, res.status, errorData);
           return { success: false, error: errorData.detail || `Ошибка ${res.status}`, index };
         }
         
@@ -230,7 +223,6 @@ const WorkSchedulePage: React.FC = () => {
       // Обновляем расписание после сохранения
       await loadSchedule();
     } catch (e) {
-      console.error("Ошибка сохранения графика:", e);
       throw e;
     }
   };
@@ -246,7 +238,6 @@ const WorkSchedulePage: React.FC = () => {
         setCoffeeShops(Array.isArray(data) ? data : []);
       }
     } catch (e) {
-      console.error("Ошибка загрузки кофеен:", e);
       setCoffeeShops([]);
     }
   };
@@ -302,7 +293,6 @@ const WorkSchedulePage: React.FC = () => {
       // Обновляем расписание после создания
       await loadSchedule();
     } catch (e: any) {
-      console.error("Ошибка создания смены:", e);
       throw e;
     }
   };
@@ -369,13 +359,11 @@ const WorkSchedulePage: React.FC = () => {
                   }
                 }
               } catch (err) {
-                console.error("Ошибка загрузки адреса кофейни:", err);
               }
             }
           }
         }
       } catch (e) {
-        console.error("Ошибка загрузки пользователя:", e);
       }
     };
     loadCurrentUser();

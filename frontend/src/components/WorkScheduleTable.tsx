@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect, useMemo } from "react"
 import { EmployeeScheduleRow } from "./EmployeeScheduleRow.tsx"
 import { DayData } from "./useScheduleUtils"
+import * as Icons from "../icons/index.ts"
 
 interface Props {
   users: any[]
@@ -56,6 +57,44 @@ const WorkScheduleTable: React.FC<Props> = ({
 
   // единый шаблон колонок для заголовка и для строк
   const gridTemplate = `repeat(${Math.max(1, days.length)}, 1fr)`
+
+  const getDateKey = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
+  const dayKeySet = useMemo(() => {
+    return new Set(days.map(d => getDateKey(d.fullDate)))
+  }, [days])
+
+  const statsByUser = useMemo(() => {
+    const map = new Map<number, { shifts: number; hours: number }>()
+
+    schedule.forEach((s: any) => {
+      if (!s || !s.user_id || !s.schedule_start_time || !s.schedule_end_time) return
+
+      const start = new Date(s.schedule_start_time)
+      const end = new Date(s.schedule_end_time)
+      if (end.getTime() <= start.getTime()) return
+
+      const dateKey = getDateKey(start)
+      if (!dayKeySet.has(dateKey)) return
+
+      const status = (s.status || "").toLowerCase()
+      const isWorkShift = status === "рабочая смена" || status === "active"
+      if (!isWorkShift) return
+
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+      const prev = map.get(s.user_id) || { shifts: 0, hours: 0 }
+      prev.shifts += 1
+      prev.hours += hours
+      map.set(s.user_id, prev)
+    })
+
+    return map
+  }, [schedule, dayKeySet])
 
   // Поиск сотрудников по частичному совпадению
   const filteredUsersBySearch = useMemo(() => {
@@ -187,11 +226,27 @@ const WorkScheduleTable: React.FC<Props> = ({
             if (roleId === 2) return "Менеджер";
             return "Бариста";
           };
+
+          const stats = statsByUser.get(u.id) || { shifts: 0, hours: 0 }
           
           return (
             <div key={u.id} className="left-employee">
-              <div className="name">{u.last_name} {u.first_name?.[0] || ""}. {u.patronymic?.[0] || ""}.</div>
-              <div className="role">{getRoleName(u.role_id)}</div>
+              <div className="left-employee-top">
+                <div className="left-employee-main">
+                  <div className="name">{u.last_name} {u.first_name?.[0] || ""}. {u.patronymic?.[0] || ""}.</div>
+                  <div className="role">{getRoleName(u.role_id)}</div>
+                </div>
+                <div className="left-employee-stats">
+                  <div className="left-employee-stat">
+                    <Icons.BriefcaseIcon className="left-employee-stat-icon" />
+                    <span className="left-employee-stat-value">{stats.shifts}</span>
+                  </div>
+                  <div className="left-employee-stat">
+                    <Icons.TimeIcon className="left-employee-stat-icon" />
+                    <span className="left-employee-stat-value">{Math.round(stats.hours)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           );
         })}

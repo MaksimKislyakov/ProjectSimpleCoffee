@@ -283,7 +283,6 @@ export const DayCell: React.FC<DayCellProps> = ({
         setModalPosition(null);
       } catch (error) {
         // Пробрасываем ошибку в модалку для отображения
-        console.error("Ошибка удаления смены в DayCell:", error);
         throw error;
       }
     } else {
