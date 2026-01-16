@@ -62,7 +62,7 @@ const CoffeeShopSelector: React.FC<CoffeeShopSelectorProps> = ({
       if (!token) return;
 
       try {
-        const res = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+        const res = await fetch("http://localhost:8000/api/v1/coffee_shop/get_coffee_shops", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

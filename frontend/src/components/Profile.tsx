@@ -117,7 +117,7 @@ const ProfilePage: React.FC = () => {
         emptyDays = generateWeekDays(currentDate);
       }
 
-      const res = await fetch("/api/v1/schedule/get_all_schedule", {
+      const res = await fetch("http://localhost:8000/api/v1/schedule/get_all_schedule", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -303,7 +303,7 @@ const fetchReport = async (schedulesOverride?: any[]) => {
     const endDateStr = reportEndDate.toISOString();
     
     const res = await fetch(
-      `/api/v1/report/get_my_report?start_date=${encodeURIComponent(startDateStr)}&end_date=${encodeURIComponent(endDateStr)}`,
+      `http://localhost:8000/api/v1/report/get_my_report?start_date=${encodeURIComponent(startDateStr)}&end_date=${encodeURIComponent(endDateStr)}`,
       {
         method: "GET",
         headers: {
@@ -346,7 +346,7 @@ const fetchReport = async (schedulesOverride?: any[]) => {
     if (!token) return { users: [], schedules: [] };
 
     try {
-      const usersRes = await fetch("/api/v1/user/all_users", {
+      const usersRes = await fetch("http://localhost:8000/api/v1/user/all_users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       let usersData: any[] = [];
@@ -356,7 +356,7 @@ const fetchReport = async (schedulesOverride?: any[]) => {
         setAllUsers(usersData);
       }
 
-      const schedulesRes = await fetch("/api/v1/schedule/get_all_schedule", {
+      const schedulesRes = await fetch("http://localhost:8000/api/v1/schedule/get_all_schedule", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       let schedulesData: any[] = [];
@@ -389,7 +389,7 @@ const fetchReport = async (schedulesOverride?: any[]) => {
           ? { ...schedule, user_id: user_id }
           : schedule;
         
-        const res = await fetch("/api/v1/schedule/create_schedule", {
+        const res = await fetch("http://localhost:8000/api/v1/schedule/create_schedule", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -564,7 +564,7 @@ useEffect(() => {
     }
 
       try {
-        const res = await fetch("/api/v1/user/me", {
+        const res = await fetch("http://localhost:8000/api/v1/user/me", {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -593,11 +593,11 @@ useEffect(() => {
       const shopId = isBarista ? data.coffee_shop_id : (selectedCoffeeShopId || data.coffee_shop_id);
       if (shopId) {
         // Для роли 3 (сотрудник) используем coffee_shop_id из данных пользователя
-        // Делаем запрос на /api/v1/coffee_shop/{coffee_shop_id} для получения адреса
+        // Делаем запрос на http://localhost:8000/api/v1/coffee_shop/{coffee_shop_id} для получения адреса
         if (isBarista) {
           if (data.coffee_shop_id) {
             try {
-              const coffeeShopRes = await fetch(`/api/v1/coffee_shop/${data.coffee_shop_id}`, {
+              const coffeeShopRes = await fetch(`http://localhost:8000/api/v1/coffee_shop/${data.coffee_shop_id}`, {
                 method: "GET",
                 headers: {
                   "Authorization": `Bearer ${token}`,
@@ -625,7 +625,7 @@ useEffect(() => {
         } else {
           // Для ролей 1 и 2 загружаем список кофеен
           try {
-            const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+            const coffeeShopRes = await fetch("http://localhost:8000/api/v1/coffee_shop/get_coffee_shops", {
               method: "GET",
               headers: {
                 "Authorization": `Bearer ${token}`,
@@ -1138,7 +1138,7 @@ useEffect(() => {
                 is_confirmed: false
               };
 
-              const res = await fetch("/api/v1/schedule/create_schedule", {
+              const res = await fetch("http://localhost:8000/api/v1/schedule/create_schedule", {
                 method: "POST",
                 headers: {
                   "Authorization": `Bearer ${token}`,

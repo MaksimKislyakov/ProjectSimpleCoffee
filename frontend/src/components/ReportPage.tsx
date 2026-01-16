@@ -63,7 +63,7 @@ const ReportPage: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const res = await fetch("/api/v1/user/all_users", {
+      const res = await fetch("http://localhost:8000/api/v1/user/all_users", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -88,7 +88,7 @@ const ReportPage: React.FC = () => {
 
   const loadSchedule = async () => {
     try {
-      const res = await fetch("/api/v1/schedule/get_all_schedule", {
+      const res = await fetch("http://localhost:8000/api/v1/schedule/get_all_schedule", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -107,7 +107,7 @@ const ReportPage: React.FC = () => {
 
   const loadCoffeeShops = async () => {
     try {
-      const res = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+      const res = await fetch("http://localhost:8000/api/v1/coffee_shop/get_coffee_shops", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -130,7 +130,7 @@ const ReportPage: React.FC = () => {
     // Загружаем текущего пользователя
     const loadCurrentUser = async () => {
       try {
-        const res = await fetch("/api/v1/user/me", {
+        const res = await fetch("http://localhost:8000/api/v1/user/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -237,7 +237,7 @@ const ReportPage: React.FC = () => {
       }
 
       // Отправляем запрос на обновление пользователя
-      const response = await fetch(`/api/v1/user/update/${userId}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/user/update/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -275,7 +275,7 @@ const ReportPage: React.FC = () => {
   // Обработчик удаления сотрудника
   const handleDeleteEmployee = async (userId: number) => {
     try {
-      const response = await fetch(`/api/v1/user/delete_user/${userId}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/user/delete_user/${userId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -303,7 +303,7 @@ const ReportPage: React.FC = () => {
     if (!selectedEmployee || !selectedType) return;
 
     try {
-      const response = await fetch("/api/v1/report/create_report_total_award_or_fine", {
+      const response = await fetch("http://localhost:8000/api/v1/report/create_report_total_award_or_fine", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

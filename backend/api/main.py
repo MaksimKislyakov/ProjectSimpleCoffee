@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app, Counter, Histogram, generate_latest
 import time
+from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import auth, schedule, user, report_route, coffee_shop_route
 
 # Метрики Prometheus
@@ -16,6 +17,14 @@ REQUEST_LATENCY = Histogram(
 )
 
 app = FastAPI(title="Simple Coffee Scheduler")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Разрешить все источники
+    allow_credentials=True,
+    allow_methods=["*"],  # Разрешить все методы
+    allow_headers=["*"],  # Разрешить все заголовки
+)
 
 # Добавляем эндпоинт для метрик
 metrics_app = make_asgi_app()

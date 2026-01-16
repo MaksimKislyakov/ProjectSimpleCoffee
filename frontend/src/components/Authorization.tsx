@@ -31,7 +31,7 @@ const Authorization: React.FC = () => {
         }
         
         try {
-            const response = await fetch(`/api/v1/auth/login`, {
+            const response = await fetch('http://localhost:8000/api/v1/auth/login', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -51,7 +51,7 @@ const Authorization: React.FC = () => {
 
             // Получаем информацию о пользователе, чтобы узнать role_id
             try {
-                const meRes = await fetch(`/api/v1/user/me`, {
+                const meRes = await fetch(`http://localhost:8000/api/v1/user/me`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

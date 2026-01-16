@@ -53,7 +53,7 @@ const WorkSchedulePage: React.FC = () => {
   const loadUsers = async () => {
     const shopId = selectedCoffeeShopId;
   try {
-    const res = await fetch("/api/v1/user/all_users", {
+    const res = await fetch("http://localhost:8000/api/v1/user/all_users", {
       headers: { "Authorization": `Bearer ${token}` }
     });
 
@@ -79,7 +79,7 @@ const WorkSchedulePage: React.FC = () => {
 
   const loadSchedule = async () => {
   try {
-    const res = await fetch("/api/v1/schedule/get_all_schedule", {
+    const res = await fetch("http://localhost:8000/api/v1/schedule/get_all_schedule", {
       headers: { "Authorization": `Bearer ${token}` }
     });
 
@@ -142,7 +142,7 @@ const WorkSchedulePage: React.FC = () => {
         params.append("schedule_end_time", schedule_end_time);
       }
 
-      const res = await fetch(`/api/v1/schedule/${scheduleId}/confirm?${params.toString()}`, {
+      const res = await fetch(`http://localhost:8000/api/v1/schedule/${scheduleId}/confirm?${params.toString()}`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -165,7 +165,7 @@ const WorkSchedulePage: React.FC = () => {
 
   const deleteSchedule = async (scheduleId: number) => {
     try {
-      const res = await fetch(`/api/v1/schedule/delete_schedule/${scheduleId}`, {
+      const res = await fetch(`http://localhost:8000/api/v1/schedule/delete_schedule/${scheduleId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -195,7 +195,7 @@ const WorkSchedulePage: React.FC = () => {
           ? { ...schedule, user_id: user_id }
           : schedule;
         
-        const res = await fetch("/api/v1/schedule/create_schedule", {
+        const res = await fetch("http://localhost:8000/api/v1/schedule/create_schedule", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -229,7 +229,7 @@ const WorkSchedulePage: React.FC = () => {
 
   const loadCoffeeShops = async () => {
     try {
-      const res = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+      const res = await fetch("http://localhost:8000/api/v1/coffee_shop/get_coffee_shops", {
         headers: { "Authorization": `Bearer ${token}` }
       });
 
@@ -275,7 +275,7 @@ const WorkSchedulePage: React.FC = () => {
         is_confirmed: false
       };
 
-      const res = await fetch("/api/v1/schedule/create_schedule", {
+      const res = await fetch("http://localhost:8000/api/v1/schedule/create_schedule", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -308,7 +308,7 @@ const WorkSchedulePage: React.FC = () => {
     // Загружаем данные текущего пользователя для получения coffee_shop_id
     const loadCurrentUser = async () => {
       try {
-        const res = await fetch("/api/v1/user/me", {
+        const res = await fetch("http://localhost:8000/api/v1/user/me", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -333,7 +333,7 @@ const WorkSchedulePage: React.FC = () => {
             } else {
               // Для ролей 1 и 2 загружаем список кофеен
               try {
-                const coffeeShopRes = await fetch("/api/v1/coffee_shop/get_coffee_shops", {
+                const coffeeShopRes = await fetch("http://localhost:8000/api/v1/coffee_shop/get_coffee_shops", {
                   headers: { "Authorization": `Bearer ${token}` }
                 });
                 

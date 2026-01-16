@@ -93,7 +93,7 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
 
       // Логируем данные перед отправкой для отладки
       
-      const response = await fetch("/api/v1/user/create", {
+      const response = await fetch("http://localhost:8000/api/v1/user/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +145,7 @@ const ReportSettingsSidebar: React.FC<ReportSettingsSidebarProps> = ({
 
   const handleCreateCoffeeShop = async (coffeeShopData: { adress: string }) => {
     try {
-      const response = await fetch("/api/v1/coffee_shop/create", {
+      const response = await fetch("http://localhost:8000/api/v1/coffee_shop/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
