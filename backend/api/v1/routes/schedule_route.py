@@ -1,10 +1,23 @@
-from fastapi import APIRouter, Depends
-from schemas.schedule_schemas import ScheduleCreate, ScheduleRead
-from services.schedule_service import ScheduleService
-from api.v1.dependencies import get_schedule_service, get_current_user
-from models.user_model import User
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
 from typing import Optional
 from datetime import datetime
+from jose import jwt
+import asyncio
+
+from db.session import async_session
+
+from core.config import settings
+
+from schemas.schedule_schemas import ScheduleCreate, ScheduleRead
+
+from services.schedule_service import ScheduleService
+
+from api.v1.dependencies import get_schedule_service, get_current_user
+from api.websocket_manager import manager
+
+from models.user_model import User
+
+from repositories.user_repository import UserRepository
 
 
 router = APIRouter(prefix="/api/v1/schedule", tags=["schedule"])
@@ -76,3 +89,51 @@ async def update_schedule_confirmation(
         schedule_end_time=schedule_end_time,
         current_user=current_user,
     )
+
+@router.websocket("/ws/{coffee_shop_id}")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    coffee_shop_id: int,
+    token: str = Query(...),  
+):
+
+    await websocket.accept()
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id or not isinstance(user_id, str):
+            await websocket.close(code=4001, reason="Invalid token: 'sub' must be a string")
+            return
+
+        async with async_session() as session:
+            repo = UserRepository(session)
+            user = await repo.get_by_id(int(user_id))
+            if not user:
+                await websocket.close(code=4002, reason="User not found")
+                return
+
+        role_id = user.role_id
+        await manager.connect(websocket, coffee_shop_id, role_id)
+        await websocket.send_json({"type": "connected", "user_id": user_id})
+
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=300)
+                await websocket.send_json({
+                    "type": "echo", 
+                    "message": f"Received: {data}",
+                    "timestamp": datetime.now().isoformat()
+                })
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "heartbeat", "status": "alive"})
+                continue
+
+    except WebSocketDisconnect:
+        if user and hasattr(user, 'role_id'):
+            manager.disconnect(websocket, coffee_shop_id, user.role_id)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        if user and hasattr(user, 'role_id'):
+            manager.disconnect(websocket, coffee_shop_id, user.role_id)
+        await websocket.close()

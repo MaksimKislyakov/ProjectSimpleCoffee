@@ -33,7 +33,7 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверные данные"
             )
 
-        token = create_access_token({"sub": user.id})
+        token = create_access_token({"sub": str(user.id)})
         return {"access_token": token, "token_type": "bearer"}
 
     def number_validate(self, telephone: str) -> str:

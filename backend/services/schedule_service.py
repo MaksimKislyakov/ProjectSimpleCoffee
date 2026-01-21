@@ -1,16 +1,17 @@
 from fastapi import HTTPException, status
 import logging
 import datetime
-from typing import List, Optional
+from typing import Optional
 
 from repositories.schedule_repository import ScheduleRepository
 
 from models.user_model import User
 from models.schedule_model import Schedule
+from models.roleEnum import RolesEnum
 
 from schemas.schedule_schemas import ScheduleCreate
 
-from models.roleEnum import RolesEnum
+from api.websocket_manager import manager
 
 
 logger = logging.getLogger(__name__)
@@ -82,7 +83,7 @@ class ScheduleService:
             )
 
     def _validate_schedule_no_time_conflicts(
-        self, schedule_data: ScheduleCreate, all_schedules: List[Schedule]
+        self, schedule_data: ScheduleCreate, all_schedules: list[Schedule]
     ):
         """Проверяет отсутствие пересечений с существующими сменами.
 
@@ -238,6 +239,20 @@ class ScheduleService:
 
         schedule = Schedule(**schedule_data)
         new_item_schedule = await self.schedule_repo.create_schedule(schedule)
+
+        notification = {
+            "type": "schedule_created",
+            "schedule_id": new_item_schedule.id,
+            "user_id": new_item_schedule.user_id,
+            "coffee_shop_id": new_item_schedule.coffee_shop_id,
+            "schedule_start_time": new_item_schedule.schedule_start_time.isoformat(),
+            "schedule_end_time": new_item_schedule.schedule_end_time.isoformat(),
+            "message": f"Бариста запросил смену на {new_item_schedule.schedule_start_time.strftime('%d.%m.%Y %H:%M')}",
+        }
+        await manager.broadcast_to_managers_and_admins(
+            notification, new_item_schedule.coffee_shop_id
+        )
+
         return new_item_schedule
 
     async def delete_item_schedule(self, id_schedule: int, current_user: User):

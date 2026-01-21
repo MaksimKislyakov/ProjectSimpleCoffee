@@ -83,8 +83,6 @@ async def get_coffee_shop_service(
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Проверяет Bearer-токен, декодирует JWT и возвращает текущего пользователя."""
-    # print("TOKEN RECEIVED:", token)
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -110,7 +108,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
     async with async_session() as session:
         repo = UserRepository(session)
-        user = await repo.get_by_id(user_id)
+        user = await repo.get_by_id(int(user_id))
 
         if user is None:
             raise credentials_exception
