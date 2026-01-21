@@ -346,5 +346,20 @@ class ScheduleService:
             schedule_start_time=schedule_start_time,
             schedule_end_time=schedule_end_time,
         )
+        message = None
 
+        if schedule_end_time or schedule_start_time:
+            message = f"Ваша смена подтверждена, время изменено - {schedule_start_time}:{schedule_end_time}"
+        else:
+            message = f"Ваша смена подтверждена, время не изменено"
+        
+        await manager.send_to_user(
+                user_id=updated_schedule.user_id,
+                message={
+                    "type": "schedule_confirmed",
+                    "schedule_id": updated_schedule.id,
+                    "message": message
+                }
+            )
+                
         return updated_schedule

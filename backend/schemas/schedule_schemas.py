@@ -13,7 +13,6 @@ class ScheduleBase(BaseModel):
 
 class ScheduleCreate(ScheduleBase):
     user_id: int
-    pass
 
 
 class ScheduleRead(ScheduleBase):

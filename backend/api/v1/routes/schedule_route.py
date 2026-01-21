@@ -114,7 +114,7 @@ async def websocket_endpoint(
                 return
 
         role_id = user.role_id
-        await manager.connect(websocket, coffee_shop_id, role_id)
+        await manager.connect(websocket, coffee_shop_id, role_id, user.id)
         await websocket.send_json({"type": "connected", "user_id": user_id})
 
         while True:
