@@ -279,6 +279,15 @@ class ScheduleService:
                 status_code=404, detail="Запись о рабочей смене не найдена"
             )
 
+        await manager.send_to_user(
+                user_id=del_schedule.user_id,
+                message={
+                    "type": "schedule_confirmed",
+                    "schedule_id": del_schedule.id,
+                    "message": f'Смена {del_schedule.schedule_start_time} : {del_schedule.schedule_end_time} отменена'
+                }
+            )
+
         return del_schedule
 
     async def get_all_schedules_is_confirmed_false(self, current_user: User):
@@ -327,6 +336,16 @@ class ScheduleService:
             actual_start_time=actual_start_time,
             actual_end_time=actual_end_time,
         )
+
+        await manager.send_to_user(
+                user_id=updated_schedule.user_id,
+                message={
+                    "type": "schedule_confirmed",
+                    "schedule_id": updated_schedule.id,
+                    "message": f"Вам обновили акутальное время смены - {actual_start_time}:{actual_end_time}"
+                }
+            )
+
         return updated_schedule
 
     async def update_schedule_is_confirmed(
