@@ -7,10 +7,12 @@ from db.session import async_session
 
 from repositories.schedule_repository import ScheduleRepository
 from repositories.user_repository import UserRepository
+from repositories.report_repository import ReportRepository
 
 from services.auth_service import AuthService
 from services.user_service import UserService
 from services.schedule_service import ScheduleService
+from services.report_service import ReportService
 
 from core.config import settings
 
@@ -27,6 +29,9 @@ async def get_user_repository(session: AsyncSession = Depends(get_async_session)
 async def get_schedule_repository(session: AsyncSession = Depends(get_async_session)) -> ScheduleRepository:
     return ScheduleRepository(session)
 
+async def get_report_repository(session: AsyncSession = Depends(get_async_session)) -> ReportRepository:
+    return ReportRepository(session)
+
 async def get_auth_service(repo: UserRepository = Depends(get_user_repository)) -> AuthService:
     return AuthService(repo)
 
@@ -35,6 +40,9 @@ async def get_user_service(repo: UserRepository = Depends(get_user_repository)) 
 
 async def get_schedule_service(repo: ScheduleRepository = Depends(get_schedule_repository)) -> ScheduleService:
     return ScheduleService(repo)
+    
+async def get_report_service(repo_report: ReportRepository = Depends(get_report_repository)) -> ScheduleService:
+    return ReportService(repo_report)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Проверяет Bearer-токен, декодирует JWT и возвращает текущего пользователя."""

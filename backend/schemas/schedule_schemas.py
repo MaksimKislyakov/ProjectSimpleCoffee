@@ -8,6 +8,7 @@ class ScheduleBase(BaseModel):
     status: str
     schedule_start_time: datetime
     schedule_end_time: datetime
+    is_confirmed: bool | None
 
 class ScheduleCreate(ScheduleBase):
     user_id: int
